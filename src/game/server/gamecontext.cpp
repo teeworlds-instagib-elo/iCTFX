@@ -2132,8 +2132,8 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 		{
 			CNetMsg_Cl_SetTeam *pMsg = (CNetMsg_Cl_SetTeam *)pRawMsg;
 
-			if(pPlayer->GetTeam() == pMsg->m_Team || (g_Config.m_SvSpamprotection && pPlayer->m_LastSetTeam && pPlayer->m_LastSetTeam + Server()->TickSpeed() * g_Config.m_SvTeamChangeDelay > Server()->Tick()))
-				return;
+			// if(pPlayer->GetTeam() == pMsg->m_Team || (g_Config.m_SvSpamprotection && pPlayer->m_LastSetTeam && pPlayer->m_LastSetTeam + Server()->TickSpeed() * g_Config.m_SvTeamChangeDelay > Server()->Tick()))
+			// 	return;
 
 			//Kill Protection
 			CCharacter *pChr = pPlayer->GetCharacter();
@@ -2158,7 +2158,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				SendBroadcast(aBuf, ClientID);
 				return;
 			}
-
+			
 			// Switch team on given client and kill/respawn him
 			if(m_pController->CanJoinTeam(pMsg->m_Team, ClientID))
 			{
@@ -2265,7 +2265,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 				// reload scores
 				Score()->PlayerData(ClientID)->Reset();
-				m_apPlayers[ClientID]->m_Score = -9999;
+				m_apPlayers[ClientID]->m_Score = 0;
 				Score()->LoadPlayerData(ClientID);
 
 				SixupNeedsUpdate = true;

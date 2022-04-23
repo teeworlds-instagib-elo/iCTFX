@@ -32,7 +32,7 @@ private:
 		Variable: m_ProximityRadius
 			Contains the physical size of the entity.
 	*/
-	float m_ProximityRadius;
+	
 
 protected:
 	/* State */
@@ -44,6 +44,7 @@ public: // TODO: Maybe make protected
 			Contains the current posititon of the entity.
 	*/
 	vec2 m_Pos;
+	float m_ProximityRadius;
 
 	/* Getters */
 	int GetID() const { return m_ID; }

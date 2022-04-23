@@ -87,6 +87,7 @@ public:
 	int m_LastCommandPos;
 	int m_LastWhisperTo;
 	int m_LastInvited;
+	int m_RespawnTick;
 
 	int m_SendVoteIndex;
 

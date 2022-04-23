@@ -43,7 +43,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_EmoteStop = -1;
 	m_LastAction = -1;
 	m_LastNoAmmoSound = -1;
-	m_LastWeapon = WEAPON_HAMMER;
+	m_LastWeapon = WEAPON_LASER;
 	m_QueuedWeapon = -1;
 	m_LastRefillJumps = false;
 	m_LastPenalty = false;
@@ -65,7 +65,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 
 	m_Core.Reset();
 	m_Core.Init(&GameServer()->m_World.m_Core, GameServer()->Collision());
-	m_Core.m_ActiveWeapon = WEAPON_GUN;
+	m_Core.m_ActiveWeapon = WEAPON_LASER;
 	m_Core.m_Pos = m_Pos;
 	GameServer()->m_World.m_Core.m_apCharacters[m_pPlayer->GetCID()] = &m_Core;
 
@@ -341,6 +341,7 @@ void CCharacter::HandleWeaponSwitch()
 
 void CCharacter::FireWeapon()
 {
+	
 	if(m_ReloadTimer != 0)
 	{
 		if(m_LatestInput.m_Fire & 1)
@@ -353,53 +354,40 @@ void CCharacter::FireWeapon()
 	DoWeaponSwitch();
 	vec2 Direction = normalize(vec2(m_LatestInput.m_TargetX, m_LatestInput.m_TargetY));
 
-	bool FullAuto = false;
-	if(m_Core.m_ActiveWeapon == WEAPON_GRENADE || m_Core.m_ActiveWeapon == WEAPON_SHOTGUN || m_Core.m_ActiveWeapon == WEAPON_LASER)
-		FullAuto = true;
-	if(m_Jetpack && m_Core.m_ActiveWeapon == WEAPON_GUN)
-		FullAuto = true;
-	// allow firing directly after coming out of freeze or being unfrozen
-	// by something
-	if(m_FrozenLastTick)
-		FullAuto = true;
 
-	// don't fire hammer when player is deep and sv_deepfly is disabled
-	if(!g_Config.m_SvDeepfly && m_Core.m_ActiveWeapon == WEAPON_HAMMER && m_DeepFreeze)
-		return;
 
 	// check if we gonna fire
 	bool WillFire = false;
 	if(CountInput(m_LatestPrevInput.m_Fire, m_LatestInput.m_Fire).m_Presses)
 		WillFire = true;
 
-	if(FullAuto && (m_LatestInput.m_Fire & 1) && m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo)
+	if(m_LatestInput.m_Fire & 1)
 		WillFire = true;
 
 	if(!WillFire)
 		return;
 
-	if(m_FreezeTime)
-	{
-		// Timer stuff to avoid shrieking orchestra caused by unfreeze-plasma
-		if(m_PainSoundTimer <= 0 && !(m_LatestPrevInput.m_Fire & 1))
-		{
-			m_PainSoundTimer = 1 * Server()->TickSpeed();
-			GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_LONG, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
-		}
-		return;
-	}
+	// if(m_FreezeTime)
+	// {
+	// 	// Timer stuff to avoid shrieking orchestra caused by unfreeze-plasma
+	// 	if(m_PainSoundTimer <= 0 && !(m_LatestPrevInput.m_Fire & 1))
+	// 	{
+	// 		m_PainSoundTimer = 1 * Server()->TickSpeed();
+	// 		GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_LONG, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
+	// 	}
+	// 	return;
+	// }
 
 	// check for ammo
-	if(!m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo)
-	{
-		/*// 125ms is a magical limit of how fast a human can click
-		m_ReloadTimer = 125 * Server()->TickSpeed() / 1000;
-		GameServer()->CreateSound(m_Pos, SOUND_WEAPON_NOAMMO);*/
-		return;
-	}
+	// if(!m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo)
+	// {
+	// 	/*// 125ms is a magical limit of how fast a human can click
+	// 	m_ReloadTimer = 125 * Server()->TickSpeed() / 1000;
+	// 	GameServer()->CreateSound(m_Pos, SOUND_WEAPON_NOAMMO);*/
+	// 	return;
+	// }
 
 	vec2 ProjStartPos = m_Pos + Direction * GetProximityRadius() * 0.75f;
-
 	switch(m_Core.m_ActiveWeapon)
 	{
 	case WEAPON_HAMMER:
@@ -560,12 +548,7 @@ void CCharacter::FireWeapon()
 
 	case WEAPON_LASER:
 	{
-		float LaserReach;
-		if(!m_TuneZone)
-			LaserReach = GameServer()->Tuning()->m_LaserReach;
-		else
-			LaserReach = GameServer()->TuningList()[m_TuneZone].m_LaserReach;
-
+		float LaserReach = GameServer()->Tuning()->m_LaserReach;
 		new CLaser(GameWorld(), m_Pos, Direction, LaserReach, m_pPlayer->GetCID(), WEAPON_LASER);
 		GameServer()->CreateSound(m_Pos, SOUND_LASER_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
 	}
@@ -1013,15 +996,51 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 		GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_LONG);
 	else
 		GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_SHORT);*/
-
+	if(GameServer()->m_pController->IsFriendlyFire(m_pPlayer->GetCID(), From))
+		return false;
 	if(Dmg)
 	{
 		m_EmoteType = EMOTE_PAIN;
 		m_EmoteStop = Server()->Tick() + 500 * Server()->TickSpeed() / 1000;
 	}
+	m_Health = 0;
+
+	
+
+	// do damage Hit sound
+	if(From >= 0 && From != m_pPlayer->GetCID() && GameServer()->m_apPlayers[From])
+	{
+		int Mask = CmaskOne(From);
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetTeam() == TEAM_SPECTATORS && GameServer()->m_apPlayers[i]->m_SpectatorID == From)
+				Mask |= CmaskOne(i);
+		}
+		GameServer()->CreateSound(GameServer()->m_apPlayers[From]->m_ViewPos, SOUND_HIT, Mask);
+	}
+
 
 	vec2 Temp = m_Core.m_Vel + Force;
 	m_Core.m_Vel = ClampVel(m_MoveRestrictions, Temp);
+	
+	// check for death
+	if(m_Health <= 0)
+	{
+		Die(From, Weapon);
+
+		// set attacker's face to happy (taunt!)
+		if (From >= 0 && From != m_pPlayer->GetCID() && GameServer()->m_apPlayers[From])
+		{
+			CCharacter *pChr = GameServer()->m_apPlayers[From]->GetCharacter();
+			if (pChr)
+			{
+				pChr->m_EmoteType = EMOTE_HAPPY;
+				pChr->m_EmoteStop = Server()->Tick() + Server()->TickSpeed();
+			}
+		}
+
+		return false;
+	}
 
 	return true;
 }

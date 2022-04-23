@@ -64,6 +64,7 @@ protected:
 
 public:
 	const char *m_pGameType;
+	int m_aTeamscore[2];
 
 	IGameController(class CGameContext *pGameServer);
 	virtual ~IGameController();
@@ -120,6 +121,7 @@ public:
 	bool IsFriendlyFire(int ClientID1, int ClientID2);
 
 	bool IsForceBalanced();
+	bool IsTeamplay() const;
 
 	/*
 
