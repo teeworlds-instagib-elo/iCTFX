@@ -3220,21 +3220,21 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 		Tuning()->Set("shotgun_curvature", 0);
 	}
 
-	if(g_Config.m_SvDDRaceTuneReset)
-	{
-		g_Config.m_SvHit = 1;
-		g_Config.m_SvEndlessDrag = 0;
-		g_Config.m_SvOldLaser = 0;
-		g_Config.m_SvOldTeleportHook = 0;
-		g_Config.m_SvOldTeleportWeapons = 0;
-		g_Config.m_SvTeleportHoldHook = 0;
-		g_Config.m_SvTeam = SV_TEAM_ALLOWED;
-		g_Config.m_SvShowOthersDefault = SHOW_OTHERS_OFF;
+	// if(g_Config.m_SvDDRaceTuneReset)
+	// {
+	// 	g_Config.m_SvHit = 1;
+	// 	g_Config.m_SvEndlessDrag = 0;
+	// 	g_Config.m_SvOldLaser = 0;
+	// 	g_Config.m_SvOldTeleportHook = 0;
+	// 	g_Config.m_SvOldTeleportWeapons = 0;
+	// 	g_Config.m_SvTeleportHoldHook = 0;
+	// 	g_Config.m_SvTeam = SV_TEAM_ALLOWED;
+	// 	g_Config.m_SvShowOthersDefault = SHOW_OTHERS_OFF;
 
-		if(Collision()->m_NumSwitchers > 0)
-			for(int i = 0; i < Collision()->m_NumSwitchers + 1; ++i)
-				Collision()->m_pSwitchers[i].m_Initial = true;
-	}
+	// 	if(Collision()->m_NumSwitchers > 0)
+	// 		for(int i = 0; i < Collision()->m_NumSwitchers + 1; ++i)
+	// 			Collision()->m_pSwitchers[i].m_Initial = true;
+	// }
 
 	Console()->ExecuteFile(g_Config.m_SvResetFile, -1);
 
@@ -3242,20 +3242,20 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 
 	m_MapBugs.Dump();
 
-	if(g_Config.m_SvSoloServer)
-	{
-		g_Config.m_SvTeam = SV_TEAM_FORCED_SOLO;
-		g_Config.m_SvShowOthersDefault = SHOW_OTHERS_ON;
+	// if(g_Config.m_SvSoloServer)
+	// {
+	// 	g_Config.m_SvTeam = SV_TEAM_FORCED_SOLO;
+	// 	g_Config.m_SvShowOthersDefault = SHOW_OTHERS_ON;
 
-		Tuning()->Set("player_collision", 0);
-		Tuning()->Set("player_hooking", 0);
+	// 	Tuning()->Set("player_collision", 0);
+	// 	Tuning()->Set("player_hooking", 0);
 
-		for(int i = 0; i < NUM_TUNEZONES; i++)
-		{
-			TuningList()[i].Set("player_collision", 0);
-			TuningList()[i].Set("player_hooking", 0);
-		}
-	}
+	// 	for(int i = 0; i < NUM_TUNEZONES; i++)
+	// 	{
+	// 		TuningList()[i].Set("player_collision", 0);
+	// 		TuningList()[i].Set("player_hooking", 0);
+	// 	}
+	// }
 
 	m_pController = new CGameControllerDDRace(this);
 
