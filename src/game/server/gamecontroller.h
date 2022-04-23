@@ -149,6 +149,7 @@ public:
 	// DDRace
 
 	float m_CurrentRecord;
+	int m_FakeWarmup;
 };
 
 #endif

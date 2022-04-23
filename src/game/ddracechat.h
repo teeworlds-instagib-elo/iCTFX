@@ -32,6 +32,13 @@ CHAT_COMMAND("save", "?r[code]", CFGFLAG_CHAT | CFGFLAG_SERVER, ConSave, this, "
 CHAT_COMMAND("load", "?r[code]", CFGFLAG_CHAT | CFGFLAG_SERVER, ConLoad, this, "Load with code r. /load to check your existing saves")
 CHAT_COMMAND("map", "?r[map]", CFGFLAG_CHAT | CFGFLAG_SERVER | CFGFLAG_NONTEEHISTORIC, ConMap, this, "Vote a map by name")
 
+CHAT_COMMAND("stop", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConStop, this, "Vote a map by name")
+CHAT_COMMAND("go", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConGo, this, "Vote a map by name")
+CHAT_COMMAND("reset", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConReset, this, "Vote a map by name")
+
+
+
+
 CHAT_COMMAND("rankteam", "?r[player name]", CFGFLAG_CHAT | CFGFLAG_SERVER, ConTeamRank, this, "Shows the team rank of player with name r (your team rank by default)")
 CHAT_COMMAND("teamrank", "?r[player name]", CFGFLAG_CHAT | CFGFLAG_SERVER, ConTeamRank, this, "Shows the team rank of player with name r (your team rank by default)")
 

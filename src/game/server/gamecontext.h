@@ -355,6 +355,12 @@ private:
 	static void ConPoints(IConsole::IResult *pResult, void *pUserData);
 	static void ConTopPoints(IConsole::IResult *pResult, void *pUserData);
 
+	//ictf features
+	static void ConStop(IConsole::IResult *pResult, void *pUserData);
+	static void ConGo(IConsole::IResult *pResult, void *pUserData);
+	static void ConXonX(IConsole::IResult *pResult, void *pUserData);
+	static void ConReset(IConsole::IResult *pResult, void *pUserData);
+
 	static void ConUTF8(IConsole::IResult *pResult, void *pUserData);
 	static void ConDND(IConsole::IResult *pResult, void *pUserData);
 	static void ConMapInfo(IConsole::IResult *pResult, void *pUserData);

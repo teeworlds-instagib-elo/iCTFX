@@ -41,6 +41,7 @@ IGameController::IGameController(class CGameContext *pGameServer)
 	m_aNumSpawnPoints[0] = 0;
 	m_aNumSpawnPoints[1] = 0;
 	m_aNumSpawnPoints[2] = 0;
+	m_FakeWarmup = 0;
 
 	m_CurrentRecord = 0;
 }
@@ -584,6 +585,16 @@ void IGameController::Tick()
 		}
 	}
 
+	if(m_FakeWarmup)
+	{
+		m_FakeWarmup--;
+		if(!m_FakeWarmup && GameServer()->m_World.m_Paused)
+		{
+			GameServer()->m_World.m_Paused = false;
+			GameServer()->SendChat(-1, CGameContext::CHAT_ALL, "Game started");
+		}
+	}
+
 	DoActivityCheck();
 }
 
@@ -602,7 +613,10 @@ void IGameController::Snap(int SnappingClient)
 	if(GameServer()->m_World.m_Paused)
 		pGameInfoObj->m_GameStateFlags |= GAMESTATEFLAG_PAUSED;
 	pGameInfoObj->m_RoundStartTick = m_RoundStartTick;
-	pGameInfoObj->m_WarmupTimer = m_Warmup;
+	if(m_FakeWarmup)
+		pGameInfoObj->m_WarmupTimer = m_FakeWarmup;
+	else
+		pGameInfoObj->m_WarmupTimer = m_Warmup;
 
 	pGameInfoObj->m_RoundNum = 0;
 	pGameInfoObj->m_RoundCurrent = m_RoundCount + 1;

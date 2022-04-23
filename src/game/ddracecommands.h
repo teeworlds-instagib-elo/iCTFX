@@ -36,7 +36,11 @@ CONSOLE_COMMAND("unlivefreeze", "", CFGFLAG_SERVER | CMDFLAG_TEST, ConUnLiveFree
 CONSOLE_COMMAND("left", "", CFGFLAG_SERVER | CMDFLAG_TEST, ConGoLeft, this, "Makes you move 1 tile left")
 CONSOLE_COMMAND("right", "", CFGFLAG_SERVER | CMDFLAG_TEST, ConGoRight, this, "Makes you move 1 tile right")
 CONSOLE_COMMAND("up", "", CFGFLAG_SERVER | CMDFLAG_TEST, ConGoUp, this, "Makes you move 1 tile up")
-CONSOLE_COMMAND("down", "", CFGFLAG_SERVER | CMDFLAG_TEST, ConGoDown, this, "Makes you move 1 tile down")
+
+CONSOLE_COMMAND("stop", "", CFGFLAG_SERVER | CMDFLAG_TEST, ConStop, this, "Makes you move 1 tile down")
+CONSOLE_COMMAND("go", "", CFGFLAG_SERVER | CMDFLAG_TEST, ConGo, this, "Makes you move 1 tile down")
+CONSOLE_COMMAND("xonx", "i", CFGFLAG_SERVER | CMDFLAG_TEST, ConXonX, this, "Makes you move 1 tile down")
+CONSOLE_COMMAND("reset", "", CFGFLAG_SERVER | CMDFLAG_TEST, ConReset, this, "Makes you move 1 tile down")
 
 CONSOLE_COMMAND("move", "i[x] i[y]", CFGFLAG_SERVER | CMDFLAG_TEST, ConMove, this, "Moves to the tile with x/y-number ii")
 CONSOLE_COMMAND("move_raw", "i[x] i[y]", CFGFLAG_SERVER | CMDFLAG_TEST, ConMoveRaw, this, "Moves to the point with x/y-coordinates ii")

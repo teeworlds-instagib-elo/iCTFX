@@ -1814,6 +1814,20 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_copy(aWhisperMsg, pMsg->m_pMessage + 10, 256);
 					Converse(pPlayer->GetCID(), aWhisperMsg);
 				}
+				else if(str_startswith(pMsg->m_pMessage + 2, "on"))
+				{
+					if(pPlayer->GetTeam() != TEAM_SPECTATORS)
+					{
+						int Mode = (int)pMsg->m_pMessage[1] - (int)'0';
+						if(Mode < 0 || Mode > 6)
+							return;
+						char aBuf[32];
+						str_format(aBuf, sizeof(aBuf), "Restart round as %don%d", Mode, Mode);
+						char bBuf[32];
+						str_format(bBuf, sizeof(aBuf), "xonx %d", Mode);
+						StartVote(aBuf, bBuf, "", "");
+					}
+				}
 				else
 				{
 					if(g_Config.m_SvSpamprotection && !str_startswith(pMsg->m_pMessage + 1, "timeout ") && pPlayer->m_LastCommands[0] && pPlayer->m_LastCommands[0] + Server()->TickSpeed() > Server()->Tick() && pPlayer->m_LastCommands[1] && pPlayer->m_LastCommands[1] + Server()->TickSpeed() > Server()->Tick() && pPlayer->m_LastCommands[2] && pPlayer->m_LastCommands[2] + Server()->TickSpeed() > Server()->Tick() && pPlayer->m_LastCommands[3] && pPlayer->m_LastCommands[3] + Server()->TickSpeed() > Server()->Tick())
@@ -3102,6 +3116,7 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("add_map_votes", "", CFGFLAG_SERVER, ConAddMapVotes, this, "Automatically adds voting options for all maps");
 	Console()->Register("vote", "r['yes'|'no']", CFGFLAG_SERVER, ConVote, this, "Force a vote to yes/no");
 	Console()->Register("dump_antibot", "", CFGFLAG_SERVER, ConDumpAntibot, this, "Dumps the antibot status");
+
 
 	Console()->Chain("sv_motd", ConchainSpecialMotdupdate, this);
 
