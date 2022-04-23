@@ -84,6 +84,8 @@ class CGameContext : public IGameServer
 
 	bool m_Resetting;
 
+	void SwapTeams();
+
 	static void CommandCallback(int ClientID, int FlagMask, const char *pCmd, IConsole::IResult *pResult, void *pUser);
 	static void TeeHistorianWrite(const void *pData, int DataSize, void *pUser);
 
@@ -118,6 +120,8 @@ class CGameContext : public IGameServer
 	static void ConDumpAntibot(IConsole::IResult *pResult, void *pUserData);
 	static void ConchainSpecialMotdupdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 
+	static void ConSwapTeams(IConsole::IResult *pResult, void *pUserData);;
+	static void ConShuffleTeams(IConsole::IResult *pResult, void *pUserData);;
 	void Construct(int Resetting);
 	void Destruct(int Resetting);
 	void AddVote(const char *pDescription, const char *pCommand);

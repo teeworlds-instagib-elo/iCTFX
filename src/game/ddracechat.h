@@ -35,6 +35,7 @@ CHAT_COMMAND("map", "?r[map]", CFGFLAG_CHAT | CFGFLAG_SERVER | CFGFLAG_NONTEEHIS
 CHAT_COMMAND("stop", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConStop, this, "Vote a map by name")
 CHAT_COMMAND("go", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConGo, this, "Vote a map by name")
 CHAT_COMMAND("reset", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConReset, this, "Vote a map by name")
+CHAT_COMMAND("restart", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConRestart, this, "Vote a map by name")
 
 
 

@@ -100,6 +100,7 @@ void CCharacter::Destroy()
 
 void CCharacter::SetWeapon(int W)
 {
+	return; //ictf
 	if(W == m_Core.m_ActiveWeapon)
 		return;
 

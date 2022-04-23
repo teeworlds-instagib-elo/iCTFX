@@ -845,6 +845,7 @@ void CGameContext::ConGo(IConsole::IResult *pResult, void *pUserData)
 	pSelf->m_pController->m_FakeWarmup = pSelf->Server()->TickSpeed() * g_Config.m_SvGoTime;
 }
 
+
 void CGameContext::ConXonX(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
@@ -865,4 +866,55 @@ void CGameContext::ConReset(IConsole::IResult *pResult, void *pUserData)
 	CGameContext *pSelf = (CGameContext *)pUserData;
 	g_Config.m_SvSpectatorSlots = 0;
 	pSelf->SendChat(-1, CHAT_ALL, "Reset spectator slots");
+}
+
+void CGameContext::ConSwapTeams(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+
+	pSelf->SwapTeams();
+}
+
+void CGameContext::ConShuffleTeams(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if(!pSelf->m_pController->IsTeamplay())
+		return;
+
+
+	int CounterRed = 0;
+	int CounterBlue = 0;
+	int PlayerTeam = 0;
+	for(int i = 0; i < MAX_CLIENTS; ++i)
+		if(pSelf->m_apPlayers[i] && pSelf->m_apPlayers[i]->GetTeam() != TEAM_SPECTATORS)
+			++PlayerTeam;
+	PlayerTeam = (PlayerTeam+1)/2;
+
+	pSelf->SendChat(-1, CGameContext::CHAT_ALL, "Teams were shuffled");
+
+	for(int i = 0; i < MAX_CLIENTS; ++i)
+	{
+		if(pSelf->m_apPlayers[i] && pSelf->m_apPlayers[i]->GetTeam() != TEAM_SPECTATORS)
+		{
+			if(CounterRed == PlayerTeam)
+				pSelf->m_apPlayers[i]->SetTeam(TEAM_BLUE, false);
+			else if(CounterBlue == PlayerTeam)
+				pSelf->m_apPlayers[i]->SetTeam(TEAM_RED, false);
+			else
+			{
+				if(rand() % 2)
+				{
+					pSelf->m_apPlayers[i]->SetTeam(TEAM_BLUE, false);
+					++CounterBlue;
+				}
+				else
+				{
+					pSelf->m_apPlayers[i]->SetTeam(TEAM_RED, false);
+					++CounterRed;
+				}
+			}
+		}
+	}
+
+	(void)pSelf->m_pController->CheckTeamBalance();
 }

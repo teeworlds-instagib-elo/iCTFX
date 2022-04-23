@@ -526,6 +526,8 @@ int IGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *
 			pKiller->m_Score++; // normal kill
 		}
 	}
+	pVictim->GetPlayer()->m_RespawnTick = Server()->Tick()+Server()->TickSpeed()*0.5f;
+
 	if(Weapon == WEAPON_SELF)
 		pVictim->GetPlayer()->m_RespawnTick = Server()->Tick()+Server()->TickSpeed()*3.0f;
 	return 0;
@@ -595,6 +597,112 @@ void IGameController::Tick()
 		}
 	}
 
+	// game is Paused
+	if(GameServer()->m_World.m_Paused)
+		++m_RoundStartTick;
+
+	// do team-balancing
+	if(IsTeamplay() && m_UnbalancedTick != -1 && Server()->Tick() > m_UnbalancedTick+g_Config.m_SvTeambalanceTime*Server()->TickSpeed()*60)
+	{
+		GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", "Balancing teams");
+
+		int aT[2] = {0,0};
+		float aTScore[2] = {0,0};
+		float aPScore[MAX_CLIENTS] = {0.0f};
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetTeam() != TEAM_SPECTATORS)
+			{
+				aT[GameServer()->m_apPlayers[i]->GetTeam()]++;
+				aPScore[i] = GameServer()->m_apPlayers[i]->m_Score*Server()->TickSpeed()*60.0f;
+				aTScore[GameServer()->m_apPlayers[i]->GetTeam()] += aPScore[i];
+			}
+		}
+
+		// are teams unbalanced?
+		if(absolute(aT[0]-aT[1]) >= 2)
+		{
+			int M = (aT[0] > aT[1]) ? 0 : 1;
+			int NumBalance = absolute(aT[0]-aT[1]) / 2;
+
+			do
+			{
+				CPlayer *pP = 0;
+				float PD = aTScore[M];
+				for(int i = 0; i < MAX_CLIENTS; i++)
+				{
+					if(!GameServer()->m_apPlayers[i] || !CanBeMovedOnBalance(i))
+						continue;
+					// remember the player who would cause lowest score-difference
+					if(GameServer()->m_apPlayers[i]->GetTeam() == M && (!pP || absolute((aTScore[M^1]+aPScore[i]) - (aTScore[M]-aPScore[i])) < PD))
+					{
+						pP = GameServer()->m_apPlayers[i];
+						PD = absolute((aTScore[M^1]+aPScore[i]) - (aTScore[M]-aPScore[i]));
+					}
+				}
+
+				// move the player to the other team
+				int Temp = pP->m_LastActionTick;
+				pP->SetTeam(M^1);
+				pP->m_LastActionTick = Temp;
+
+				pP->Respawn();
+				pP->m_ForceBalanced = true;
+			} while (--NumBalance);
+
+			m_ForceBalanced = true;
+		}
+		m_UnbalancedTick = -1;
+	}
+
+	// check for inactive players
+	if(g_Config.m_SvInactiveKickTime > 0)
+	{
+		for(int i = 0; i < MAX_CLIENTS; ++i)
+		{
+		#ifdef CONF_DEBUG
+			if(g_Config.m_DbgDummies)
+			{
+				if(i >= MAX_CLIENTS-g_Config.m_DbgDummies)
+					break;
+			}
+		#endif
+			if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetTeam() != TEAM_SPECTATORS)
+			{
+				if(Server()->Tick() > GameServer()->m_apPlayers[i]->m_LastActionTick+g_Config.m_SvInactiveKickTime*Server()->TickSpeed()*60)
+				{
+					switch(g_Config.m_SvInactiveKick)
+					{
+					case 0:
+						{
+							// move player to spectator
+							GameServer()->m_apPlayers[i]->SetTeam(TEAM_SPECTATORS);
+						}
+						break;
+					case 1:
+						{
+							// move player to spectator if the reserved slots aren't filled yet, kick him otherwise
+							int Spectators = 0;
+							for(int j = 0; j < MAX_CLIENTS; ++j)
+								if(GameServer()->m_apPlayers[j] && GameServer()->m_apPlayers[j]->GetTeam() == TEAM_SPECTATORS)
+									++Spectators;
+							if(Spectators >= g_Config.m_SvSpectatorSlots)
+								Server()->Kick(i, "Kicked for inactivity");
+							else
+								GameServer()->m_apPlayers[i]->SetTeam(TEAM_SPECTATORS);
+						}
+						break;
+					case 2:
+						{
+							// kick the player
+							Server()->Kick(i, "Kicked for inactivity");
+						}
+					}
+				}
+			}
+		}
+	}
+
 	DoActivityCheck();
 }
 
@@ -646,6 +754,24 @@ void IGameController::Snap(int SnappingClient)
 	if(!pGameInfoEx)
 		return;
 
+	// pGameInfoEx->m_Flags =
+	// 	GAMEINFOFLAG_TIMESCORE |
+	// 	GAMEINFOFLAG_GAMETYPE_RACE |
+	// 	GAMEINFOFLAG_GAMETYPE_DDRACE |
+	// 	GAMEINFOFLAG_GAMETYPE_DDNET |
+	// 	GAMEINFOFLAG_UNLIMITED_AMMO |
+	// 	GAMEINFOFLAG_RACE_RECORD_MESSAGE |
+	// 	GAMEINFOFLAG_ALLOW_EYE_WHEEL |
+	// 	GAMEINFOFLAG_ALLOW_HOOK_COLL |
+	// 	GAMEINFOFLAG_ALLOW_ZOOM |
+	// 	GAMEINFOFLAG_BUG_DDRACE_GHOST |
+	// 	GAMEINFOFLAG_BUG_DDRACE_INPUT |
+	// 	GAMEINFOFLAG_PREDICT_DDRACE |
+	// 	GAMEINFOFLAG_PREDICT_DDRACE_TILES |
+	// 	GAMEINFOFLAG_ENTITIES_DDNET |
+	// 	GAMEINFOFLAG_ENTITIES_DDRACE |
+	// 	GAMEINFOFLAG_ENTITIES_RACE |
+	// 	GAMEINFOFLAG_RACE;
 	pGameInfoEx->m_Flags =
 		GAMEINFOFLAG_TIMESCORE |
 		GAMEINFOFLAG_GAMETYPE_RACE |
@@ -655,7 +781,6 @@ void IGameController::Snap(int SnappingClient)
 		GAMEINFOFLAG_RACE_RECORD_MESSAGE |
 		GAMEINFOFLAG_ALLOW_EYE_WHEEL |
 		GAMEINFOFLAG_ALLOW_HOOK_COLL |
-		GAMEINFOFLAG_ALLOW_ZOOM |
 		GAMEINFOFLAG_BUG_DDRACE_GHOST |
 		GAMEINFOFLAG_BUG_DDRACE_INPUT |
 		GAMEINFOFLAG_PREDICT_DDRACE |
@@ -782,6 +907,37 @@ bool IGameController::CanJoinTeam(int Team, int NotThisID)
 	}
 
 	return (aNumplayers[0] + aNumplayers[1]) < Server()->MaxClients() - g_Config.m_SvSpectatorSlots;
+}
+
+bool IGameController::CheckTeamBalance()
+{
+	if(!IsTeamplay() || !g_Config.m_SvTeambalanceTime)
+		return true;
+
+	int aT[2] = {0, 0};
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		CPlayer *pP = GameServer()->m_apPlayers[i];
+		if(pP && pP->GetTeam() != TEAM_SPECTATORS)
+			aT[pP->GetTeam()]++;
+	}
+
+	char aBuf[256];
+	if(absolute(aT[0]-aT[1]) >= 2)
+	{
+		str_format(aBuf, sizeof(aBuf), "Teams are NOT balanced (red=%d blue=%d)", aT[0], aT[1]);
+		GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
+		if(GameServer()->m_pController->m_UnbalancedTick == -1)
+			GameServer()->m_pController->m_UnbalancedTick = Server()->Tick();
+		return false;
+	}
+	else
+	{
+		str_format(aBuf, sizeof(aBuf), "Teams are balanced (red=%d blue=%d)", aT[0], aT[1]);
+		GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
+		GameServer()->m_pController->m_UnbalancedTick = -1;
+		return true;
+	}
 }
 
 int IGameController::ClampTeam(int Team)

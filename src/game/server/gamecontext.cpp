@@ -796,6 +796,22 @@ void CGameContext::OnPreTickTeehistorian()
 	}
 }
 
+void CGameContext::SwapTeams()
+{
+	if(!m_pController->IsTeamplay())
+		return;
+
+	SendChat(-1, CGameContext::CHAT_ALL, "Teams were swapped");
+
+	for(int i = 0; i < MAX_CLIENTS; ++i)
+	{
+		if(m_apPlayers[i] && m_apPlayers[i]->GetTeam() != TEAM_SPECTATORS)
+			m_apPlayers[i]->SetTeam(m_apPlayers[i]->GetTeam()^1, false);
+	}
+
+	(void)m_pController->CheckTeamBalance();
+}
+
 void CGameContext::OnTick()
 {
 	// check tuning
@@ -1825,7 +1841,11 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						str_format(aBuf, sizeof(aBuf), "Restart round as %don%d", Mode, Mode);
 						char bBuf[32];
 						str_format(bBuf, sizeof(aBuf), "xonx %d", Mode);
-						StartVote(aBuf, bBuf, "", "");
+						m_pController->DoWarmup(g_Config.m_SvWarTime);
+						g_Config.m_SvSpectatorSlots = Config()->m_SvMaxClients - 2*Mode;
+
+					// 	StartVote(aBuf, bBuf, "", "");
+					// }
 					}
 				}
 				else
@@ -2721,7 +2741,7 @@ void CGameContext::ConRestart(IConsole::IResult *pResult, void *pUserData)
 	if(pResult->NumArguments())
 		pSelf->m_pController->DoWarmup(pResult->GetInteger(0));
 	else
-		pSelf->m_pController->StartRound();
+		pSelf->m_pController->DoWarmup(5);
 }
 
 void CGameContext::ConBroadcast(IConsole::IResult *pResult, void *pUserData)

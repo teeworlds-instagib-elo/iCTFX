@@ -122,6 +122,7 @@ public:
 
 	bool IsForceBalanced();
 	bool IsTeamplay() const;
+	bool CheckTeamBalance();
 
 	/*
 
