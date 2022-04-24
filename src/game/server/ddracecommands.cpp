@@ -837,12 +837,14 @@ void CGameContext::ConStop(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
 	pSelf->m_World.m_Paused = true;
+		pSelf->SendChat(-1, CHAT_ALL, "Server paused");
 }
 
 void CGameContext::ConGo(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
 	pSelf->m_pController->m_FakeWarmup = pSelf->Server()->TickSpeed() * g_Config.m_SvGoTime;
+	pSelf->SendChat(-1, CHAT_ALL, "Server continuing");
 }
 
 

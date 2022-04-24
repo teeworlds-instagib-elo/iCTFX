@@ -438,7 +438,7 @@ void CGameControllerDDRace::Tick()
 
 void CGameControllerDDRace::DoTeamChange(class CPlayer *pPlayer, int Team, bool DoChatMsg)
 {
-	Team = ClampTeam(Team);
+	// Team = ClampTeam(Team);
 	if(Team == pPlayer->GetTeam())
 		return;
 

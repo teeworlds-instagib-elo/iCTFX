@@ -1837,12 +1837,14 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						int Mode = (int)pMsg->m_pMessage[1] - (int)'0';
 						if(Mode < 0 || Mode > 6)
 							return;
-						char aBuf[32];
-						str_format(aBuf, sizeof(aBuf), "Restart round as %don%d", Mode, Mode);
-						char bBuf[32];
-						str_format(bBuf, sizeof(aBuf), "xonx %d", Mode);
 						m_pController->DoWarmup(g_Config.m_SvWarTime);
 						g_Config.m_SvSpectatorSlots = Config()->m_SvMaxClients - 2*Mode;
+						char aBuf[128];
+						str_format(aBuf, sizeof(aBuf), "Upcoming %don%d! Please stay on spectator", Mode, Mode);
+						SendBroadcast(aBuf, -1);
+
+						str_format(aBuf, sizeof(aBuf), "The %don%d will start in %d seconds!", Mode, Mode, g_Config.m_SvWarTime);
+						SendChat(-1, CHAT_ALL, aBuf);
 
 					// 	StartVote(aBuf, bBuf, "", "");
 					// }

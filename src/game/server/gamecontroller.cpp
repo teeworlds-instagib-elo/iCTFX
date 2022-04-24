@@ -992,11 +992,37 @@ int64_t IGameController::GetMaskForPlayerWorldEvent(int Asker, int ExceptID)
 	return CmaskAllExceptOne(ExceptID);
 }
 
+
+
 void IGameController::DoTeamChange(CPlayer *pPlayer, int Team, bool DoChatMsg)
 {
 	// if(Team == 0) Team = !pPlayer->GetTeam();
 	if(Team == pPlayer->GetTeam())
 		return;
+	
+	int aT[2] = {0, 0};
+	if(Team != TEAM_SPECTATORS)
+	{
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			CPlayer *pP = GameServer()->m_apPlayers[i];
+			if(pP && pP->GetTeam() != TEAM_SPECTATORS)
+				aT[pP->GetTeam()]++;
+		}
+
+		// simulate what would happen if changed team
+		aT[Team]++;
+		if (pPlayer->GetTeam() != TEAM_SPECTATORS)
+			aT[Team^1]--;
+
+		// there is a player-difference of at least 2
+		if(absolute(aT[0]-aT[1]) >= 2)
+		{
+			// player wants to join team with less players
+			if (!((aT[0] < aT[1] && Team == TEAM_RED) || (aT[0] > aT[1] && Team == TEAM_BLUE)))
+				return;
+		}
+	}
 	pPlayer->SetTeam(Team);
 	int ClientID = pPlayer->GetCID();
 
