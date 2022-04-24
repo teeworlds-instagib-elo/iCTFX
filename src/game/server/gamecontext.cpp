@@ -385,7 +385,9 @@ void CGameContext::SendChatTarget(int To, const char *pText, int Flags)
 void CGameContext::SendChatTeam(int Team, const char *pText)
 {
 	for(int i = 0; i < MAX_CLIENTS; i++)
-		if(((CGameControllerDDRace *)m_pController)->m_Teams.m_Core.Team(i) == Team)
+	//todo probably should fix this
+		// if(((CGameControllerDDRace *)m_pController)->m_Teams.m_Core.Team(i) == Team)
+		if(m_apPlayers[i]->GetTeam() == Team)
 			SendChatTarget(i, pText);
 }
 
@@ -1806,11 +1808,19 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 			if(str_startswith(pMsg->m_pMessage + 1, "go "))
 			{
+				if(pPlayer->GetTeam() == TEAM_SPECTATORS)
+				{
+					return;
+				}
 				ConGo(0, this);
 			}
 
 			if(str_startswith(pMsg->m_pMessage + 1, "stop "))
 			{
+				if(pPlayer->GetTeam() == TEAM_SPECTATORS)
+				{
+					return;
+				}
 				ConStop(0, this);
 			}
 			
@@ -1866,7 +1876,14 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						return;
 					
 					if(str_startswith(pMsg->m_pMessage + 1, "reset") || str_startswith(pMsg->m_pMessage + 1, "restart") || str_startswith(pMsg->m_pMessage + 1, "spec") || str_startswith(pMsg->m_pMessage + 1, "stop") || str_startswith(pMsg->m_pMessage + 1, "go"))
+					{
 						SendChat(ClientID, Team, pMsg->m_pMessage, ClientID);
+						if(pPlayer->GetTeam() == TEAM_SPECTATORS)
+						{
+							return;
+						}
+					}
+
 
 					int64_t Now = Server()->Tick();
 					pPlayer->m_LastCommands[pPlayer->m_LastCommandPos] = Now;
