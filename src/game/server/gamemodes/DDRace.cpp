@@ -260,6 +260,10 @@ void CGameControllerDDRace::Tick()
 		m_pInitResult = nullptr;
 	}
 
+	// if(Server()->IsSixup(0))
+	// 	GameServer()->SendGameMsg(protocol7::GAMEMSG_CTF_GRAB, 0, -1);
+
+
 	for(int fi = 0; fi < 2; fi++)
 	{
 		CFlag *F = m_apFlags[fi];
@@ -320,7 +324,7 @@ void CGameControllerDDRace::Tick()
 					{
 						if(Server()->IsSixup(i))
 						{
-							GameServer()->SendGameMsg(protocol7::GAMEMSG_CTF_GRAB, fi, -1);
+							GameServer()->SendGameMsg(protocol7::GAMEMSG_CTF_CAPTURE, fi, -1);
 						}
 
 					}
@@ -353,6 +357,14 @@ void CGameControllerDDRace::Tick()
 
 						GameServer()->CreateSoundGlobal(SOUND_CTF_RETURN);
 						F->Reset();
+						for(int i = 0; i < MAX_CLIENTS; i++)
+						{
+							if(Server()->IsSixup(i))
+							{
+								GameServer()->SendGameMsg(protocol7::GAMEMSG_CTF_RETURN, fi, -1);
+							}
+
+						}
 					}
 				}
 				else
@@ -362,6 +374,14 @@ void CGameControllerDDRace::Tick()
 					{
 						m_aTeamscore[fi^1]++;
 						F->m_GrabTick = Server()->Tick();
+						for(int i = 0; i < MAX_CLIENTS; i++)
+						{
+							if(Server()->IsSixup(i))
+							{
+								GameServer()->SendGameMsg(protocol7::GAMEMSG_CTF_GRAB, fi, -1);
+							}
+
+						}
 					}
 
 					F->m_AtStand = 0;
@@ -400,6 +420,14 @@ void CGameControllerDDRace::Tick()
 				{
 					GameServer()->CreateSoundGlobal(SOUND_CTF_RETURN);
 					F->Reset();
+					for(int i = 0; i < MAX_CLIENTS; i++)
+					{
+						if(Server()->IsSixup(i))
+						{
+							GameServer()->SendGameMsg(protocol7::GAMEMSG_CTF_DROP, fi, -1);
+						}
+
+					}
 				}
 				else
 				{

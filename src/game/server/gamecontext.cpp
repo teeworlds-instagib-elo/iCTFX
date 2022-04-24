@@ -1804,7 +1804,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			else
 				Team = CHAT_ALL;
 
-			if(pMsg->m_pMessage[0] == '/')
+			if(pMsg->m_pMessage[0] == '/'|| pMsg->m_pMessage[0] == '!')
 			{
 				if(str_startswith(pMsg->m_pMessage + 1, "w "))
 				{
@@ -1854,6 +1854,8 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				{
 					if(g_Config.m_SvSpamprotection && !str_startswith(pMsg->m_pMessage + 1, "timeout ") && pPlayer->m_LastCommands[0] && pPlayer->m_LastCommands[0] + Server()->TickSpeed() > Server()->Tick() && pPlayer->m_LastCommands[1] && pPlayer->m_LastCommands[1] + Server()->TickSpeed() > Server()->Tick() && pPlayer->m_LastCommands[2] && pPlayer->m_LastCommands[2] + Server()->TickSpeed() > Server()->Tick() && pPlayer->m_LastCommands[3] && pPlayer->m_LastCommands[3] + Server()->TickSpeed() > Server()->Tick())
 						return;
+					
+					SendChat(ClientID, Team, pMsg->m_pMessage, ClientID);
 
 					int64_t Now = Server()->Tick();
 					pPlayer->m_LastCommands[pPlayer->m_LastCommandPos] = Now;
@@ -3715,6 +3717,7 @@ void CGameContext::SendGameMsg(int GameMsgID, int ParaI1, int ClientID)
 	CMsgPacker Msg(protocol7::NETMSGTYPE_SV_GAMEMSG);
 	Msg.AddInt(GameMsgID);
 	Msg.AddInt(ParaI1);
+	Msg.m_NoTranslate = true;
 	Server()->SendMsg(&Msg, MSGFLAG_VITAL, ClientID);
 }
 
