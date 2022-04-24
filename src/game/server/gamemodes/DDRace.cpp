@@ -11,6 +11,7 @@
 #include <game/version.h>
 #include <game/server/entities/flag.h>
 
+
 #define GAME_TYPE_NAME "iCTF++"
 #define TEST_TYPE_NAME "TestiCTF++"
 
@@ -118,6 +119,7 @@ void CGameControllerDDRace::HandleCharacterTiles(CCharacter *pChr, int MapIndex)
 		pChr->SetSolo(false);
 	}
 }
+
 bool teamP;
 void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 {
@@ -126,7 +128,7 @@ void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 
 	// init the player
 	Score()->PlayerData(ClientID)->Reset();
-	pPlayer->m_Score = 0;
+	pPlayer->m_Score = Score()->PlayerData(ClientID)->m_BestTime ? Score()->PlayerData(ClientID)->m_BestTime : -9999;
 
 	// Can't set score here as LoadScore() is threaded, run it in
 	// LoadScoreThreaded() instead
@@ -138,10 +140,12 @@ void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 		str_format(aBuf, sizeof(aBuf), "'%s' entered and joined the %s", Server()->ClientName(ClientID), GetTeamName(pPlayer->GetTeam()));
 		GameServer()->SendChat(-1, CGameContext::CHAT_ALL, aBuf, -1, CGameContext::CHAT_SIX);
 
-		// GameServer()->SendChatTarget(ClientID, "DDraceNetwork Mod. Version: " GAME_VERSION);
-		GameServer()->SendChatTarget(ClientID, "welcome to iCTF++!");
+		GameServer()->SendChatTarget(ClientID, "DDraceNetwork Mod. Version: " GAME_VERSION);
+		GameServer()->SendChatTarget(ClientID, "please visit DDNet.tw or say /info and make sure to read our /rules");
 	}
-
+	pPlayer->m_Score = 0;
+	pPlayer->SetTeam(teamP, true);
+	teamP = !teamP;
 	if(m_apFlags[0] == 0)
 	{
 		CFlag *F = new CFlag(&GameServer()->m_World, 0);
@@ -156,9 +160,6 @@ void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 		m_apFlags[1] = F;
 		GameServer()->m_World.InsertEntity(F);
 	}
-	pPlayer->m_Score = 0;
-	pPlayer->SetTeam(teamP, true);
-	teamP = !teamP;
 }
 
 void CGameControllerDDRace::OnPlayerDisconnect(CPlayer *pPlayer, const char *pReason)
@@ -175,43 +176,12 @@ void CGameControllerDDRace::OnPlayerDisconnect(CPlayer *pPlayer, const char *pRe
 		m_Teams.SetForceCharacterTeam(ClientID, TEAM_FLOCK);
 }
 
-int CGameControllerDDRace::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int WeaponID)
-{
-	IGameController::OnCharacterDeath(pVictim, pKiller, WeaponID);
-	int HadFlag = 0;
-
-	// drop flags
-	for(int i = 0; i < 2; i++)
-	{
-		CFlag *F = m_apFlags[i];
-		if(F && pKiller && pKiller->GetCharacter() && F->m_pCarryingCharacter == pKiller->GetCharacter())
-			HadFlag |= 2;
-		if(F && F->m_pCarryingCharacter == pVictim)
-		{
-			GameServer()->CreateSoundGlobal(SOUND_CTF_DROP);
-			F->m_DropTick = Server()->Tick();
-			F->m_pCarryingCharacter = 0;
-			F->m_Vel = vec2(0,0);
-			// pVictim->GetPlayer()->m_Stats.m_LostFlags++;
-
-			if(pKiller && pKiller->GetTeam() != pVictim->GetPlayer()->GetTeam())
-			{
-				// if(g_Config.m_SvLoltextShow)
-				// 	GameServer()->CreateLolText(pKiller->GetCharacter(), "+1");
-				pKiller->m_Score++;
-			}
-
-			HadFlag |= 1;
-		}
-	}
-
-	return HadFlag;
-}
-
 void CGameControllerDDRace::Snap(int SnappingClient)
 {
 	IGameController::Snap(SnappingClient);
 
+	if(Server()->IsSixup(SnappingClient))
+		return;
 	CNetObj_GameData *pGameDataObj = (CNetObj_GameData *)Server()->SnapNewItem(NETOBJTYPE_GAMEDATA, 0, sizeof(CNetObj_GameData));
 	if(!pGameDataObj)
 		return;
@@ -248,7 +218,6 @@ void CGameControllerDDRace::Tick()
 	IGameController::Tick();
 	m_Teams.ProcessSaveTeam();
 	m_Teams.Tick();
-	
 
 	if(m_pInitResult != nullptr && m_pInitResult->m_Completed)
 	{
@@ -315,6 +284,13 @@ void CGameControllerDDRace::Tick()
 						m_apFlags[i]->Reset();
 
 					GameServer()->CreateSoundGlobal(SOUND_CTF_CAPTURE);
+					// for(int i = 0; i < MAX_CLIENTS; i++)
+					// {
+					// 	if(Server()->m_aClients[i].m_State == CServer::CClient::STATE_EMPTY)
+					// 		continue;
+
+					// 	Server()->IsSixup()
+					// }
 				}
 			}
 		}
@@ -427,6 +403,28 @@ void CGameControllerDDRace::Tick()
 	}
 }
 
+void CGameControllerDDRace::DoTeamChange(class CPlayer *pPlayer, int Team, bool DoChatMsg)
+{
+	Team = ClampTeam(Team);
+	if(Team == pPlayer->GetTeam())
+		return;
+
+	CCharacter *pCharacter = pPlayer->GetCharacter();
+
+	if(Team == TEAM_SPECTATORS)
+	{
+		if(g_Config.m_SvTeam != SV_TEAM_FORCED_SOLO && pCharacter)
+		{
+			// Joining spectators should not kill a locked team, but should still
+			// check if the team finished by you leaving it.
+			int DDRTeam = pCharacter->Team();
+			m_Teams.SetForceCharacterTeam(pPlayer->GetCID(), TEAM_FLOCK);
+			m_Teams.CheckTeamFinished(DDRTeam);
+		}
+	}
+
+	IGameController::DoTeamChange(pPlayer, Team, DoChatMsg);
+}
 
 int64_t CGameControllerDDRace::GetMaskForPlayerWorldEvent(int Asker, int ExceptID)
 {

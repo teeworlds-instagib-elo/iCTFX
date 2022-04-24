@@ -754,6 +754,24 @@ void IGameController::Snap(int SnappingClient)
 	if(!pGameInfoEx)
 		return;
 
+	pGameInfoEx->m_Flags =
+		!GAMEINFOFLAG_TIMESCORE |
+		!GAMEINFOFLAG_GAMETYPE_RACE |
+		!GAMEINFOFLAG_GAMETYPE_DDRACE |
+		GAMEINFOFLAG_GAMETYPE_DDNET |
+		GAMEINFOFLAG_UNLIMITED_AMMO |
+		!GAMEINFOFLAG_RACE_RECORD_MESSAGE |
+		GAMEINFOFLAG_ALLOW_EYE_WHEEL |
+		GAMEINFOFLAG_ALLOW_HOOK_COLL |
+		!GAMEINFOFLAG_ALLOW_ZOOM |
+		!GAMEINFOFLAG_BUG_DDRACE_GHOST |
+		GAMEINFOFLAG_BUG_DDRACE_INPUT |
+		GAMEINFOFLAG_PREDICT_DDRACE |
+		!GAMEINFOFLAG_PREDICT_DDRACE_TILES |
+		!GAMEINFOFLAG_ENTITIES_DDNET |
+		!GAMEINFOFLAG_ENTITIES_DDRACE |
+		!GAMEINFOFLAG_ENTITIES_RACE |
+		!GAMEINFOFLAG_RACE;
 	// pGameInfoEx->m_Flags =
 	// 	GAMEINFOFLAG_TIMESCORE |
 	// 	GAMEINFOFLAG_GAMETYPE_RACE |
@@ -772,23 +790,6 @@ void IGameController::Snap(int SnappingClient)
 	// 	GAMEINFOFLAG_ENTITIES_DDRACE |
 	// 	GAMEINFOFLAG_ENTITIES_RACE |
 	// 	GAMEINFOFLAG_RACE;
-	pGameInfoEx->m_Flags =
-		GAMEINFOFLAG_TIMESCORE |
-		GAMEINFOFLAG_GAMETYPE_RACE |
-		GAMEINFOFLAG_GAMETYPE_DDRACE |
-		GAMEINFOFLAG_GAMETYPE_DDNET |
-		GAMEINFOFLAG_UNLIMITED_AMMO |
-		GAMEINFOFLAG_RACE_RECORD_MESSAGE |
-		GAMEINFOFLAG_ALLOW_EYE_WHEEL |
-		GAMEINFOFLAG_ALLOW_HOOK_COLL |
-		GAMEINFOFLAG_BUG_DDRACE_GHOST |
-		GAMEINFOFLAG_BUG_DDRACE_INPUT |
-		GAMEINFOFLAG_PREDICT_DDRACE |
-		GAMEINFOFLAG_PREDICT_DDRACE_TILES |
-		GAMEINFOFLAG_ENTITIES_DDNET |
-		GAMEINFOFLAG_ENTITIES_DDRACE |
-		GAMEINFOFLAG_ENTITIES_RACE |
-		GAMEINFOFLAG_RACE;
 	pGameInfoEx->m_Flags2 = 0;
 	pGameInfoEx->m_Version = GAMEINFO_CURVERSION;
 
@@ -807,15 +808,49 @@ void IGameController::Snap(int SnappingClient)
 		if(GameServer()->m_World.m_Paused)
 			pGameData->m_GameStateFlags |= protocol7::GAMESTATEFLAG_PAUSED;
 
+		
+
 		pGameData->m_GameStateEndTick = 0;
 
-		protocol7::CNetObj_GameDataRace *pRaceData = static_cast<protocol7::CNetObj_GameDataRace *>(Server()->SnapNewItem(-protocol7::NETOBJTYPE_GAMEDATARACE, 0, sizeof(protocol7::CNetObj_GameDataRace)));
-		if(!pRaceData)
+		protocol7::CNetObj_GameDataTeam *pTeamData = static_cast<protocol7::CNetObj_GameDataTeam *>(Server()->SnapNewItem(-protocol7::NETOBJTYPE_GAMEDATATEAM, 0, sizeof(protocol7::CNetObj_GameDataTeam)));
+		if(!pTeamData)
 			return;
+		pTeamData->m_TeamscoreBlue = m_aTeamscore[TEAM_BLUE];
+		pTeamData->m_TeamscoreRed = m_aTeamscore[TEAM_RED];
 
-		pRaceData->m_BestTime = round_to_int(m_CurrentRecord * 1000);
-		pRaceData->m_Precision = 0;
-		pRaceData->m_RaceFlags = protocol7::RACEFLAG_HIDE_KILLMSG | protocol7::RACEFLAG_KEEP_WANTED_WEAPON;
+
+		protocol7::CNetObj_GameDataFlag *pFlagData = static_cast<protocol7::CNetObj_GameDataFlag *>(Server()->SnapNewItem(-protocol7::NETOBJTYPE_GAMEDATAFLAG, 0, sizeof(protocol7::CNetObj_GameDataFlag)));
+		if(!pFlagData)
+			return;
+			if(m_apFlags[TEAM_RED])
+		{
+			if(m_apFlags[TEAM_RED]->m_AtStand)
+				pFlagData->m_FlagCarrierRed = FLAG_ATSTAND;
+			else if(m_apFlags[TEAM_RED]->m_pCarryingCharacter && m_apFlags[TEAM_RED]->m_pCarryingCharacter->GetPlayer())
+				pFlagData->m_FlagCarrierRed = m_apFlags[TEAM_RED]->m_pCarryingCharacter->GetPlayer()->GetCID();
+			else
+				pFlagData->m_FlagCarrierRed = FLAG_TAKEN;
+		}
+		else
+			pFlagData->m_FlagCarrierRed = FLAG_MISSING;
+		if(m_apFlags[TEAM_BLUE])
+		{
+			if(m_apFlags[TEAM_BLUE]->m_AtStand)
+				pFlagData->m_FlagCarrierBlue = FLAG_ATSTAND;
+			else if(m_apFlags[TEAM_BLUE]->m_pCarryingCharacter && m_apFlags[TEAM_BLUE]->m_pCarryingCharacter->GetPlayer())
+				pFlagData->m_FlagCarrierBlue = m_apFlags[TEAM_BLUE]->m_pCarryingCharacter->GetPlayer()->GetCID();
+			else
+				pFlagData->m_FlagCarrierBlue = FLAG_TAKEN;
+		}
+		else
+			pFlagData->m_FlagCarrierBlue = FLAG_MISSING;
+		// protocol7::CNetObj_GameDataRace *pRaceData = static_cast<protocol7::CNetObj_GameDataRace *>(Server()->SnapNewItem(-protocol7::NETOBJTYPE_GAMEDATARACE, 0, sizeof(protocol7::CNetObj_GameDataRace)));
+		// if(!pRaceData)
+		// 	return;
+
+		// pRaceData->m_BestTime = round_to_int(m_CurrentRecord * 1000);
+		// pRaceData->m_Precision = 0;
+		// pRaceData->m_RaceFlags = protocol7::RACEFLAG_HIDE_KILLMSG | protocol7::RACEFLAG_KEEP_WANTED_WEAPON;
 	}
 
 	if(GameServer()->Collision()->m_pSwitchers)

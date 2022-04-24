@@ -16,11 +16,10 @@ public:
 	~CGameControllerDDRace();
 
 	CScore *Score();
-	class CFlag *m_apFlags[2];
 	
 
 	void OnCharacterSpawn(class CCharacter *pChr) override;
-	int OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int WeaponID) override;
+	// int OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int WeaponID) override;
 	void Snap(int SnappingClient);
 	
 	void HandleCharacterTiles(class CCharacter *pChr, int MapIndex) override;
@@ -29,6 +28,8 @@ public:
 	void OnPlayerDisconnect(class CPlayer *pPlayer, const char *pReason) override;
 
 	void Tick() override;
+
+	void DoTeamChange(class CPlayer *pPlayer, int Team, bool DoChatMsg) override;
 
 	int64_t GetMaskForPlayerWorldEvent(int Asker, int ExceptID = -1) override;
 
