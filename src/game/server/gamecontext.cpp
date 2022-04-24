@@ -1808,20 +1808,18 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 			if(str_startswith(pMsg->m_pMessage + 1, "go "))
 			{
-				if(pPlayer->GetTeam() == TEAM_SPECTATORS)
+				if(pPlayer->GetTeam() != TEAM_SPECTATORS)
 				{
-					return;
+					ConGo(0, this);
 				}
-				ConGo(0, this);
 			}
 
 			if(str_startswith(pMsg->m_pMessage + 1, "stop "))
 			{
-				if(pPlayer->GetTeam() == TEAM_SPECTATORS)
+				if(pPlayer->GetTeam() != TEAM_SPECTATORS)
 				{
-					return;
+					ConStop(0, this);
 				}
-				ConStop(0, this);
 			}
 			
 			if(pMsg->m_pMessage[0] == '/'|| pMsg->m_pMessage[0] == '!')
