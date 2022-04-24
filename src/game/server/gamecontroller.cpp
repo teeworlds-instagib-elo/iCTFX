@@ -482,6 +482,7 @@ void IGameController::StartRound()
 		if(pPlayer)
 		{
 			const int team = pPlayer->GetTeam();
+			pPlayer->m_Score = 0;
 		}
 	}
 
@@ -920,6 +921,9 @@ int IGameController::GetAutoTeam(int NotThisID)
 	}
 
 	int Team = 0;
+	if(IsTeamplay())
+		Team = aNumplayers[TEAM_RED] > aNumplayers[TEAM_BLUE] ? TEAM_BLUE : TEAM_RED;
+
 
 	if(CanJoinTeam(Team, NotThisID))
 		return Team;

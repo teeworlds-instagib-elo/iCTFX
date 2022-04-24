@@ -19,7 +19,7 @@ public:
 	
 
 	void OnCharacterSpawn(class CCharacter *pChr) override;
-	// int OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int WeaponID) override;
+	int OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int WeaponID) override;
 	void Snap(int SnappingClient);
 	
 	void HandleCharacterTiles(class CCharacter *pChr, int MapIndex) override;

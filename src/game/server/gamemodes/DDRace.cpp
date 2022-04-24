@@ -12,8 +12,8 @@
 #include <game/server/entities/flag.h>
 
 
-#define GAME_TYPE_NAME "iCTF++"
-#define TEST_TYPE_NAME "TestiCTF++"
+#define GAME_TYPE_NAME "iCTFX"
+#define TEST_TYPE_NAME "TestiCTFX"
 
 CGameControllerDDRace::CGameControllerDDRace(class CGameContext *pGameServer) :
 	IGameController(pGameServer), m_Teams(pGameServer), m_pInitResult(nullptr)
@@ -120,6 +120,40 @@ void CGameControllerDDRace::HandleCharacterTiles(CCharacter *pChr, int MapIndex)
 	}
 }
 
+int CGameControllerDDRace::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int WeaponID)
+{
+	IGameController::OnCharacterDeath(pVictim, pKiller, WeaponID);
+	int HadFlag = 0;
+
+	// drop flags
+	for(int i = 0; i < 2; i++)
+	{
+		CFlag *F = m_apFlags[i];
+		if(F && pKiller && pKiller->GetCharacter() && F->m_pCarryingCharacter == pKiller->GetCharacter())
+			HadFlag |= 2;
+		if(F && F->m_pCarryingCharacter == pVictim)
+		{
+			GameServer()->CreateSoundGlobal(SOUND_CTF_DROP);
+			F->m_DropTick = Server()->Tick();
+			F->m_pCarryingCharacter = 0;
+			F->m_Vel = vec2(0,0);
+			// pVictim->GetPlayer()->m_Stats.m_LostFlags++;
+
+			if(pKiller && pKiller->GetTeam() != pVictim->GetPlayer()->GetTeam())
+			{
+				// if(g_Config.m_SvLoltextShow)
+				// 	GameServer()->CreateLolText(pKiller->GetCharacter(), "+1");
+				pKiller->m_Score++;
+			}
+
+			HadFlag |= 1;
+		}
+	}
+
+	return HadFlag;
+}
+
+
 bool teamP;
 void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 {
@@ -128,7 +162,6 @@ void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 
 	// init the player
 	Score()->PlayerData(ClientID)->Reset();
-	pPlayer->m_Score = Score()->PlayerData(ClientID)->m_BestTime ? Score()->PlayerData(ClientID)->m_BestTime : -9999;
 
 	// Can't set score here as LoadScore() is threaded, run it in
 	// LoadScoreThreaded() instead
@@ -140,12 +173,9 @@ void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 		str_format(aBuf, sizeof(aBuf), "'%s' entered and joined the %s", Server()->ClientName(ClientID), GetTeamName(pPlayer->GetTeam()));
 		GameServer()->SendChat(-1, CGameContext::CHAT_ALL, aBuf, -1, CGameContext::CHAT_SIX);
 
-		GameServer()->SendChatTarget(ClientID, "DDraceNetwork Mod. Version: " GAME_VERSION);
-		GameServer()->SendChatTarget(ClientID, "please visit DDNet.tw or say /info and make sure to read our /rules");
+		GameServer()->SendChatTarget(ClientID, "welcome to iCTFX!");
 	}
 	pPlayer->m_Score = 0;
-	pPlayer->SetTeam(teamP, true);
-	teamP = !teamP;
 	if(m_apFlags[0] == 0)
 	{
 		CFlag *F = new CFlag(&GameServer()->m_World, 0);
@@ -160,6 +190,8 @@ void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 		m_apFlags[1] = F;
 		GameServer()->m_World.InsertEntity(F);
 	}
+
+	
 }
 
 void CGameControllerDDRace::OnPlayerDisconnect(CPlayer *pPlayer, const char *pReason)
@@ -286,10 +318,11 @@ void CGameControllerDDRace::Tick()
 					GameServer()->CreateSoundGlobal(SOUND_CTF_CAPTURE);
 					// for(int i = 0; i < MAX_CLIENTS; i++)
 					// {
-					// 	if(Server()->m_aClients[i].m_State == CServer::CClient::STATE_EMPTY)
-					// 		continue;
+					// 	// if(Server()->IsSixup(i))
+					// 	// {
+					// 	// 	GameServer()->Send
+					// 	// }
 
-					// 	Server()->IsSixup()
 					// }
 				}
 			}
