@@ -441,7 +441,7 @@ void CGameContext::SendChat(int ChatterClientID, int Team, const char *pText, in
 		Msg.m_Team = 1;
 		Msg.m_ClientID = ChatterClientID;
 		Msg.m_pMessage = aText;
-
+		printf("cringe\n");
 		// pack one for the recording only
 		if(g_Config.m_SvDemoChat)
 			Server()->SendPackMsg(&Msg, MSGFLAG_VITAL | MSGFLAG_NOSEND, -1);
@@ -460,8 +460,10 @@ void CGameContext::SendChat(int ChatterClientID, int Team, const char *pText, in
 				}
 				else
 				{
-					if(Teams->Team(i) == Team && m_apPlayers[i]->GetTeam() != CHAT_SPEC)
+					printf("Double Cringe ");
+					if(m_apPlayers[i]->GetTeam() == Team)
 					{
+						printf("Triple Cringe %i, %i\n", Team, m_apPlayers[i]->GetTeam());
 						Server()->SendPackMsg(&Msg, MSGFLAG_VITAL | MSGFLAG_NORECORD, i);
 					}
 				}
@@ -1806,6 +1808,8 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			else
 				Team = CHAT_ALL;
 
+			Team = pPlayer->GetTeam();
+
 			if(str_startswith(pMsg->m_pMessage + 1, "go "))
 			{
 				if(pPlayer->GetTeam() != TEAM_SPECTATORS)
@@ -2328,9 +2332,9 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				SendChat(-1, CGameContext::CHAT_ALL, aChatText);
 
 				// reload scores
-				Score()->PlayerData(ClientID)->Reset();
-				m_apPlayers[ClientID]->m_Score = 0;
-				Score()->LoadPlayerData(ClientID);
+				// Score()->PlayerData(ClientID)->Reset();
+				// m_apPlayers[ClientID]->m_Score = 0;
+				// Score()->LoadPlayerData(ClientID);
 
 				SixupNeedsUpdate = true;
 			}
