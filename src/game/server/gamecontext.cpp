@@ -1804,6 +1804,16 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			else
 				Team = CHAT_ALL;
 
+			if(str_startswith(pMsg->m_pMessage + 1, "go "))
+			{
+				ConGo(0, this);
+			}
+
+			if(str_startswith(pMsg->m_pMessage + 1, "stop "))
+			{
+				ConStop(0, this);
+			}
+			
 			if(pMsg->m_pMessage[0] == '/'|| pMsg->m_pMessage[0] == '!')
 			{
 				if(str_startswith(pMsg->m_pMessage + 1, "w "))
@@ -1855,7 +1865,8 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					if(g_Config.m_SvSpamprotection && !str_startswith(pMsg->m_pMessage + 1, "timeout ") && pPlayer->m_LastCommands[0] && pPlayer->m_LastCommands[0] + Server()->TickSpeed() > Server()->Tick() && pPlayer->m_LastCommands[1] && pPlayer->m_LastCommands[1] + Server()->TickSpeed() > Server()->Tick() && pPlayer->m_LastCommands[2] && pPlayer->m_LastCommands[2] + Server()->TickSpeed() > Server()->Tick() && pPlayer->m_LastCommands[3] && pPlayer->m_LastCommands[3] + Server()->TickSpeed() > Server()->Tick())
 						return;
 					
-					SendChat(ClientID, Team, pMsg->m_pMessage, ClientID);
+					if(str_startswith(pMsg->m_pMessage + 1, "reset") || str_startswith(pMsg->m_pMessage + 1, "restart") || str_startswith(pMsg->m_pMessage + 1, "spec") || str_startswith(pMsg->m_pMessage + 1, "stop") || str_startswith(pMsg->m_pMessage + 1, "go"))
+						SendChat(ClientID, Team, pMsg->m_pMessage, ClientID);
 
 					int64_t Now = Server()->Tick();
 					pPlayer->m_LastCommands[pPlayer->m_LastCommandPos] = Now;
