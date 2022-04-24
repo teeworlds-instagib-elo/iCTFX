@@ -754,7 +754,7 @@ void IGameController::Snap(int SnappingClient)
 	CNetObj_GameInfoEx *pGameInfoEx = (CNetObj_GameInfoEx *)Server()->SnapNewItem(NETOBJTYPE_GAMEINFOEX, 0, sizeof(CNetObj_GameInfoEx));
 	if(!pGameInfoEx)
 		return;
-
+	
 	pGameInfoEx->m_Flags =
 		!GAMEINFOFLAG_TIMESCORE |
 		!GAMEINFOFLAG_GAMETYPE_RACE |
@@ -767,12 +767,14 @@ void IGameController::Snap(int SnappingClient)
 		!GAMEINFOFLAG_ALLOW_ZOOM |
 		!GAMEINFOFLAG_BUG_DDRACE_GHOST |
 		GAMEINFOFLAG_BUG_DDRACE_INPUT |
-		GAMEINFOFLAG_PREDICT_DDRACE |
+		!GAMEINFOFLAG_PREDICT_DDRACE |
 		!GAMEINFOFLAG_PREDICT_DDRACE_TILES |
 		!GAMEINFOFLAG_ENTITIES_DDNET |
 		!GAMEINFOFLAG_ENTITIES_DDRACE |
 		!GAMEINFOFLAG_ENTITIES_RACE |
-		!GAMEINFOFLAG_RACE;
+		!GAMEINFOFLAG_RACE|
+		GAMEINFOFLAG_GAMETYPE_VANILLA |
+		GAMEINFOFLAG_PREDICT_VANILLA;
 	// pGameInfoEx->m_Flags =
 	// 	GAMEINFOFLAG_TIMESCORE |
 	// 	GAMEINFOFLAG_GAMETYPE_RACE |
@@ -826,25 +828,25 @@ void IGameController::Snap(int SnappingClient)
 			if(m_apFlags[TEAM_RED])
 		{
 			if(m_apFlags[TEAM_RED]->m_AtStand)
-				pFlagData->m_FlagCarrierRed = FLAG_ATSTAND;
+				pFlagData->m_FlagCarrierRed = protocol7::FLAG_ATSTAND;
 			else if(m_apFlags[TEAM_RED]->m_pCarryingCharacter && m_apFlags[TEAM_RED]->m_pCarryingCharacter->GetPlayer())
 				pFlagData->m_FlagCarrierRed = m_apFlags[TEAM_RED]->m_pCarryingCharacter->GetPlayer()->GetCID();
 			else
-				pFlagData->m_FlagCarrierRed = FLAG_TAKEN;
+				pFlagData->m_FlagCarrierRed = protocol7::FLAG_TAKEN;
 		}
 		else
-			pFlagData->m_FlagCarrierRed = FLAG_MISSING;
+			pFlagData->m_FlagCarrierRed = protocol7::FLAG_MISSING;
 		if(m_apFlags[TEAM_BLUE])
 		{
 			if(m_apFlags[TEAM_BLUE]->m_AtStand)
-				pFlagData->m_FlagCarrierBlue = FLAG_ATSTAND;
+				pFlagData->m_FlagCarrierBlue = protocol7::FLAG_ATSTAND;
 			else if(m_apFlags[TEAM_BLUE]->m_pCarryingCharacter && m_apFlags[TEAM_BLUE]->m_pCarryingCharacter->GetPlayer())
 				pFlagData->m_FlagCarrierBlue = m_apFlags[TEAM_BLUE]->m_pCarryingCharacter->GetPlayer()->GetCID();
 			else
-				pFlagData->m_FlagCarrierBlue = FLAG_TAKEN;
+				pFlagData->m_FlagCarrierBlue = protocol7::FLAG_TAKEN;
 		}
 		else
-			pFlagData->m_FlagCarrierBlue = FLAG_MISSING;
+			pFlagData->m_FlagCarrierBlue = protocol7::FLAG_MISSING;
 		// protocol7::CNetObj_GameDataRace *pRaceData = static_cast<protocol7::CNetObj_GameDataRace *>(Server()->SnapNewItem(-protocol7::NETOBJTYPE_GAMEDATARACE, 0, sizeof(protocol7::CNetObj_GameDataRace)));
 		// if(!pRaceData)
 		// 	return;

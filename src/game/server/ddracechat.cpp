@@ -363,21 +363,25 @@ void ToggleSpecPauseVoted(IConsole::IResult *pResult, void *pUserData, int Pause
 
 void CGameContext::ConToggleSpec(IConsole::IResult *pResult, void *pUserData)
 {
+	return;
 	ToggleSpecPause(pResult, pUserData, g_Config.m_SvPauseable ? CPlayer::PAUSE_SPEC : CPlayer::PAUSE_PAUSED);
 }
 
 void CGameContext::ConToggleSpecVoted(IConsole::IResult *pResult, void *pUserData)
 {
+	return;
 	ToggleSpecPauseVoted(pResult, pUserData, g_Config.m_SvPauseable ? CPlayer::PAUSE_SPEC : CPlayer::PAUSE_PAUSED);
 }
 
 void CGameContext::ConTogglePause(IConsole::IResult *pResult, void *pUserData)
 {
+	return;
 	ToggleSpecPause(pResult, pUserData, CPlayer::PAUSE_PAUSED);
 }
 
 void CGameContext::ConTogglePauseVoted(IConsole::IResult *pResult, void *pUserData)
 {
+	return;
 	ToggleSpecPauseVoted(pResult, pUserData, CPlayer::PAUSE_PAUSED);
 }
 

@@ -316,14 +316,14 @@ void CGameControllerDDRace::Tick()
 						m_apFlags[i]->Reset();
 
 					GameServer()->CreateSoundGlobal(SOUND_CTF_CAPTURE);
-					// for(int i = 0; i < MAX_CLIENTS; i++)
-					// {
-					// 	// if(Server()->IsSixup(i))
-					// 	// {
-					// 	// 	GameServer()->Send
-					// 	// }
+					for(int i = 0; i < MAX_CLIENTS; i++)
+					{
+						if(Server()->IsSixup(i))
+						{
+							GameServer()->SendGameMsg(protocol7::GAMEMSG_CTF_GRAB, fi, -1);
+						}
 
-					// }
+					}
 				}
 			}
 		}
