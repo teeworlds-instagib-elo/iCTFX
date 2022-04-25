@@ -37,6 +37,7 @@ CHAT_COMMAND("go", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConGo, this, "Vote a map b
 CHAT_COMMAND("reset", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConReset, this, "Vote a map by name")
 CHAT_COMMAND("restart", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConRestart, this, "Vote a map by name")
 
+CHAT_COMMAND("setping", "?i[ping]", CFGFLAG_CHAT | CFGFLAG_SERVER, ConSetPing, this, "Lets you a minimum amount of ping to help with ping jumps")
 
 
 

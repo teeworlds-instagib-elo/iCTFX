@@ -365,6 +365,7 @@ private:
 	static void ConGo(IConsole::IResult *pResult, void *pUserData);
 	static void ConXonX(IConsole::IResult *pResult, void *pUserData);
 	static void ConReset(IConsole::IResult *pResult, void *pUserData);
+	static void ConSetPing(IConsole::IResult *pResult, void *pUserData);
 
 	static void ConUTF8(IConsole::IResult *pResult, void *pUserData);
 	static void ConDND(IConsole::IResult *pResult, void *pUserData);

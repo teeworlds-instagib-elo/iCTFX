@@ -115,6 +115,13 @@ public:
 	class IEngineAntibot *Antibot() { return m_pAntibot; }
 	class CDbConnectionPool *DbPool() { return m_pConnectionPool; }
 
+
+	CNetChunk m_aPackets[255]; //maybe too small?
+
+	void BufferClientPackage(CNetChunk *pPacket);
+	void DelBufferPackage(int index);
+	void SetFakePing(int ClientID, int value);
+
 	enum
 	{
 		MAX_RCONCMD_SEND = 16,
@@ -153,6 +160,9 @@ public:
 		int m_State;
 		int m_Latency;
 		int m_SnapRate;
+
+		int m_FakeMinLatency;
+		int m_FakeAddedLatency;
 
 		float m_Traffic;
 		int64_t m_TrafficSince;

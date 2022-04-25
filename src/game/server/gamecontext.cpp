@@ -2776,6 +2776,16 @@ void CGameContext::ConRestart(IConsole::IResult *pResult, void *pUserData)
 		pSelf->m_pController->DoWarmup(5);
 }
 
+void CGameContext::ConSetPing(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+
+	int ClientID = pResult->m_ClientID;
+	int newPing = pResult->GetInteger(0);
+	pSelf->Server()->SetFakePing(ClientID, newPing);
+	printf("Set new fake ping %i client %i\n", newPing, ClientID);
+}
+
 void CGameContext::ConBroadcast(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
@@ -3160,6 +3170,9 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("say", "r[message]", CFGFLAG_SERVER, ConSay, this, "Say in chat");
 	Console()->Register("set_team", "i[id] i[team-id] ?i[delay in minutes]", CFGFLAG_SERVER, ConSetTeam, this, "Set team of player to team");
 	Console()->Register("set_team_all", "i[team-id]", CFGFLAG_SERVER, ConSetTeamAll, this, "Set team of all players to team");
+
+	// Console()->Register("setping", "i[ping]", CFGFLAG_CLIENT | CFGFLAG_GAME, ConSetPing, this, "Set minimum amount of ping to help with ping jumps");
+
 
 	Console()->Register("add_vote", "s[name] r[command]", CFGFLAG_SERVER, ConAddVote, this, "Add a voting option");
 	Console()->Register("remove_vote", "r[name]", CFGFLAG_SERVER, ConRemoveVote, this, "remove a voting option");
