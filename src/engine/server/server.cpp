@@ -528,8 +528,8 @@ int CServer::Init()
 		Client.m_ShowIps = false;
 		Client.m_AuthKey = -1;
 		Client.m_Latency = 0;
-		Client.m_FakeAddedLatency = 100;
-		Client.m_FakeMinLatency = 100;
+		Client.m_FakeAddedLatency = 0;
+		Client.m_FakeMinLatency = 0;
 		Client.m_Sixup = false;
 	}
 
