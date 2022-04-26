@@ -116,7 +116,7 @@ public:
 	class CDbConnectionPool *DbPool() { return m_pConnectionPool; }
 
 
-	CNetChunk m_aPackets[255]; //maybe too small?
+	CNetChunk m_aPackets[1024]; //maybe too small?
 
 	void BufferClientPackage(CNetChunk *pPacket);
 	void DelBufferPackage(int index);

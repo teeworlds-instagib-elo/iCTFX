@@ -1633,7 +1633,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 			for(int i = 0; i < Size / 4; i++)
 				pInput->m_aData[i] = Unpacker.GetInt();
 			
-			return;
+			// return;
 
 			mem_copy(m_aClients[ClientID].m_LatestInput.m_aData, pInput->m_aData, MAX_INPUT_SIZE * sizeof(int));
 
@@ -2344,15 +2344,16 @@ void CServer::PumpNetwork(bool PacketWaiting)
 		int Flags;
 		mem_zero(&Packet, sizeof(Packet));
 		Packet.m_pData = aBuffer;
-		// while(Antibot()->OnEngineSimulateClientMessage(&Packet.m_ClientID, aBuffer, sizeof(aBuffer), &Packet.m_DataSize, &Flags))
-		// {
-		// 	Packet.m_Flags = 0;
-		// 	if(Flags & MSGFLAG_VITAL)
-		// 	{
-		// 		Packet.m_Flags |= NET_CHUNKFLAG_VITAL;
-		// 	}
-		// 	ProcessClientPacket(&Packet);
-		// }
+		while(Antibot()->OnEngineSimulateClientMessage(&Packet.m_ClientID, aBuffer, sizeof(aBuffer), &Packet.m_DataSize, &Flags))
+		{
+			Packet.m_Flags = 0;
+			if(Flags & MSGFLAG_VITAL)
+			{
+				Packet.m_Flags |= NET_CHUNKFLAG_VITAL;
+			}
+			// ProcessClientPacket(&Packet);
+			BufferClientPackage(&Packet);
+		}
 	}
 
 	m_ServerBan.Update();
