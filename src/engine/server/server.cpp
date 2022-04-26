@@ -1369,7 +1369,7 @@ void CServer::BufferClientPackage(CNetChunk *pPacket)
 		{
 			//found empty packet
 			// printf("found empty packet\n");
-			m_aPackets[i].tick = Tick()+m_aClients[ClientID].m_FakeAddedLatency/20;
+			m_aPackets[i].tick = Tick()+floor(m_aClients[ClientID].m_FakeAddedLatency/20.0f);
 			m_aPackets[i].m_Address = pPacket->m_Address;
 			mem_copy(m_aPackets[i].m_aExtraData, pPacket->m_aExtraData, 4);
 			m_aPackets[i].m_ClientID = pPacket->m_ClientID;
