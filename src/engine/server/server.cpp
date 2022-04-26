@@ -1325,7 +1325,7 @@ static inline int MsgFromSixup(int Msg, bool System)
 
 	return Msg;
 }
-// #include <stdio.h>
+#include <stdio.h>
 //todo check for memory leaks
 void CServer::BufferClientPackage(CNetChunk *pPacket)
 {
@@ -1359,8 +1359,8 @@ void CServer::BufferClientPackage(CNetChunk *pPacket)
 		if(m_aClients[ClientID].m_Snapshots.Get(lastAckedSnapshot, &TagTime, 0, 0) >= 0)
 				latency = (int)(((time_get() - TagTime) * 1000) / time_freq());
 		// int latency = (IntendedTick - Tick()-1)*20;
-		m_aClients[ClientID].m_FakeAddedLatency = m_aClients[ClientID].m_FakeMinLatency - latency;
-		// printf("new latency set %i\n", m_aClients[ClientID].m_FakeAddedLatency);
+		m_aClients[ClientID].m_FakeAddedLatency = floor(m_aClients[ClientID].m_FakeMinLatency/20.0f) - floor(latency/20.0);
+		// printf("new latency set %i ", latency);
 	}
 
 	for(int i = 0; i < 255; i++)
@@ -1369,7 +1369,8 @@ void CServer::BufferClientPackage(CNetChunk *pPacket)
 		{
 			//found empty packet
 			// printf("found empty packet\n");
-			m_aPackets[i].tick = Tick()+floor(m_aClients[ClientID].m_FakeAddedLatency/20.0f);
+			m_aPackets[i].tick = Tick()+m_aClients[ClientID].m_FakeAddedLatency;
+			// printf("ticks added %i, fake added latency %i ", m_aPackets[i].tick-Tick(), m_aClients[ClientID].m_FakeAddedLatency);
 			m_aPackets[i].m_Address = pPacket->m_Address;
 			mem_copy(m_aPackets[i].m_aExtraData, pPacket->m_aExtraData, 4);
 			m_aPackets[i].m_ClientID = pPacket->m_ClientID;
@@ -1604,7 +1605,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 			if(m_aClients[ClientID].m_Snapshots.Get(m_aClients[ClientID].m_LastAckedSnapshot, &TagTime, 0, 0) >= 0)
 				m_aClients[ClientID].m_Latency = (int)(((time_get() - TagTime) * 1000) / time_freq());
 
-			// printf("m_latency %i\n", m_aClients[ClientID].m_Latency );
+			printf("m_latency %i\n", m_aClients[ClientID].m_Latency );
 
 			// add message to report the input timing
 			// skip packets that are old
