@@ -122,6 +122,7 @@ struct CNetChunk
 	// only used if the flags contain NETSENDFLAG_EXTENDED and NETSENDFLAG_CONNLESS
 	unsigned char m_aExtraData[4];
 	int tick; //0 tick means it's an empty packet
+	int latency;
 };
 
 class CNetChunkHeader

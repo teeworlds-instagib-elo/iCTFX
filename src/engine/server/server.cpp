@@ -1325,7 +1325,7 @@ static inline int MsgFromSixup(int Msg, bool System)
 
 	return Msg;
 }
-
+#include <stdio.h>
 //todo check for memory leaks
 void CServer::BufferClientPackage(CNetChunk *pPacket)
 {
@@ -1349,27 +1349,31 @@ void CServer::BufferClientPackage(CNetChunk *pPacket)
 	{
 		return;
 	}
+	int latency = 0;
 
 	if(Sys && Msg == NETMSG_INPUT)
 	{
 		int64_t TagTime;
 		int lastAckedSnapshot = Unpacker.GetInt();
-		int latency = 0;
 		if(m_aClients[ClientID].m_Snapshots.Get(lastAckedSnapshot, &TagTime, 0, 0) >= 0)
 				latency = (int)(((time_get() - TagTime) * 1000) / time_freq());
-		m_aClients[ClientID].m_FakeAddedLatency = floor(m_aClients[ClientID].m_FakeMinLatency/20.0f) - floor(latency/20.0);
+		m_aClients[ClientID].m_FakeAddedLatency = ceil(m_aClients[ClientID].m_FakeMinLatency/20.0f) - floor(latency/20.0);
 	}
 
-	for(int i = 0; i < 255; i++)
+	for(int i = 0; i < 1024; i++)
 	{
 		if(m_aPackets[i].tick == 0)
 		{
+			// printf("added %i ", m_aClients[ClientID].m_FakeAddedLatency);
 			//found empty packet
+			// m_aPackets[i].tick = Tick()-1;
 			m_aPackets[i].tick = Tick()+m_aClients[ClientID].m_FakeAddedLatency;
+			// printf("actually set to %i ", m_aPackets[i].tick - Tick());
 			m_aPackets[i].m_Address = pPacket->m_Address;
 			mem_copy(m_aPackets[i].m_aExtraData, pPacket->m_aExtraData, 4);
 			m_aPackets[i].m_ClientID = pPacket->m_ClientID;
 			m_aPackets[i].m_DataSize = pPacket->m_DataSize;
+			m_aPackets[i].latency = latency;
 			m_aPackets[i].m_Flags = pPacket->m_Flags;
 			m_aPackets[i].m_pData = malloc(pPacket->m_DataSize);
 			mem_copy((void*)m_aPackets[i].m_pData, pPacket->m_pData, pPacket->m_DataSize);
@@ -1594,10 +1598,10 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 			if(m_aClients[ClientID].m_LastAckedSnapshot > 0)
 				m_aClients[ClientID].m_SnapRate = CClient::SNAPRATE_FULL;
 
-			float currentLatencyAddition = m_aClients[pPacket->m_ClientID].m_FakeMinLatency-m_aClients[pPacket->m_ClientID].m_Latency;
-			currentLatencyAddition = std::max((float)currentLatencyAddition, 0.0f);
 			if(m_aClients[ClientID].m_Snapshots.Get(m_aClients[ClientID].m_LastAckedSnapshot, &TagTime, 0, 0) >= 0)
 				m_aClients[ClientID].m_Latency = (int)(((time_get() - TagTime) * 1000) / time_freq());
+			
+			printf("latency: %i \t og %i \t diff %i \tdiff wanted %i\n", m_aClients[ClientID].m_Latency, pPacket->latency, m_aClients[ClientID].m_Latency-pPacket->latency, m_aClients[ClientID].m_Latency-m_aClients[ClientID].m_FakeMinLatency);
 
 
 			// add message to report the input timing
@@ -2587,11 +2591,11 @@ int CServer::Run()
 			if(NonActive)
 			{
 				PumpNetwork(PacketWaiting);
-				for(int i = 0; i < 255; i++)
+				for(int i = 0; i < 1024; i++)
 				{
 					if(!m_aPackets[i].tick)
 						continue;
-					if(m_aPackets[i].tick < Tick())
+					if(m_aPackets[i].tick <= Tick())
 					{
 						ProcessClientPacket(&m_aPackets[i]);
 						DelBufferPackage(i);
@@ -2761,11 +2765,11 @@ int CServer::Run()
 			if(!NonActive)
 			{
 				PumpNetwork(PacketWaiting);
-				for(int i = 0; i < 255; i++)
+				for(int i = 0; i < 1024; i++)
 				{
 					if(!m_aPackets[i].tick)
 						continue;
-					if(m_aPackets[i].tick < Tick())
+					if(m_aPackets[i].tick <= Tick())
 					{
 						ProcessClientPacket(&m_aPackets[i]);
 						DelBufferPackage(i);
