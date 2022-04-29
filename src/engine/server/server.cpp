@@ -287,6 +287,8 @@ void CServer::CClient::Reset()
 	m_Score = 0;
 	m_NextMapChunk = 0;
 	m_Flags = 0;
+	m_FakeMinLatency = 0;
+	m_FakeAddedLatency = 0;
 }
 
 CServer::CServer() :
@@ -1368,12 +1370,13 @@ void CServer::BufferClientPackage(CNetChunk *pPacket)
 			//found empty packet
 			// m_aPackets[i].tick = Tick()-1;
 			m_aPackets[i].tick = Tick()+m_aClients[ClientID].m_FakeAddedLatency;
+			//m_aClients[ClientID].m_FakeAddedLatency;
 			// printf("actually set to %i ", m_aPackets[i].tick - Tick());
 			m_aPackets[i].m_Address = pPacket->m_Address;
 			mem_copy(m_aPackets[i].m_aExtraData, pPacket->m_aExtraData, 4);
 			m_aPackets[i].m_ClientID = pPacket->m_ClientID;
 			m_aPackets[i].m_DataSize = pPacket->m_DataSize;
-			m_aPackets[i].latency = latency;
+			m_aPackets[i].latency = 0;
 			m_aPackets[i].m_Flags = pPacket->m_Flags;
 			m_aPackets[i].m_pData = malloc(pPacket->m_DataSize);
 			mem_copy((void*)m_aPackets[i].m_pData, pPacket->m_pData, pPacket->m_DataSize);
@@ -1444,6 +1447,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 
 	if(Sys)
 	{
+		// printf("Msg %i\n", Msg);
 		// system message
 		if(Msg == NETMSG_CLIENTVER)
 		{
@@ -1590,6 +1594,8 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 			int IntendedTick = Unpacker.GetInt();
 			int Size = Unpacker.GetInt();
 
+			// printf("inteded tick: %i\t %i\t diff %i\n", IntendedTick, Tick(), Tick()-IntendedTick);
+
 
 			// check for errors
 			if(Unpacker.Error() || Size / 4 > MAX_INPUT_SIZE)
@@ -1606,7 +1612,8 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 
 			// add message to report the input timing
 			// skip packets that are old
-			if(IntendedTick > m_aClients[ClientID].m_LastInputTick)
+			
+			if(IntendedTick+2 > m_aClients[ClientID].m_LastInputTick)
 			{
 				int TimeLeft = ((TickStartTime(IntendedTick) - time_get()) * 1000) / time_freq();
 
@@ -1615,6 +1622,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 				Msgp.AddInt(TimeLeft);
 				SendMsg(&Msgp, 0, ClientID);
 			}
+			else printf("nah %i diff\n", IntendedTick - m_aClients[ClientID].m_LastInputTick);
 
 
 			m_aClients[ClientID].m_LastInputTick = IntendedTick;
@@ -1781,11 +1789,13 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 		}
 		else if(Msg == NETMSG_PING)
 		{
+			printf("ping!\n");
 			CMsgPacker Msgp(NETMSG_PING_REPLY, true);
 			SendMsg(&Msgp, 0, ClientID);
 		}
 		else if(Msg == NETMSG_PINGEX)
 		{
+			printf("ping!Ex\n");
 			CUuid *pID = (CUuid *)Unpacker.GetRaw(sizeof(*pID));
 			if(Unpacker.Error())
 			{
