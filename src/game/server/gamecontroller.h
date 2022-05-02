@@ -118,7 +118,7 @@ public:
 	virtual void OnPlayerConnect(class CPlayer *pPlayer);
 	virtual void OnPlayerDisconnect(class CPlayer *pPlayer, const char *pReason);
 
-	void OnReset();
+	void OnReset(int team);
 
 	// game
 	void DoWarmup(int Seconds, int team);

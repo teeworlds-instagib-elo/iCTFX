@@ -19,8 +19,11 @@ CGameWorld::CGameWorld()
 	m_pConfig = 0x0;
 	m_pServer = 0x0;
 
-	m_Paused = false;
-	m_ResetRequested = false;
+	for(int i = 0; i < 64; i++)
+	{
+		m_Paused[i] = false;
+		m_ResetRequested[i] = false;
+	}
 	for(auto &pFirstEntityType : m_apFirstEntityTypes)
 		pFirstEntityType = 0;
 }
@@ -127,22 +130,23 @@ void CGameWorld::Snap(int SnappingClient)
 	}
 }
 
-void CGameWorld::Reset()
+void CGameWorld::Reset(int team)
 {
 	// reset all entities
-	for(auto *pEnt : m_apFirstEntityTypes)
-		for(; pEnt;)
-		{
-			m_pNextTraverseEntity = pEnt->m_pNextTypeEntity;
-			pEnt->Reset();
-			pEnt = m_pNextTraverseEntity;
-		}
+	// for(auto *pEnt : m_apFirstEntityTypes)
+	// 	for(; pEnt;)
+	// 	{
+	// 		m_pNextTraverseEntity = pEnt->m_pNextTypeEntity;
+	// 		pEnt->Reset();
+	// 		pEnt = m_pNextTraverseEntity;
+	// 	}
+	//todo maybe not this v
+	// RemoveEntities();
+
+	GameServer()->m_pController->OnReset(team);
 	RemoveEntities();
 
-	GameServer()->m_pController->OnReset();
-	RemoveEntities();
-
-	m_ResetRequested = false;
+	m_ResetRequested[team] = false;
 }
 
 void CGameWorld::RemoveEntities()
@@ -257,40 +261,43 @@ void CGameWorld::UpdatePlayerMaps()
 
 void CGameWorld::Tick()
 {
-	if(m_ResetRequested)
-		Reset();
-
-	if(!m_Paused)
+	for(int team = 0; team < 64; team++)
 	{
-		if(GameServer()->m_pController->IsForceBalanced())
-			GameServer()->SendChat(-1, CGameContext::CHAT_ALL, "Teams have been balanced");
-		// update all objects
-		for(auto *pEnt : m_apFirstEntityTypes)
-			for(; pEnt;)
-			{
-				m_pNextTraverseEntity = pEnt->m_pNextTypeEntity;
-				pEnt->Tick();
-				pEnt = m_pNextTraverseEntity;
-			}
+		if(m_ResetRequested[team])
+			Reset(team);
 
-		for(auto *pEnt : m_apFirstEntityTypes)
-			for(; pEnt;)
-			{
-				m_pNextTraverseEntity = pEnt->m_pNextTypeEntity;
-				pEnt->TickDefered();
-				pEnt = m_pNextTraverseEntity;
-			}
-	}
-	else
-	{
-		// update all objects
-		for(auto *pEnt : m_apFirstEntityTypes)
-			for(; pEnt;)
-			{
-				m_pNextTraverseEntity = pEnt->m_pNextTypeEntity;
-				pEnt->TickPaused();
-				pEnt = m_pNextTraverseEntity;
-			}
+		if(!m_Paused[team])
+		{
+			if(GameServer()->m_pController->IsForceBalanced())
+				GameServer()->SendChat(-1, CGameContext::CHAT_ALL, "Teams have been balanced");
+			// update all objects
+			for(auto *pEnt : m_apFirstEntityTypes)
+				for(; pEnt;)
+				{
+					m_pNextTraverseEntity = pEnt->m_pNextTypeEntity;
+					pEnt->Tick();
+					pEnt = m_pNextTraverseEntity;
+				}
+
+			for(auto *pEnt : m_apFirstEntityTypes)
+				for(; pEnt;)
+				{
+					m_pNextTraverseEntity = pEnt->m_pNextTypeEntity;
+					pEnt->TickDefered();
+					pEnt = m_pNextTraverseEntity;
+				}
+		}
+		else
+		{
+			// update all objects
+			for(auto *pEnt : m_apFirstEntityTypes)
+				for(; pEnt;)
+				{
+					m_pNextTraverseEntity = pEnt->m_pNextTypeEntity;
+					pEnt->TickPaused();
+					pEnt = m_pNextTraverseEntity;
+				}
+		}
 	}
 
 	RemoveEntities();

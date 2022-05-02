@@ -144,7 +144,7 @@ int CGameControllerDDRace::OnCharacterDeath(class CCharacter *pVictim, class CPl
 			HadFlag |= 2;
 		if(F && F->m_pCarryingCharacter == pVictim)
 		{
-			GameServer()->CreateSoundGlobal(SOUND_CTF_DROP);
+			GameServer()->CreateSoundGlobal(SOUND_CTF_DROP, team);
 			F->m_DropTick = Server()->Tick();
 			F->m_pCarryingCharacter = 0;
 			F->m_Vel = vec2(0,0);
@@ -335,7 +335,7 @@ void CGameControllerDDRace::Tick()
 						for(int i = 0; i < 2; i++)
 							m_apFlags[team][i]->Reset();
 
-						GameServer()->CreateSoundGlobal(SOUND_CTF_CAPTURE);
+						GameServer()->CreateSoundGlobal(SOUND_CTF_CAPTURE, team);
 						for(int i = 0; i < MAX_CLIENTS; i++)
 						{
 							if(Server()->IsSixup(i))
@@ -371,7 +371,7 @@ void CGameControllerDDRace::Tick()
 								Server()->ClientName(pChr->GetPlayer()->GetCID()));
 							GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
 
-							GameServer()->CreateSoundGlobal(SOUND_CTF_RETURN);
+							GameServer()->CreateSoundGlobal(SOUND_CTF_RETURN, team);
 							F->Reset();
 							for(int i = 0; i < MAX_CLIENTS; i++)
 							{
@@ -392,7 +392,7 @@ void CGameControllerDDRace::Tick()
 							F->m_GrabTick = Server()->Tick();
 							for(int i = 0; i < MAX_CLIENTS; i++)
 							{
-								if(Server()->IsSixup(i))
+								if(Server()->IsSixup(i) && m_Teams.m_Core.Team(i) == team)
 								{
 									GameServer()->SendGameMsg(protocol7::GAMEMSG_CTF_GRAB, fi, -1);
 								}
@@ -418,14 +418,14 @@ void CGameControllerDDRace::Tick()
 								continue;
 
 							if(pPlayer->GetTeam() == TEAM_SPECTATORS && pPlayer->m_SpectatorID != SPEC_FREEVIEW && GameServer()->m_apPlayers[pPlayer->m_SpectatorID] && GameServer()->m_apPlayers[pPlayer->m_SpectatorID]->GetTeam() == fi)
-								GameServer()->CreateSoundGlobal(SOUND_CTF_GRAB_EN, c);
+								GameServer()->CreateSoundGlobal(SOUND_CTF_GRAB_EN, team, c);
 							else if(pPlayer->GetTeam() == fi)
-								GameServer()->CreateSoundGlobal(SOUND_CTF_GRAB_EN, c);
+								GameServer()->CreateSoundGlobal(SOUND_CTF_GRAB_EN, team, c);
 							else
-								GameServer()->CreateSoundGlobal(SOUND_CTF_GRAB_PL, c);
+								GameServer()->CreateSoundGlobal(SOUND_CTF_GRAB_PL, team, c);
 						}
 						// demo record entry
-						GameServer()->CreateSoundGlobal(SOUND_CTF_GRAB_EN, -2);
+						GameServer()->CreateSoundGlobal(SOUND_CTF_GRAB_EN, team, -2);
 						break;
 					}
 				}
@@ -434,7 +434,7 @@ void CGameControllerDDRace::Tick()
 				{
 					if(Server()->Tick() > F->m_DropTick + Server()->TickSpeed()*30)
 					{
-						GameServer()->CreateSoundGlobal(SOUND_CTF_RETURN);
+						GameServer()->CreateSoundGlobal(SOUND_CTF_RETURN, team);
 						F->Reset();
 						for(int i = 0; i < MAX_CLIENTS; i++)
 						{

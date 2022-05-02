@@ -29,7 +29,7 @@ public:
 	};
 
 private:
-	void Reset();
+	void Reset(int team);
 	void RemoveEntities();
 
 	CEntity *m_pNextTraverseEntity = nullptr;
@@ -46,8 +46,8 @@ public:
 	class CConfig *Config() { return m_pConfig; }
 	class IServer *Server() { return m_pServer; }
 
-	bool m_ResetRequested;
-	bool m_Paused;
+	bool m_ResetRequested[64];
+	bool m_Paused[64];
 	CWorldCore m_Core;
 
 	CGameWorld();

@@ -448,14 +448,14 @@ void IGameController::EndRound(int team)
 	if(m_Warmup[team]) // game can't end when we are running warmup
 		return;
 
-	GameServer()->m_World.m_Paused = true;
+	GameServer()->m_World.m_Paused[team] = true;
 	m_GameOverTick[team] = Server()->Tick();
 	m_SuddenDeath[team] = 0;
 }
 
 void IGameController::ResetGame(int team)
 {
-	GameServer()->m_World.m_ResetRequested = true;
+	GameServer()->m_World.m_ResetRequested[team] = true;
 }
 
 const char *IGameController::GetTeamName(int Team)
@@ -474,7 +474,7 @@ void IGameController::StartRound(int team)
 	m_RoundStartTick[team] = Server()->Tick();
 	m_SuddenDeath[team] = 0;
 	m_GameOverTick[team] = -1;
-	GameServer()->m_World.m_Paused = false;
+	GameServer()->m_World.m_Paused[team] = false;
 	m_ForceBalanced[team] = false;
 	Server()->DemoRecorder_HandleAutoStart();
 	char aBuf[256];
@@ -499,10 +499,10 @@ void IGameController::ChangeMap(const char *pToMap)
 	Server()->ChangeMap(pToMap);
 }
 
-void IGameController::OnReset()
+void IGameController::OnReset(int team)
 {
 	for(auto &pPlayer : GameServer()->m_apPlayers)
-		if(pPlayer)
+		if(pPlayer && p_Teams->m_Core.Team(pPlayer->GetCID()) == team)
 			pPlayer->Respawn();
 }
 
@@ -599,7 +599,7 @@ void IGameController::Tick()
 			m_FakeWarmup[team]--;
 			if(!m_FakeWarmup[team] && GameServer()->m_World.m_Paused)
 			{
-				GameServer()->m_World.m_Paused = false;
+				GameServer()->m_World.m_Paused[team] = false;
 				GameServer()->SendChat(-1, CGameContext::CHAT_ALL, "Game started");
 			}
 		}

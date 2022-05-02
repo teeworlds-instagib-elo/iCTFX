@@ -310,10 +310,14 @@ void CGameContext::CreateSound(vec2 Pos, int Sound, int64_t Mask)
 	}
 }
 
-void CGameContext::CreateSoundGlobal(int Sound, int Target)
+void CGameContext::CreateSoundGlobal(int Sound, int DDTeam, int Target)
 {
 	if(Sound < 0)
 		return;
+	if(!m_pController)
+		return;
+	
+
 
 	CNetMsg_Sv_SoundGlobal Msg;
 	Msg.m_SoundID = Sound;
@@ -324,7 +328,14 @@ void CGameContext::CreateSoundGlobal(int Sound, int Target)
 		int Flag = MSGFLAG_VITAL;
 		if(Target != -1)
 			Flag |= MSGFLAG_NORECORD;
-		Server()->SendPackMsg(&Msg, Flag, Target);
+		//Server()->SendPackMsg(&Msg, Flag, Target);
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(!Server()->ClientIngame(i))
+				continue;
+			if(m_pController->p_Teams->m_Core.Team(i) == DDTeam)
+				Server()->SendPackMsg(&Msg, Flag, i);
+		}
 	}
 }
 
@@ -2739,8 +2750,8 @@ void CGameContext::ConSwitchOpen(IConsole::IResult *pResult, void *pUserData)
 void CGameContext::ConPause(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
-
-	pSelf->m_World.m_Paused ^= 1;
+	int team = pSelf->m_pController->p_Teams->m_Core.Team(pResult->m_ClientID);
+	pSelf->m_World.m_Paused[team] ^= 1;
 }
 
 void CGameContext::ConChangeMap(IConsole::IResult *pResult, void *pUserData)

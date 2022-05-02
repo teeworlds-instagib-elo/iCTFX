@@ -836,7 +836,8 @@ void CGameContext::ConDumpAntibot(IConsole::IResult *pResult, void *pUserData)
 void CGameContext::ConStop(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
-	pSelf->m_World.m_Paused = true;
+	int team = pSelf->m_pController->p_Teams->m_Core.Team(pResult->m_ClientID);
+	pSelf->m_World.m_Paused[team] = true;
 		pSelf->SendChat(-1, CHAT_ALL, "Server paused");
 }
 
