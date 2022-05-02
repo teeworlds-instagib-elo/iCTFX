@@ -22,11 +22,15 @@ CGameControllerDDRace::CGameControllerDDRace(class CGameContext *pGameServer) :
 	m_pGameType = g_Config.m_SvTestingCommands ? TEST_TYPE_NAME : GAME_TYPE_NAME;
 	m_GameFlags = GAMEFLAG_TEAMS|GAMEFLAG_FLAGS;
 
+	p_Teams = &m_Teams;
+
 	// InitTeleporter();
 	for(int team = 0; team < 64; team++)
 	{
 		m_apFlags[team][0] = 0;
 		m_apFlags[team][1] = 0;
+		m_aTeamscore[team][0] = 0;
+		m_aTeamscore[team][1] = 0;
 	}
 }
 
@@ -43,6 +47,7 @@ void CGameControllerDDRace::OnCharacterSpawn(CCharacter *pChr)
 	pChr->SetTeams(&m_Teams);
 	pChr->SetTeleports(&m_TeleOuts, &m_TeleCheckOuts);
 	m_Teams.OnCharacterSpawn(pChr->GetPlayer()->GetCID());
+	
 }
 
 void CGameControllerDDRace::HandleCharacterTiles(CCharacter *pChr, int MapIndex)
@@ -185,19 +190,18 @@ void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 	for(int i = 0; i < 64; i++)
 		if(m_apFlags[i][0] == 0)
 		{
-			CFlag *F = new CFlag(&GameServer()->m_World, 0);
+			CFlag *F = new CFlag(&GameServer()->m_World, 0, i);
 			F->m_StandPos = vec2(246, 785);
 			F->m_Pos = vec2(246, 785);
 			m_apFlags[i][0] = F;
 			GameServer()->m_World.InsertEntity(F);
 
-			F = new CFlag(&GameServer()->m_World, 1);
+			F = new CFlag(&GameServer()->m_World, 1, i);
 			F->m_StandPos = vec2(6129, 785);
 			F->m_Pos = vec2(6129, 785);
 			m_apFlags[i][1] = F;
 			GameServer()->m_World.InsertEntity(F);
 		}
-
 	
 }
 
@@ -271,6 +275,8 @@ void CGameControllerDDRace::Tick()
 
 	// if(Server()->IsSixup(0))
 	// 	GameServer()->SendGameMsg(protocol7::GAMEMSG_CTF_GRAB, 0, -1);
+
+
 
 	for(int team = 0; team < 64; team++)
 	{
@@ -347,7 +353,7 @@ void CGameControllerDDRace::Tick()
 				int Num = GameServer()->m_World.FindEntities(F->m_Pos, CFlag::ms_PhysSize, (CEntity**)apCloseCCharacters, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
 				for(int i = 0; i < Num; i++)
 				{
-					if(!apCloseCCharacters[i]->IsAlive() || apCloseCCharacters[i]->GetPlayer()->GetTeam() == TEAM_SPECTATORS || GameServer()->Collision()->IntersectLine(F->m_Pos, apCloseCCharacters[i]->m_Pos, NULL, NULL))
+					if(!apCloseCCharacters[i]->IsAlive() || apCloseCCharacters[i]->GetPlayer()->GetTeam() == TEAM_SPECTATORS || GameServer()->Collision()->IntersectLine(F->m_Pos, apCloseCCharacters[i]->m_Pos, NULL, NULL) || m_Teams.m_Core.Team(apCloseCCharacters[i]->GetPlayer()->GetCID())!=team)
 						continue;
 
 					if(apCloseCCharacters[i]->GetPlayer()->GetTeam() == F->m_Team)
@@ -448,7 +454,7 @@ void CGameControllerDDRace::Tick()
 			}
 		}
 		
-		if(m_GameOverTick[team] == -1 && !m_Warmup)
+		if(m_GameOverTick[team] == -1 && !m_Warmup[team])
 		{
 			// check score win condition
 			if((g_Config.m_SvScorelimit > 0 && (m_aTeamscore[team][TEAM_RED] >= g_Config.m_SvScorelimit || m_aTeamscore[team][TEAM_BLUE] >= g_Config.m_SvScorelimit)) ||

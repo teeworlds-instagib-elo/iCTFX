@@ -6,7 +6,8 @@
 #include <base/vmath.h>
 #include <engine/map.h>
 #include <game/server/entities/flag.h>
-#include <game/server/teams.h>
+
+class CGameTeams;
 
 /*
 	Class: Game Controller
@@ -68,7 +69,8 @@ public:
 	const char *m_pGameType;
 	int m_aTeamscore[64][2];
 	class CFlag *m_apFlags[64][2];
-	CGameTeams m_Teams;
+	CGameTeams * p_Teams;
+	// std::unique_ptr<CGameTeams> m_Teams;
 
 	int m_FakeWarmup[64];
 

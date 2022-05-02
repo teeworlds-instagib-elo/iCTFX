@@ -22,8 +22,7 @@ private:
 	CEntity *m_pPrevTypeEntity;
 	CEntity *m_pNextTypeEntity;
 
-	/* Identity */
-	class CGameWorld *m_pGameWorld;
+	
 
 	int m_ID;
 	int m_ObjType;
@@ -37,6 +36,8 @@ private:
 protected:
 	/* State */
 	bool m_MarkedForDestroy;
+	/* Identity */
+	class CGameWorld *m_pGameWorld;
 
 public: // TODO: Maybe make protected
 	/*

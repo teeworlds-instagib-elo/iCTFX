@@ -8,6 +8,7 @@
 #include "entities/character.h"
 #include "entities/pickup.h"
 #include "gamecontext.h"
+#include <game/server/teams.h>
 #include "gamecontroller.h"
 #include "player.h"
 
@@ -18,6 +19,7 @@
 #include "entities/plasma.h"
 #include "entities/projectile.h"
 #include <game/layers.h>
+
 
 IGameController::IGameController(class CGameContext *pGameServer)
 {
@@ -481,7 +483,7 @@ void IGameController::StartRound(int team)
 
 	for(int i = 0; i < MAX_CLIENTS; i++) {
 		CPlayer* pPlayer = GameServer()->m_apPlayers[i];
-		if(pPlayer && m_Teams.m_Core.Team(i) == team)
+		if(pPlayer && p_Teams->m_Core.Team(i) == team)
 		{
 			const int team = pPlayer->GetTeam();
 			pPlayer->m_Score = 0;
@@ -616,7 +618,7 @@ void IGameController::Tick()
 			float aPScore[MAX_CLIENTS] = {0.0f};
 			for(int i = 0; i < MAX_CLIENTS; i++)
 			{
-				if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetTeam() != TEAM_SPECTATORS && m_Teams.m_Core.Team(i))
+				if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetTeam() != TEAM_SPECTATORS && p_Teams->m_Core.Team(i))
 				{
 					aT[GameServer()->m_apPlayers[i]->GetTeam()]++;
 					aPScore[i] = GameServer()->m_apPlayers[i]->m_Score*Server()->TickSpeed()*60.0f;
@@ -639,7 +641,7 @@ void IGameController::Tick()
 						if(!GameServer()->m_apPlayers[i] || !CanBeMovedOnBalance(i))
 							continue;
 						// remember the player who would cause lowest score-difference
-						if(GameServer()->m_apPlayers[i]->GetTeam() == M && (!pP || absolute((aTScore[M^1]+aPScore[i]) - (aTScore[M]-aPScore[i])) < PD) && m_Teams.m_Core.Team(i))
+						if(GameServer()->m_apPlayers[i]->GetTeam() == M && (!pP || absolute((aTScore[M^1]+aPScore[i]) - (aTScore[M]-aPScore[i])) < PD) && p_Teams->m_Core.Team(i))
 						{
 							pP = GameServer()->m_apPlayers[i];
 							PD = absolute((aTScore[M^1]+aPScore[i]) - (aTScore[M]-aPScore[i]));
@@ -718,7 +720,7 @@ void IGameController::Snap(int SnappingClient)
 	if(!pGameInfoObj)
 		return;
 
-	int team = m_Teams.m_Core.Team(SnappingClient);
+	int team = p_Teams->m_Core.Team(SnappingClient);
 
 	pGameInfoObj->m_GameFlags = m_GameFlags;
 	pGameInfoObj->m_GameStateFlags = 0;
@@ -822,7 +824,7 @@ void IGameController::Snap(int SnappingClient)
 
 		pGameData->m_GameStateEndTick = 0;
 
-		int ddraceTeam = m_Teams.m_Core.Team(pPlayer->GetCID());
+		int ddraceTeam = p_Teams->m_Core.Team(pPlayer->GetCID());
 
 		protocol7::CNetObj_GameDataTeam *pTeamData = static_cast<protocol7::CNetObj_GameDataTeam *>(Server()->SnapNewItem(-protocol7::NETOBJTYPE_GAMEDATATEAM, 0, sizeof(protocol7::CNetObj_GameDataTeam)));
 		if(!pTeamData)
@@ -971,7 +973,7 @@ bool IGameController::CheckTeamBalance()
 		for(int i = 0; i < MAX_CLIENTS; i++)
 		{
 			CPlayer *pP = GameServer()->m_apPlayers[i];
-			if(pP && pP->GetTeam() != TEAM_SPECTATORS && m_Teams.m_Core.Team(i) = team)
+			if(pP && pP->GetTeam() != TEAM_SPECTATORS && p_Teams->m_Core.Team(i) == team)
 				aT[pP->GetTeam()]++;
 		}
 
@@ -1021,7 +1023,7 @@ void IGameController::DoTeamChange(CPlayer *pPlayer, int Team, bool DoChatMsg)
 		for(int i = 0; i < MAX_CLIENTS; i++)
 		{
 			CPlayer *pP = GameServer()->m_apPlayers[i];
-			if(pP && pP->GetTeam() != TEAM_SPECTATORS && m_Teams.m_Core.Team(pP->GetCID()) == m_Teams.m_Core.Team(pPlayer->GetCID()))
+			if(pP && pP->GetTeam() != TEAM_SPECTATORS && p_Teams->m_Core.Team(pP->GetCID()) == p_Teams->m_Core.Team(pPlayer->GetCID()))
 				aT[pP->GetTeam()]++;
 		}
 

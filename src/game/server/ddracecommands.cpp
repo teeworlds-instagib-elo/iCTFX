@@ -843,7 +843,7 @@ void CGameContext::ConStop(IConsole::IResult *pResult, void *pUserData)
 void CGameContext::ConGo(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
-	pSelf->m_pController->m_FakeWarmup[pSelf->m_pController->m_Teams.m_Core.Team(pResult->m_ClientID)] = pSelf->Server()->TickSpeed() * g_Config.m_SvGoTime;
+	pSelf->m_pController->m_FakeWarmup[pSelf->m_pController->p_Teams->m_Core.Team(pResult->m_ClientID)] = pSelf->Server()->TickSpeed() * g_Config.m_SvGoTime;
 	pSelf->SendChat(-1, CHAT_ALL, "Server continuing");
 }
 
@@ -853,7 +853,7 @@ void CGameContext::ConXonX(IConsole::IResult *pResult, void *pUserData)
 	CGameContext *pSelf = (CGameContext *)pUserData;
 	int Mode = pResult->GetInteger(0);
 	g_Config.m_SvSpectatorSlots = MAX_CLIENTS - 2*Mode;
-	pSelf->m_pController->DoWarmup(g_Config.m_SvWarTime, pSelf->m_pController->m_Teams.m_Core.Team(pResult->m_ClientID));
+	pSelf->m_pController->DoWarmup(g_Config.m_SvWarTime, pSelf->m_pController->p_Teams->m_Core.Team(pResult->m_ClientID));
 	char aBuf[128];
 
 	str_format(aBuf, sizeof(aBuf), "Upcoming %don%d! Please stay on spectator", Mode, Mode);
