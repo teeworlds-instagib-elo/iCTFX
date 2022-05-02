@@ -6,7 +6,6 @@
 CTeamsCore::CTeamsCore()
 {
 	Reset();
-	g_Config.m_SvTeam = 0;
 }
 
 bool CTeamsCore::SameTeam(int ClientID1, int ClientID2) const

@@ -1857,7 +1857,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						int Mode = (int)pMsg->m_pMessage[1] - (int)'0';
 						if(Mode < 0 || Mode > 6)
 							return;
-						m_pController->DoWarmup(g_Config.m_SvWarTime);
+						m_pController->DoWarmup(g_Config.m_SvWarTime, ClientID);
 						g_Config.m_SvSpectatorSlots = Config()->m_SvMaxClients - 2*Mode;
 						char aBuf[128];
 						str_format(aBuf, sizeof(aBuf), "Upcoming %don%d! Please stay on spectator", Mode, Mode);
@@ -2771,9 +2771,9 @@ void CGameContext::ConRestart(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
 	if(pResult->NumArguments())
-		pSelf->m_pController->DoWarmup(pResult->GetInteger(0));
+		pSelf->m_pController->DoWarmup(pResult->GetInteger(0), pResult->m_ClientID);
 	else
-		pSelf->m_pController->DoWarmup(5);
+		pSelf->m_pController->DoWarmup(5, pResult->m_ClientID);
 }
 
 void CGameContext::ConBroadcast(IConsole::IResult *pResult, void *pUserData)

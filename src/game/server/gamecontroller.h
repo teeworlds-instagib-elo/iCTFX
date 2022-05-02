@@ -6,6 +6,7 @@
 #include <base/vmath.h>
 #include <engine/map.h>
 #include <game/server/entities/flag.h>
+#include <game/server/teams.h>
 
 /*
 	Class: Game Controller
@@ -48,25 +49,29 @@ protected:
 	float EvaluateSpawnPos(CSpawnEval *pEval, vec2 Pos, int DDTeam);
 	void EvaluateSpawnType(CSpawnEval *pEval, int Type, int DDTeam);
 
-	void ResetGame();
+	void ResetGame(int team);
 
 	char m_aMapWish[MAX_MAP_LENGTH];
 
-	int m_RoundStartTick;
-	int m_GameOverTick;
-	int m_SuddenDeath;
+	int m_RoundStartTick[64];
+	int m_GameOverTick[64];
+	int m_SuddenDeath[64];
 
-	int m_Warmup;
-	int m_RoundCount;
+	int m_Warmup[64];
+	int m_RoundCount[64];
 
 	int m_GameFlags;
-	int m_UnbalancedTick;
-	bool m_ForceBalanced;
+	int m_UnbalancedTick[64];
+	bool m_ForceBalanced[64];
 
 public:
 	const char *m_pGameType;
-	int m_aTeamscore[2];
-	class CFlag *m_apFlags[2];
+	int m_aTeamscore[64][2];
+	class CFlag *m_apFlags[64][2];
+	CGameTeams m_Teams;
+
+	int m_FakeWarmup[64];
+
 
 	IGameController(class CGameContext *pGameServer);
 	virtual ~IGameController();
@@ -114,10 +119,10 @@ public:
 	void OnReset();
 
 	// game
-	void DoWarmup(int Seconds);
+	void DoWarmup(int Seconds, int team);
 
-	void StartRound();
-	void EndRound();
+	void StartRound(int team);
+	void EndRound(int team);
 	void ChangeMap(const char *pToMap);
 
 	bool IsFriendlyFire(int ClientID1, int ClientID2);
@@ -152,7 +157,7 @@ public:
 	// DDRace
 
 	float m_CurrentRecord;
-	int m_FakeWarmup;
+	
 };
 
 #endif
