@@ -441,7 +441,6 @@ void CGameContext::SendChat(int ChatterClientID, int Team, const char *pText, in
 		Msg.m_Team = 1;
 		Msg.m_ClientID = ChatterClientID;
 		Msg.m_pMessage = aText;
-		printf("cringe\n");
 		// pack one for the recording only
 		if(g_Config.m_SvDemoChat)
 			Server()->SendPackMsg(&Msg, MSGFLAG_VITAL | MSGFLAG_NOSEND, -1);
@@ -460,10 +459,8 @@ void CGameContext::SendChat(int ChatterClientID, int Team, const char *pText, in
 				}
 				else
 				{
-					printf("Double Cringe ");
 					if(m_apPlayers[i]->GetTeam() == Team)
 					{
-						printf("Triple Cringe %i, %i\n", Team, m_apPlayers[i]->GetTeam());
 						Server()->SendPackMsg(&Msg, MSGFLAG_VITAL | MSGFLAG_NORECORD, i);
 					}
 				}
@@ -1246,6 +1243,8 @@ void CGameContext::OnClientEnter(int ClientID)
 		{
 			protocol7::CNetMsg_Sv_GameInfo Msg;
 			Msg.m_GameFlags = protocol7::GAMEFLAG_TEAMS | protocol7::GAMEFLAG_FLAGS;
+			if(m_pController->idm)
+				Msg.m_GameFlags = 0;
 			Msg.m_MatchCurrent = 1;
 			Msg.m_MatchNum = 0;
 			Msg.m_ScoreLimit = 0;
@@ -3305,7 +3304,7 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 	// }
 
 	m_pController = new CGameControllerDDRace(this);
-
+	m_pController->idm = !str_comp_nocase(g_Config.m_SvGametype, "idm") || !str_comp_nocase(g_Config.m_SvGametype, "idm+");
 	const char *pCensorFilename = "censorlist.txt";
 	IOHANDLE File = Storage()->OpenFile(pCensorFilename, IOFLAG_READ | IOFLAG_SKIP_BOM, IStorage::TYPE_ALL);
 	if(!File)

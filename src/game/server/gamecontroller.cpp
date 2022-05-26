@@ -24,7 +24,7 @@ IGameController::IGameController(class CGameContext *pGameServer)
 	m_pGameServer = pGameServer;
 	m_pConfig = m_pGameServer->Config();
 	m_pServer = m_pGameServer->Server();
-	m_pGameType = "iCTF++";
+	// m_pGameType = "iCTF++";
 
 	//
 	DoWarmup(g_Config.m_SvWarmup);

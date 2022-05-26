@@ -67,6 +67,7 @@ public:
 	const char *m_pGameType;
 	int m_aTeamscore[2];
 	class CFlag *m_apFlags[2];
+	bool idm; //todo, not this shitty solution
 
 	IGameController(class CGameContext *pGameServer);
 	virtual ~IGameController();
