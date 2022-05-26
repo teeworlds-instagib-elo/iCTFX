@@ -25,6 +25,8 @@ CGameControllerDDRace::CGameControllerDDRace(class CGameContext *pGameServer) :
 	InitTeleporter();
 	m_apFlags[0] = 0;
 	m_apFlags[1] = 0;
+	m_aTeamscore[TEAM_RED] = 0;
+	m_aTeamscore[TEAM_BLUE] = 0;
 }
 
 CGameControllerDDRace::~CGameControllerDDRace() = default;
@@ -177,7 +179,7 @@ void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 		GameServer()->SendChatTarget(ClientID, "welcome to iCTFX!");
 	}
 	pPlayer->m_Score = 0;
-	if(m_apFlags[0] == 0)
+	if(m_apFlags[0] == 0 && false)
 	{
 		CFlag *F = new CFlag(&GameServer()->m_World, 0);
 		F->m_StandPos = vec2(246, 785);
@@ -487,6 +489,27 @@ void CGameControllerDDRace::DoTeamChange(class CPlayer *pPlayer, int Team, bool 
 
 	IGameController::DoTeamChange(pPlayer, Team, DoChatMsg);
 }
+
+bool CGameControllerDDRace::OnEntity(int Index, vec2 Pos, int Layer, int Flags, int Number)
+{
+	if(IGameController::OnEntity(Index, Pos, Layer, Flags, Number))
+		return true;
+
+	int Team = -1;
+	if(Index == ENTITY_FLAGSTAND_RED) Team = TEAM_RED;
+	if(Index == ENTITY_FLAGSTAND_BLUE) Team = TEAM_BLUE;
+	if(Team == -1 || m_apFlags[Team])
+		return false;
+
+	CFlag *F = new CFlag(&GameServer()->m_World, Team);
+	F->m_StandPos = Pos;
+	F->m_Pos = Pos;
+	m_apFlags[Team] = F;
+	GameServer()->m_World.InsertEntity(F);
+	return true;
+}
+
+
 
 int64_t CGameControllerDDRace::GetMaskForPlayerWorldEvent(int Asker, int ExceptID)
 {

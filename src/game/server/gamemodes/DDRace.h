@@ -23,6 +23,7 @@ public:
 	void Snap(int SnappingClient);
 	
 	void HandleCharacterTiles(class CCharacter *pChr, int MapIndex) override;
+	bool OnEntity(int Index, vec2 Pos, int Layer, int Flags, int Number) override;
 
 	void OnPlayerConnect(class CPlayer *pPlayer) override;
 	void OnPlayerDisconnect(class CPlayer *pPlayer, const char *pReason) override;
