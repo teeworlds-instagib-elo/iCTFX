@@ -927,20 +927,20 @@ void CGameContext::OnTick()
 
 					// only allow IPs to vote once, but keep veto ability
 					// check for more players with the same ip (only use the vote of the one who voted first)
-					for(int j = i + 1; j < MAX_CLIENTS; j++)
-					{
-						if(!m_apPlayers[j] || aVoteChecked[j] || str_comp(aaBuf[j], aaBuf[i]) != 0)
-							continue;
+					// for(int j = i + 1; j < MAX_CLIENTS; j++)
+					// {
+					// 	if(!m_apPlayers[j] || aVoteChecked[j] || str_comp(aaBuf[j], aaBuf[i]) != 0)
+					// 		continue;
 
-						// count the latest vote by this ip
-						if(CurVotePos < m_apPlayers[j]->m_VotePos)
-						{
-							CurVote = m_apPlayers[j]->m_Vote;
-							CurVotePos = m_apPlayers[j]->m_VotePos;
-						}
+					// 	// count the latest vote by this ip
+					// 	if(CurVotePos < m_apPlayers[j]->m_VotePos)
+					// 	{
+					// 		CurVote = m_apPlayers[j]->m_Vote;
+					// 		CurVotePos = m_apPlayers[j]->m_VotePos;
+					// 	}
 
-						aVoteChecked[j] = true;
-					}
+					// 	aVoteChecked[j] = true;
+					// }
 
 					Total++;
 					if(CurVote > 0)
@@ -973,27 +973,14 @@ void CGameContext::OnTick()
 					}
 				}
 
-				if(g_Config.m_SvVoteMaxTotal && Total > g_Config.m_SvVoteMaxTotal &&
-					(IsKickVote() || IsSpecVote()))
-					Total = g_Config.m_SvVoteMaxTotal;
-
-				if((Yes > Total / (100.0f / g_Config.m_SvVoteYesPercentage)) && !Veto)
+				if(Yes >= Total/2+1)
 					m_VoteEnforce = VOTE_ENFORCE_YES;
-				else if(No >= Total - Total / (100.0f / g_Config.m_SvVoteYesPercentage))
+				else if(No >= (Total+1)/2)
 					m_VoteEnforce = VOTE_ENFORCE_NO;
-
-				if(VetoStop)
-					m_VoteEnforce = VOTE_ENFORCE_NO;
-
-				m_VoteWillPass = Yes > (Yes + No) / (100.0f / g_Config.m_SvVoteYesPercentage);
 			}
 
-			if(time_get() > m_VoteCloseTime && !g_Config.m_SvVoteMajority)
-				m_VoteEnforce = (m_VoteWillPass && !Veto) ? VOTE_ENFORCE_YES : VOTE_ENFORCE_NO;
-
 			// / Ensure minimum time for vote to end when moderating.
-			if(m_VoteEnforce == VOTE_ENFORCE_YES && !(PlayerModerating() &&
-									(IsKickVote() || IsSpecVote()) && time_get() < m_VoteCloseTime))
+			if(m_VoteEnforce == VOTE_ENFORCE_YES)
 			{
 				Server()->SetRconCID(IServer::RCON_CID_VOTE);
 				Console()->ExecuteLine(m_aVoteCommand);
@@ -1020,7 +1007,7 @@ void CGameContext::OnTick()
 				SendChat(-1, CGameContext::CHAT_ALL, aBuf, -1, CHAT_SIX);
 			}
 			//else if(m_VoteEnforce == VOTE_ENFORCE_NO || time_get() > m_VoteCloseTime)
-			else if(m_VoteEnforce == VOTE_ENFORCE_NO || (time_get() > m_VoteCloseTime && g_Config.m_SvVoteMajority))
+			else if(m_VoteEnforce == VOTE_ENFORCE_NO || time_get() > m_VoteCloseTime)
 			{
 				EndVote();
 				if(VetoStop || (m_VoteWillPass && Veto))
@@ -1798,6 +1785,30 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			if(pEnd != 0)
 				*(const_cast<char *>(pEnd)) = 0;
 
+
+			if(Length >= 2 && str_startswith(pMsg->m_pMessage, "go"))
+			{
+				if(pPlayer->GetTeam() != TEAM_SPECTATORS)
+				{
+					char aBuf[32];
+					str_format(aBuf, sizeof(aBuf), "continue game");
+					char bBuf[32];
+					str_format(bBuf, sizeof(aBuf), "go");
+					StartVote(aBuf, bBuf, "continue", "continue");
+					pPlayer->m_Vote = 1;
+					pPlayer->m_VotePos = ++m_VotePos;
+					m_VoteUpdate = true;
+				}
+			}
+
+			if(Length >= 4 && str_startswith(pMsg->m_pMessage, "stop"))
+			{
+				if(pPlayer->GetTeam() != TEAM_SPECTATORS)
+				{
+					ConStop(0, this);
+				}
+			}
+
 			// drop empty and autocreated spam messages (more than 32 characters per second)
 			if(Length == 0 || (pMsg->m_pMessage[0] != '/' && (g_Config.m_SvSpamprotection && pPlayer->m_LastChat && pPlayer->m_LastChat + Server()->TickSpeed() * ((31 + Length) / 32) > Server()->Tick())))
 				return;
@@ -1808,15 +1819,22 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			else
 				Team = CHAT_ALL;
 
-			if(str_startswith(pMsg->m_pMessage + 1, "go "))
+			if(str_startswith(pMsg->m_pMessage + 1, "go"))
 			{
 				if(pPlayer->GetTeam() != TEAM_SPECTATORS)
 				{
-					ConGo(0, this);
+					char aBuf[32];
+					str_format(aBuf, sizeof(aBuf), "continue game");
+					char bBuf[32];
+					str_format(bBuf, sizeof(aBuf), "go");
+					StartVote(aBuf, bBuf, "continue", "continue");
+					pPlayer->m_Vote = 1;
+					pPlayer->m_VotePos = ++m_VotePos;
+					m_VoteUpdate = true;
 				}
 			}
 
-			if(str_startswith(pMsg->m_pMessage + 1, "stop "))
+			if(str_startswith(pMsg->m_pMessage + 1, "stop"))
 			{
 				if(pPlayer->GetTeam() != TEAM_SPECTATORS)
 				{
@@ -1857,17 +1875,14 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						int Mode = (int)pMsg->m_pMessage[1] - (int)'0';
 						if(Mode < 0 || Mode > 6)
 							return;
-						m_pController->DoWarmup(g_Config.m_SvWarTime);
-						g_Config.m_SvSpectatorSlots = Config()->m_SvMaxClients - 2*Mode;
-						char aBuf[128];
-						str_format(aBuf, sizeof(aBuf), "Upcoming %don%d! Please stay on spectator", Mode, Mode);
-						SendBroadcast(aBuf, -1);
-
-						str_format(aBuf, sizeof(aBuf), "The %don%d will start in %d seconds!", Mode, Mode, g_Config.m_SvWarTime);
-						SendChat(-1, CHAT_ALL, aBuf);
-
-					// 	StartVote(aBuf, bBuf, "", "");
-					// }
+						char aBuf[32];
+						str_format(aBuf, sizeof(aBuf), "Restart round as %don%d", Mode, Mode);
+						char bBuf[32];
+						str_format(bBuf, sizeof(aBuf), "xonx %d", Mode);
+						StartVote(aBuf, bBuf, "xonx", "xonx");
+						pPlayer->m_Vote = 1;
+						pPlayer->m_VotePos = ++m_VotePos;
+						m_VoteUpdate = true;
 					}
 				}
 				else

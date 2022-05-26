@@ -39,7 +39,7 @@ CONSOLE_COMMAND("up", "", CFGFLAG_SERVER | CMDFLAG_TEST, ConGoUp, this, "Makes y
 
 CONSOLE_COMMAND("stop", "", CFGFLAG_SERVER | CMDFLAG_TEST, ConStop, this, "Makes you move 1 tile down")
 CONSOLE_COMMAND("go", "", CFGFLAG_SERVER | CMDFLAG_TEST, ConGo, this, "Makes you move 1 tile down")
-CONSOLE_COMMAND("xonx", "i", CFGFLAG_SERVER | CMDFLAG_TEST, ConXonX, this, "Makes you move 1 tile down")
+CONSOLE_COMMAND("xonx", "i[amount]", CFGFLAG_SERVER, ConXonX, this, "Makes you move 1 tile down")
 CONSOLE_COMMAND("reset", "", CFGFLAG_SERVER | CMDFLAG_TEST, ConReset, this, "Makes you move 1 tile down")
 
 CONSOLE_COMMAND("move", "i[x] i[y]", CFGFLAG_SERVER | CMDFLAG_TEST, ConMove, this, "Moves to the tile with x/y-number ii")
