@@ -314,7 +314,7 @@ void CGameControllerDDRace::Tick()
 						for(int i = 0; i < 2; i++)
 							m_apFlags[i]->Reset();
 						
-						// GameServer()->SendChat(-1, -2, aBuf);
+						GameServer()->SendChat(-1, -2, aBuf);
 
 						GameServer()->CreateSoundGlobal(SOUND_CTF_CAPTURE);
 						for(int i = 0; i < MAX_CLIENTS; i++)
