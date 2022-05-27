@@ -1443,250 +1443,250 @@ void CCharacter::HandleTiles(int Index)
 		m_LastBonus = false;
 		return;
 	}
-	int cp = GameServer()->Collision()->IsCheckpoint(MapIndex);
-	if(cp != -1 && m_DDRaceState == DDRACE_STARTED && cp > m_CpActive)
-	{
-		m_CpActive = cp;
-		m_CpCurrent[cp] = m_Time;
-		m_CpTick = Server()->Tick() + Server()->TickSpeed() * 2;
-		if(m_pPlayer->GetClientVersion() >= VERSION_DDRACE)
-		{
-			CPlayerData *pData = GameServer()->Score()->PlayerData(m_pPlayer->GetCID());
-			CNetMsg_Sv_DDRaceTime Msg;
-			Msg.m_Time = (int)m_Time;
-			Msg.m_Check = 0;
-			Msg.m_Finish = 0;
+	// int cp = GameServer()->Collision()->IsCheckpoint(MapIndex);
+	// if(cp != -1 && m_DDRaceState == DDRACE_STARTED && cp > m_CpActive)
+	// {
+	// 	m_CpActive = cp;
+	// 	m_CpCurrent[cp] = m_Time;
+	// 	m_CpTick = Server()->Tick() + Server()->TickSpeed() * 2;
+	// 	if(m_pPlayer->GetClientVersion() >= VERSION_DDRACE)
+	// 	{
+	// 		CPlayerData *pData = GameServer()->Score()->PlayerData(m_pPlayer->GetCID());
+	// 		CNetMsg_Sv_DDRaceTime Msg;
+	// 		Msg.m_Time = (int)m_Time;
+	// 		Msg.m_Check = 0;
+	// 		Msg.m_Finish = 0;
 
-			if(m_CpActive != -1 && m_CpTick > Server()->Tick())
-			{
-				if(pData->m_BestTime && pData->m_aBestCpTime[m_CpActive] != 0)
-				{
-					float Diff = (m_CpCurrent[m_CpActive] - pData->m_aBestCpTime[m_CpActive]) * 100;
-					Msg.m_Check = (int)Diff;
-				}
-			}
+	// 		if(m_CpActive != -1 && m_CpTick > Server()->Tick())
+	// 		{
+	// 			if(pData->m_BestTime && pData->m_aBestCpTime[m_CpActive] != 0)
+	// 			{
+	// 				float Diff = (m_CpCurrent[m_CpActive] - pData->m_aBestCpTime[m_CpActive]) * 100;
+	// 				Msg.m_Check = (int)Diff;
+	// 			}
+	// 		}
 
-			Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, m_pPlayer->GetCID());
-		}
-	}
-	int cpf = GameServer()->Collision()->IsFCheckpoint(MapIndex);
-	if(cpf != -1 && m_DDRaceState == DDRACE_STARTED && cpf > m_CpActive)
-	{
-		m_CpActive = cpf;
-		m_CpCurrent[cpf] = m_Time;
-		m_CpTick = Server()->Tick() + Server()->TickSpeed() * 2;
-		if(m_pPlayer->GetClientVersion() >= VERSION_DDRACE)
-		{
-			CPlayerData *pData = GameServer()->Score()->PlayerData(m_pPlayer->GetCID());
-			CNetMsg_Sv_DDRaceTime Msg;
-			Msg.m_Time = (int)m_Time;
-			Msg.m_Check = 0;
-			Msg.m_Finish = 0;
+	// 		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, m_pPlayer->GetCID());
+	// 	}
+	// }
+	// int cpf = GameServer()->Collision()->IsFCheckpoint(MapIndex);
+	// if(cpf != -1 && m_DDRaceState == DDRACE_STARTED && cpf > m_CpActive)
+	// {
+	// 	m_CpActive = cpf;
+	// 	m_CpCurrent[cpf] = m_Time;
+	// 	m_CpTick = Server()->Tick() + Server()->TickSpeed() * 2;
+	// 	if(m_pPlayer->GetClientVersion() >= VERSION_DDRACE)
+	// 	{
+	// 		CPlayerData *pData = GameServer()->Score()->PlayerData(m_pPlayer->GetCID());
+	// 		CNetMsg_Sv_DDRaceTime Msg;
+	// 		Msg.m_Time = (int)m_Time;
+	// 		Msg.m_Check = 0;
+	// 		Msg.m_Finish = 0;
 
-			if(m_CpActive != -1 && m_CpTick > Server()->Tick())
-			{
-				if(pData->m_BestTime && pData->m_aBestCpTime[m_CpActive] != 0)
-				{
-					float Diff = (m_CpCurrent[m_CpActive] - pData->m_aBestCpTime[m_CpActive]) * 100;
-					Msg.m_Check = (int)Diff;
-				}
-			}
+	// 		if(m_CpActive != -1 && m_CpTick > Server()->Tick())
+	// 		{
+	// 			if(pData->m_BestTime && pData->m_aBestCpTime[m_CpActive] != 0)
+	// 			{
+	// 				float Diff = (m_CpCurrent[m_CpActive] - pData->m_aBestCpTime[m_CpActive]) * 100;
+	// 				Msg.m_Check = (int)Diff;
+	// 			}
+	// 		}
 
-			Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, m_pPlayer->GetCID());
-		}
-	}
-	int tcp = GameServer()->Collision()->IsTCheckpoint(MapIndex);
-	if(tcp)
-		m_TeleCheckpoint = tcp;
+	// 		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, m_pPlayer->GetCID());
+	// 	}
+	// }
+	// int tcp = GameServer()->Collision()->IsTCheckpoint(MapIndex);
+	// if(tcp)
+	// 	m_TeleCheckpoint = tcp;
 
-	GameServer()->m_pController->HandleCharacterTiles(this, Index);
+	// GameServer()->m_pController->HandleCharacterTiles(this, Index);
 
-	// freeze
-	if(((m_TileIndex == TILE_FREEZE) || (m_TileFIndex == TILE_FREEZE)) && !m_Super && !m_DeepFreeze)
-		Freeze();
-	else if(((m_TileIndex == TILE_UNFREEZE) || (m_TileFIndex == TILE_UNFREEZE)) && !m_DeepFreeze)
-		UnFreeze();
+	// // freeze
+	// if(((m_TileIndex == TILE_FREEZE) || (m_TileFIndex == TILE_FREEZE)) && !m_Super && !m_DeepFreeze)
+	// 	Freeze();
+	// else if(((m_TileIndex == TILE_UNFREEZE) || (m_TileFIndex == TILE_UNFREEZE)) && !m_DeepFreeze)
+	// 	UnFreeze();
 
-	// deep freeze
-	if(((m_TileIndex == TILE_DFREEZE) || (m_TileFIndex == TILE_DFREEZE)) && !m_Super && !m_DeepFreeze)
-		m_DeepFreeze = true;
-	else if(((m_TileIndex == TILE_DUNFREEZE) || (m_TileFIndex == TILE_DUNFREEZE)) && !m_Super && m_DeepFreeze)
-		m_DeepFreeze = false;
+	// // deep freeze
+	// if(((m_TileIndex == TILE_DFREEZE) || (m_TileFIndex == TILE_DFREEZE)) && !m_Super && !m_DeepFreeze)
+	// 	m_DeepFreeze = true;
+	// else if(((m_TileIndex == TILE_DUNFREEZE) || (m_TileFIndex == TILE_DUNFREEZE)) && !m_Super && m_DeepFreeze)
+	// 	m_DeepFreeze = false;
 
-	// live freeze
-	if(((m_TileIndex == TILE_LFREEZE) || (m_TileFIndex == TILE_LFREEZE)) && !m_Super)
-	{
-		SetLiveFrozen(true);
-	}
-	else if(((m_TileIndex == TILE_LUNFREEZE) || (m_TileFIndex == TILE_LUNFREEZE)) && !m_Super)
-	{
-		SetLiveFrozen(false);
-	}
+	// // live freeze
+	// if(((m_TileIndex == TILE_LFREEZE) || (m_TileFIndex == TILE_LFREEZE)) && !m_Super)
+	// {
+	// 	SetLiveFrozen(true);
+	// }
+	// else if(((m_TileIndex == TILE_LUNFREEZE) || (m_TileFIndex == TILE_LUNFREEZE)) && !m_Super)
+	// {
+	// 	SetLiveFrozen(false);
+	// }
 
-	// endless hook
-	if(((m_TileIndex == TILE_EHOOK_ENABLE) || (m_TileFIndex == TILE_EHOOK_ENABLE)))
-	{
-		SetEndlessHook(true);
-	}
-	else if(((m_TileIndex == TILE_EHOOK_DISABLE) || (m_TileFIndex == TILE_EHOOK_DISABLE)))
-	{
-		SetEndlessHook(false);
-	}
+	// // endless hook
+	// if(((m_TileIndex == TILE_EHOOK_ENABLE) || (m_TileFIndex == TILE_EHOOK_ENABLE)))
+	// {
+	// 	SetEndlessHook(true);
+	// }
+	// else if(((m_TileIndex == TILE_EHOOK_DISABLE) || (m_TileFIndex == TILE_EHOOK_DISABLE)))
+	// {
+	// 	SetEndlessHook(false);
+	// }
 
-	// hit others
-	if(((m_TileIndex == TILE_HIT_DISABLE) || (m_TileFIndex == TILE_HIT_DISABLE)) && m_Hit != (DISABLE_HIT_GRENADE | DISABLE_HIT_HAMMER | DISABLE_HIT_LASER | DISABLE_HIT_SHOTGUN))
-	{
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can't hit others");
-		m_Hit = DISABLE_HIT_GRENADE | DISABLE_HIT_HAMMER | DISABLE_HIT_LASER | DISABLE_HIT_SHOTGUN;
-		m_Core.m_NoShotgunHit = true;
-		m_Core.m_NoGrenadeHit = true;
-		m_Core.m_NoHammerHit = true;
-		m_Core.m_NoLaserHit = true;
-		m_NeededFaketuning |= FAKETUNE_NOHAMMER;
-		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
-	}
-	else if(((m_TileIndex == TILE_HIT_ENABLE) || (m_TileFIndex == TILE_HIT_ENABLE)) && m_Hit != HIT_ALL)
-	{
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can hit others");
-		m_Hit = HIT_ALL;
-		m_Core.m_NoShotgunHit = false;
-		m_Core.m_NoGrenadeHit = false;
-		m_Core.m_NoHammerHit = false;
-		m_Core.m_NoLaserHit = false;
-		m_NeededFaketuning &= ~FAKETUNE_NOHAMMER;
-		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
-	}
+	// // hit others
+	// if(((m_TileIndex == TILE_HIT_DISABLE) || (m_TileFIndex == TILE_HIT_DISABLE)) && m_Hit != (DISABLE_HIT_GRENADE | DISABLE_HIT_HAMMER | DISABLE_HIT_LASER | DISABLE_HIT_SHOTGUN))
+	// {
+	// 	GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can't hit others");
+	// 	m_Hit = DISABLE_HIT_GRENADE | DISABLE_HIT_HAMMER | DISABLE_HIT_LASER | DISABLE_HIT_SHOTGUN;
+	// 	m_Core.m_NoShotgunHit = true;
+	// 	m_Core.m_NoGrenadeHit = true;
+	// 	m_Core.m_NoHammerHit = true;
+	// 	m_Core.m_NoLaserHit = true;
+	// 	m_NeededFaketuning |= FAKETUNE_NOHAMMER;
+	// 	GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
+	// }
+	// else if(((m_TileIndex == TILE_HIT_ENABLE) || (m_TileFIndex == TILE_HIT_ENABLE)) && m_Hit != HIT_ALL)
+	// {
+	// 	GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can hit others");
+	// 	m_Hit = HIT_ALL;
+	// 	m_Core.m_NoShotgunHit = false;
+	// 	m_Core.m_NoGrenadeHit = false;
+	// 	m_Core.m_NoHammerHit = false;
+	// 	m_Core.m_NoLaserHit = false;
+	// 	m_NeededFaketuning &= ~FAKETUNE_NOHAMMER;
+	// 	GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
+	// }
 
-	// collide with others
-	if(((m_TileIndex == TILE_NPC_DISABLE) || (m_TileFIndex == TILE_NPC_DISABLE)) && m_Core.m_Collision)
-	{
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can't collide with others");
-		m_Core.m_Collision = false;
-		m_Core.m_NoCollision = true;
-		m_NeededFaketuning |= FAKETUNE_NOCOLL;
-		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
-	}
-	else if(((m_TileIndex == TILE_NPC_ENABLE) || (m_TileFIndex == TILE_NPC_ENABLE)) && !m_Core.m_Collision)
-	{
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can collide with others");
-		m_Core.m_Collision = true;
-		m_Core.m_NoCollision = false;
-		m_NeededFaketuning &= ~FAKETUNE_NOCOLL;
-		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
-	}
+	// // collide with others
+	// if(((m_TileIndex == TILE_NPC_DISABLE) || (m_TileFIndex == TILE_NPC_DISABLE)) && m_Core.m_Collision)
+	// {
+	// 	GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can't collide with others");
+	// 	m_Core.m_Collision = false;
+	// 	m_Core.m_NoCollision = true;
+	// 	m_NeededFaketuning |= FAKETUNE_NOCOLL;
+	// 	GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
+	// }
+	// else if(((m_TileIndex == TILE_NPC_ENABLE) || (m_TileFIndex == TILE_NPC_ENABLE)) && !m_Core.m_Collision)
+	// {
+	// 	GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can collide with others");
+	// 	m_Core.m_Collision = true;
+	// 	m_Core.m_NoCollision = false;
+	// 	m_NeededFaketuning &= ~FAKETUNE_NOCOLL;
+	// 	GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
+	// }
 
-	// hook others
-	if(((m_TileIndex == TILE_NPH_DISABLE) || (m_TileFIndex == TILE_NPH_DISABLE)) && m_Core.m_Hook)
-	{
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can't hook others");
-		m_Core.m_Hook = false;
-		m_Core.m_NoHookHit = true;
-		m_NeededFaketuning |= FAKETUNE_NOHOOK;
-		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
-	}
-	else if(((m_TileIndex == TILE_NPH_ENABLE) || (m_TileFIndex == TILE_NPH_ENABLE)) && !m_Core.m_Hook)
-	{
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can hook others");
-		m_Core.m_Hook = true;
-		m_Core.m_NoHookHit = false;
-		m_NeededFaketuning &= ~FAKETUNE_NOHOOK;
-		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
-	}
+	// // hook others
+	// if(((m_TileIndex == TILE_NPH_DISABLE) || (m_TileFIndex == TILE_NPH_DISABLE)) && m_Core.m_Hook)
+	// {
+	// 	GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can't hook others");
+	// 	m_Core.m_Hook = false;
+	// 	m_Core.m_NoHookHit = true;
+	// 	m_NeededFaketuning |= FAKETUNE_NOHOOK;
+	// 	GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
+	// }
+	// else if(((m_TileIndex == TILE_NPH_ENABLE) || (m_TileFIndex == TILE_NPH_ENABLE)) && !m_Core.m_Hook)
+	// {
+	// 	GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can hook others");
+	// 	m_Core.m_Hook = true;
+	// 	m_Core.m_NoHookHit = false;
+	// 	m_NeededFaketuning &= ~FAKETUNE_NOHOOK;
+	// 	GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
+	// }
 
-	// unlimited air jumps
-	if(((m_TileIndex == TILE_UNLIMITED_JUMPS_ENABLE) || (m_TileFIndex == TILE_UNLIMITED_JUMPS_ENABLE)) && !m_SuperJump)
-	{
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You have unlimited air jumps");
-		m_SuperJump = true;
-		m_Core.m_EndlessJump = true;
-		if(m_Core.m_Jumps == 0)
-		{
-			m_NeededFaketuning &= ~FAKETUNE_NOJUMP;
-			GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
-		}
-	}
-	else if(((m_TileIndex == TILE_UNLIMITED_JUMPS_DISABLE) || (m_TileFIndex == TILE_UNLIMITED_JUMPS_DISABLE)) && m_SuperJump)
-	{
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You don't have unlimited air jumps");
-		m_SuperJump = false;
-		m_Core.m_EndlessJump = false;
-		if(m_Core.m_Jumps == 0)
-		{
-			m_NeededFaketuning |= FAKETUNE_NOJUMP;
-			GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
-		}
-	}
+	// // unlimited air jumps
+	// if(((m_TileIndex == TILE_UNLIMITED_JUMPS_ENABLE) || (m_TileFIndex == TILE_UNLIMITED_JUMPS_ENABLE)) && !m_SuperJump)
+	// {
+	// 	GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You have unlimited air jumps");
+	// 	m_SuperJump = true;
+	// 	m_Core.m_EndlessJump = true;
+	// 	if(m_Core.m_Jumps == 0)
+	// 	{
+	// 		m_NeededFaketuning &= ~FAKETUNE_NOJUMP;
+	// 		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
+	// 	}
+	// }
+	// else if(((m_TileIndex == TILE_UNLIMITED_JUMPS_DISABLE) || (m_TileFIndex == TILE_UNLIMITED_JUMPS_DISABLE)) && m_SuperJump)
+	// {
+	// 	GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You don't have unlimited air jumps");
+	// 	m_SuperJump = false;
+	// 	m_Core.m_EndlessJump = false;
+	// 	if(m_Core.m_Jumps == 0)
+	// 	{
+	// 		m_NeededFaketuning |= FAKETUNE_NOJUMP;
+	// 		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
+	// 	}
+	// }
 
-	// walljump
-	if((m_TileIndex == TILE_WALLJUMP) || (m_TileFIndex == TILE_WALLJUMP))
-	{
-		if(m_Core.m_Vel.y > 0 && m_Core.m_Colliding && m_Core.m_LeftWall)
-		{
-			m_Core.m_LeftWall = false;
-			m_Core.m_JumpedTotal = m_Core.m_Jumps - 1;
-			m_Core.m_Jumped = 1;
-		}
-	}
+	// // walljump
+	// if((m_TileIndex == TILE_WALLJUMP) || (m_TileFIndex == TILE_WALLJUMP))
+	// {
+	// 	if(m_Core.m_Vel.y > 0 && m_Core.m_Colliding && m_Core.m_LeftWall)
+	// 	{
+	// 		m_Core.m_LeftWall = false;
+	// 		m_Core.m_JumpedTotal = m_Core.m_Jumps - 1;
+	// 		m_Core.m_Jumped = 1;
+	// 	}
+	// }
 
-	// jetpack gun
-	if(((m_TileIndex == TILE_JETPACK_ENABLE) || (m_TileFIndex == TILE_JETPACK_ENABLE)) && !m_Jetpack)
-	{
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You have a jetpack gun");
-		m_Jetpack = true;
-		m_Core.m_Jetpack = true;
-	}
-	else if(((m_TileIndex == TILE_JETPACK_DISABLE) || (m_TileFIndex == TILE_JETPACK_DISABLE)) && m_Jetpack)
-	{
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost your jetpack gun");
-		m_Jetpack = false;
-		m_Core.m_Jetpack = false;
-	}
+	// // jetpack gun
+	// if(((m_TileIndex == TILE_JETPACK_ENABLE) || (m_TileFIndex == TILE_JETPACK_ENABLE)) && !m_Jetpack)
+	// {
+	// 	GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You have a jetpack gun");
+	// 	m_Jetpack = true;
+	// 	m_Core.m_Jetpack = true;
+	// }
+	// else if(((m_TileIndex == TILE_JETPACK_DISABLE) || (m_TileFIndex == TILE_JETPACK_DISABLE)) && m_Jetpack)
+	// {
+	// 	GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You lost your jetpack gun");
+	// 	m_Jetpack = false;
+	// 	m_Core.m_Jetpack = false;
+	// }
 
-	// refill jumps
-	if(((m_TileIndex == TILE_REFILL_JUMPS) || (m_TileFIndex == TILE_REFILL_JUMPS)) && !m_LastRefillJumps)
-	{
-		m_Core.m_JumpedTotal = 0;
-		m_Core.m_Jumped = 0;
-		m_LastRefillJumps = true;
-	}
-	if((m_TileIndex != TILE_REFILL_JUMPS) && (m_TileFIndex != TILE_REFILL_JUMPS))
-	{
-		m_LastRefillJumps = false;
-	}
+	// // refill jumps
+	// if(((m_TileIndex == TILE_REFILL_JUMPS) || (m_TileFIndex == TILE_REFILL_JUMPS)) && !m_LastRefillJumps)
+	// {
+	// 	m_Core.m_JumpedTotal = 0;
+	// 	m_Core.m_Jumped = 0;
+	// 	m_LastRefillJumps = true;
+	// }
+	// if((m_TileIndex != TILE_REFILL_JUMPS) && (m_TileFIndex != TILE_REFILL_JUMPS))
+	// {
+	// 	m_LastRefillJumps = false;
+	// }
 
-	// Teleport gun
-	if(((m_TileIndex == TILE_TELE_GUN_ENABLE) || (m_TileFIndex == TILE_TELE_GUN_ENABLE)) && !m_Core.m_HasTelegunGun)
-	{
-		m_Core.m_HasTelegunGun = true;
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Teleport gun enabled");
-	}
-	else if(((m_TileIndex == TILE_TELE_GUN_DISABLE) || (m_TileFIndex == TILE_TELE_GUN_DISABLE)) && m_Core.m_HasTelegunGun)
-	{
-		m_Core.m_HasTelegunGun = false;
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Teleport gun disabled");
-	}
+	// // Teleport gun
+	// if(((m_TileIndex == TILE_TELE_GUN_ENABLE) || (m_TileFIndex == TILE_TELE_GUN_ENABLE)) && !m_Core.m_HasTelegunGun)
+	// {
+	// 	m_Core.m_HasTelegunGun = true;
+	// 	GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Teleport gun enabled");
+	// }
+	// else if(((m_TileIndex == TILE_TELE_GUN_DISABLE) || (m_TileFIndex == TILE_TELE_GUN_DISABLE)) && m_Core.m_HasTelegunGun)
+	// {
+	// 	m_Core.m_HasTelegunGun = false;
+	// 	GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Teleport gun disabled");
+	// }
 
-	if(((m_TileIndex == TILE_TELE_GRENADE_ENABLE) || (m_TileFIndex == TILE_TELE_GRENADE_ENABLE)) && !m_Core.m_HasTelegunGrenade)
-	{
-		m_Core.m_HasTelegunGrenade = true;
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Teleport grenade enabled");
-	}
-	else if(((m_TileIndex == TILE_TELE_GRENADE_DISABLE) || (m_TileFIndex == TILE_TELE_GRENADE_DISABLE)) && m_Core.m_HasTelegunGrenade)
-	{
-		m_Core.m_HasTelegunGrenade = false;
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Teleport grenade disabled");
-	}
+	// if(((m_TileIndex == TILE_TELE_GRENADE_ENABLE) || (m_TileFIndex == TILE_TELE_GRENADE_ENABLE)) && !m_Core.m_HasTelegunGrenade)
+	// {
+	// 	m_Core.m_HasTelegunGrenade = true;
+	// 	GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Teleport grenade enabled");
+	// }
+	// else if(((m_TileIndex == TILE_TELE_GRENADE_DISABLE) || (m_TileFIndex == TILE_TELE_GRENADE_DISABLE)) && m_Core.m_HasTelegunGrenade)
+	// {
+	// 	m_Core.m_HasTelegunGrenade = false;
+	// 	GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Teleport grenade disabled");
+	// }
 
-	if(((m_TileIndex == TILE_TELE_LASER_ENABLE) || (m_TileFIndex == TILE_TELE_LASER_ENABLE)) && !m_Core.m_HasTelegunLaser)
-	{
-		m_Core.m_HasTelegunLaser = true;
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Teleport laser enabled");
-	}
-	else if(((m_TileIndex == TILE_TELE_LASER_DISABLE) || (m_TileFIndex == TILE_TELE_LASER_DISABLE)) && m_Core.m_HasTelegunLaser)
-	{
-		m_Core.m_HasTelegunLaser = false;
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Teleport laser disabled");
-	}
+	// if(((m_TileIndex == TILE_TELE_LASER_ENABLE) || (m_TileFIndex == TILE_TELE_LASER_ENABLE)) && !m_Core.m_HasTelegunLaser)
+	// {
+	// 	m_Core.m_HasTelegunLaser = true;
+	// 	GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Teleport laser enabled");
+	// }
+	// else if(((m_TileIndex == TILE_TELE_LASER_DISABLE) || (m_TileFIndex == TILE_TELE_LASER_DISABLE)) && m_Core.m_HasTelegunLaser)
+	// {
+	// 	m_Core.m_HasTelegunLaser = false;
+	// 	GameServer()->SendChatTarget(GetPlayer()->GetCID(), "Teleport laser disabled");
+	// }
 
 	// stopper
 	if(m_Core.m_Vel.y > 0 && (m_MoveRestrictions & CANTMOVE_DOWN))
@@ -1697,315 +1697,315 @@ void CCharacter::HandleTiles(int Index)
 	m_Core.m_Vel = ClampVel(m_MoveRestrictions, m_Core.m_Vel);
 
 	// handle switch tiles
-	if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_SWITCHOPEN && Team() != TEAM_SUPER && GameServer()->Collision()->GetSwitchNumber(MapIndex) > 0)
-	{
-		GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_Status[Team()] = true;
-		GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_EndTick[Team()] = 0;
-		GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_Type[Team()] = TILE_SWITCHOPEN;
-	}
-	else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_SWITCHTIMEDOPEN && Team() != TEAM_SUPER && GameServer()->Collision()->GetSwitchNumber(MapIndex) > 0)
-	{
-		GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_Status[Team()] = true;
-		GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_EndTick[Team()] = Server()->Tick() + 1 + GameServer()->Collision()->GetSwitchDelay(MapIndex) * Server()->TickSpeed();
-		GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_Type[Team()] = TILE_SWITCHTIMEDOPEN;
-	}
-	else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_SWITCHTIMEDCLOSE && Team() != TEAM_SUPER && GameServer()->Collision()->GetSwitchNumber(MapIndex) > 0)
-	{
-		GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_Status[Team()] = false;
-		GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_EndTick[Team()] = Server()->Tick() + 1 + GameServer()->Collision()->GetSwitchDelay(MapIndex) * Server()->TickSpeed();
-		GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_Type[Team()] = TILE_SWITCHTIMEDCLOSE;
-	}
-	else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_SWITCHCLOSE && Team() != TEAM_SUPER && GameServer()->Collision()->GetSwitchNumber(MapIndex) > 0)
-	{
-		GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_Status[Team()] = false;
-		GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_EndTick[Team()] = 0;
-		GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_Type[Team()] = TILE_SWITCHCLOSE;
-	}
-	else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_FREEZE && Team() != TEAM_SUPER)
-	{
-		if(GameServer()->Collision()->GetSwitchNumber(MapIndex) == 0 || GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_Status[Team()])
-			Freeze(GameServer()->Collision()->GetSwitchDelay(MapIndex));
-	}
-	else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_DFREEZE && Team() != TEAM_SUPER)
-	{
-		if(GameServer()->Collision()->GetSwitchNumber(MapIndex) == 0 || GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_Status[Team()])
-			m_DeepFreeze = true;
-	}
-	else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_DUNFREEZE && Team() != TEAM_SUPER)
-	{
-		if(GameServer()->Collision()->GetSwitchNumber(MapIndex) == 0 || GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_Status[Team()])
-			m_DeepFreeze = false;
-	}
-	else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_LFREEZE && Team() != TEAM_SUPER)
-	{
-		if(GameServer()->Collision()->GetSwitchNumber(MapIndex) == 0 || GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_Status[Team()])
-		{
-			m_LiveFreeze = true;
-			m_Core.m_LiveFrozen = true;
-		}
-	}
-	else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_LUNFREEZE && Team() != TEAM_SUPER)
-	{
-		if(GameServer()->Collision()->GetSwitchNumber(MapIndex) == 0 || GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_Status[Team()])
-		{
-			m_LiveFreeze = false;
-			m_Core.m_LiveFrozen = false;
-		}
-	}
-	else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_HIT_ENABLE && m_Hit & DISABLE_HIT_HAMMER && GameServer()->Collision()->GetSwitchDelay(MapIndex) == WEAPON_HAMMER)
-	{
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can hammer hit others");
-		m_Hit &= ~DISABLE_HIT_HAMMER;
-		m_NeededFaketuning &= ~FAKETUNE_NOHAMMER;
-		m_Core.m_NoHammerHit = false;
-		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
-	}
-	else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_HIT_DISABLE && !(m_Hit & DISABLE_HIT_HAMMER) && GameServer()->Collision()->GetSwitchDelay(MapIndex) == WEAPON_HAMMER)
-	{
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can't hammer hit others");
-		m_Hit |= DISABLE_HIT_HAMMER;
-		m_NeededFaketuning |= FAKETUNE_NOHAMMER;
-		m_Core.m_NoHammerHit = true;
-		GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
-	}
-	else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_HIT_ENABLE && m_Hit & DISABLE_HIT_SHOTGUN && GameServer()->Collision()->GetSwitchDelay(MapIndex) == WEAPON_SHOTGUN)
-	{
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can shoot others with shotgun");
-		m_Hit &= ~DISABLE_HIT_SHOTGUN;
-		m_Core.m_NoShotgunHit = false;
-	}
-	else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_HIT_DISABLE && !(m_Hit & DISABLE_HIT_SHOTGUN) && GameServer()->Collision()->GetSwitchDelay(MapIndex) == WEAPON_SHOTGUN)
-	{
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can't shoot others with shotgun");
-		m_Hit |= DISABLE_HIT_SHOTGUN;
-		m_Core.m_NoShotgunHit = true;
-	}
-	else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_HIT_ENABLE && m_Hit & DISABLE_HIT_GRENADE && GameServer()->Collision()->GetSwitchDelay(MapIndex) == WEAPON_GRENADE)
-	{
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can shoot others with grenade");
-		m_Hit &= ~DISABLE_HIT_GRENADE;
-		m_Core.m_NoGrenadeHit = false;
-	}
-	else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_HIT_DISABLE && !(m_Hit & DISABLE_HIT_GRENADE) && GameServer()->Collision()->GetSwitchDelay(MapIndex) == WEAPON_GRENADE)
-	{
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can't shoot others with grenade");
-		m_Hit |= DISABLE_HIT_GRENADE;
-		m_Core.m_NoGrenadeHit = true;
-	}
-	else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_HIT_ENABLE && m_Hit & DISABLE_HIT_LASER && GameServer()->Collision()->GetSwitchDelay(MapIndex) == WEAPON_LASER)
-	{
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can shoot others with laser");
-		m_Hit &= ~DISABLE_HIT_LASER;
-		m_Core.m_NoLaserHit = false;
-	}
-	else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_HIT_DISABLE && !(m_Hit & DISABLE_HIT_LASER) && GameServer()->Collision()->GetSwitchDelay(MapIndex) == WEAPON_LASER)
-	{
-		GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can't shoot others with laser");
-		m_Hit |= DISABLE_HIT_LASER;
-		m_Core.m_NoLaserHit = true;
-	}
-	else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_JUMP)
-	{
-		int NewJumps = GameServer()->Collision()->GetSwitchDelay(MapIndex);
-		if(NewJumps == 255)
-		{
-			NewJumps = -1;
-		}
+	// if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_SWITCHOPEN && Team() != TEAM_SUPER && GameServer()->Collision()->GetSwitchNumber(MapIndex) > 0)
+	// {
+	// 	GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_Status[Team()] = true;
+	// 	GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_EndTick[Team()] = 0;
+	// 	GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_Type[Team()] = TILE_SWITCHOPEN;
+	// }
+	// else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_SWITCHTIMEDOPEN && Team() != TEAM_SUPER && GameServer()->Collision()->GetSwitchNumber(MapIndex) > 0)
+	// {
+	// 	GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_Status[Team()] = true;
+	// 	GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_EndTick[Team()] = Server()->Tick() + 1 + GameServer()->Collision()->GetSwitchDelay(MapIndex) * Server()->TickSpeed();
+	// 	GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_Type[Team()] = TILE_SWITCHTIMEDOPEN;
+	// }
+	// else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_SWITCHTIMEDCLOSE && Team() != TEAM_SUPER && GameServer()->Collision()->GetSwitchNumber(MapIndex) > 0)
+	// {
+	// 	GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_Status[Team()] = false;
+	// 	GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_EndTick[Team()] = Server()->Tick() + 1 + GameServer()->Collision()->GetSwitchDelay(MapIndex) * Server()->TickSpeed();
+	// 	GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_Type[Team()] = TILE_SWITCHTIMEDCLOSE;
+	// }
+	// else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_SWITCHCLOSE && Team() != TEAM_SUPER && GameServer()->Collision()->GetSwitchNumber(MapIndex) > 0)
+	// {
+	// 	GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_Status[Team()] = false;
+	// 	GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_EndTick[Team()] = 0;
+	// 	GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_Type[Team()] = TILE_SWITCHCLOSE;
+	// }
+	// else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_FREEZE && Team() != TEAM_SUPER)
+	// {
+	// 	if(GameServer()->Collision()->GetSwitchNumber(MapIndex) == 0 || GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_Status[Team()])
+	// 		Freeze(GameServer()->Collision()->GetSwitchDelay(MapIndex));
+	// }
+	// else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_DFREEZE && Team() != TEAM_SUPER)
+	// {
+	// 	if(GameServer()->Collision()->GetSwitchNumber(MapIndex) == 0 || GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_Status[Team()])
+	// 		m_DeepFreeze = true;
+	// }
+	// else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_DUNFREEZE && Team() != TEAM_SUPER)
+	// {
+	// 	if(GameServer()->Collision()->GetSwitchNumber(MapIndex) == 0 || GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_Status[Team()])
+	// 		m_DeepFreeze = false;
+	// }
+	// else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_LFREEZE && Team() != TEAM_SUPER)
+	// {
+	// 	if(GameServer()->Collision()->GetSwitchNumber(MapIndex) == 0 || GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_Status[Team()])
+	// 	{
+	// 		m_LiveFreeze = true;
+	// 		m_Core.m_LiveFrozen = true;
+	// 	}
+	// }
+	// else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_LUNFREEZE && Team() != TEAM_SUPER)
+	// {
+	// 	if(GameServer()->Collision()->GetSwitchNumber(MapIndex) == 0 || GameServer()->Collision()->m_pSwitchers[GameServer()->Collision()->GetSwitchNumber(MapIndex)].m_Status[Team()])
+	// 	{
+	// 		m_LiveFreeze = false;
+	// 		m_Core.m_LiveFrozen = false;
+	// 	}
+	// }
+	// else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_HIT_ENABLE && m_Hit & DISABLE_HIT_HAMMER && GameServer()->Collision()->GetSwitchDelay(MapIndex) == WEAPON_HAMMER)
+	// {
+	// 	GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can hammer hit others");
+	// 	m_Hit &= ~DISABLE_HIT_HAMMER;
+	// 	m_NeededFaketuning &= ~FAKETUNE_NOHAMMER;
+	// 	m_Core.m_NoHammerHit = false;
+	// 	GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
+	// }
+	// else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_HIT_DISABLE && !(m_Hit & DISABLE_HIT_HAMMER) && GameServer()->Collision()->GetSwitchDelay(MapIndex) == WEAPON_HAMMER)
+	// {
+	// 	GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can't hammer hit others");
+	// 	m_Hit |= DISABLE_HIT_HAMMER;
+	// 	m_NeededFaketuning |= FAKETUNE_NOHAMMER;
+	// 	m_Core.m_NoHammerHit = true;
+	// 	GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
+	// }
+	// else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_HIT_ENABLE && m_Hit & DISABLE_HIT_SHOTGUN && GameServer()->Collision()->GetSwitchDelay(MapIndex) == WEAPON_SHOTGUN)
+	// {
+	// 	GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can shoot others with shotgun");
+	// 	m_Hit &= ~DISABLE_HIT_SHOTGUN;
+	// 	m_Core.m_NoShotgunHit = false;
+	// }
+	// else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_HIT_DISABLE && !(m_Hit & DISABLE_HIT_SHOTGUN) && GameServer()->Collision()->GetSwitchDelay(MapIndex) == WEAPON_SHOTGUN)
+	// {
+	// 	GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can't shoot others with shotgun");
+	// 	m_Hit |= DISABLE_HIT_SHOTGUN;
+	// 	m_Core.m_NoShotgunHit = true;
+	// }
+	// else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_HIT_ENABLE && m_Hit & DISABLE_HIT_GRENADE && GameServer()->Collision()->GetSwitchDelay(MapIndex) == WEAPON_GRENADE)
+	// {
+	// 	GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can shoot others with grenade");
+	// 	m_Hit &= ~DISABLE_HIT_GRENADE;
+	// 	m_Core.m_NoGrenadeHit = false;
+	// }
+	// else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_HIT_DISABLE && !(m_Hit & DISABLE_HIT_GRENADE) && GameServer()->Collision()->GetSwitchDelay(MapIndex) == WEAPON_GRENADE)
+	// {
+	// 	GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can't shoot others with grenade");
+	// 	m_Hit |= DISABLE_HIT_GRENADE;
+	// 	m_Core.m_NoGrenadeHit = true;
+	// }
+	// else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_HIT_ENABLE && m_Hit & DISABLE_HIT_LASER && GameServer()->Collision()->GetSwitchDelay(MapIndex) == WEAPON_LASER)
+	// {
+	// 	GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can shoot others with laser");
+	// 	m_Hit &= ~DISABLE_HIT_LASER;
+	// 	m_Core.m_NoLaserHit = false;
+	// }
+	// else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_HIT_DISABLE && !(m_Hit & DISABLE_HIT_LASER) && GameServer()->Collision()->GetSwitchDelay(MapIndex) == WEAPON_LASER)
+	// {
+	// 	GameServer()->SendChatTarget(GetPlayer()->GetCID(), "You can't shoot others with laser");
+	// 	m_Hit |= DISABLE_HIT_LASER;
+	// 	m_Core.m_NoLaserHit = true;
+	// }
+	// else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_JUMP)
+	// {
+	// 	int NewJumps = GameServer()->Collision()->GetSwitchDelay(MapIndex);
+	// 	if(NewJumps == 255)
+	// 	{
+	// 		NewJumps = -1;
+	// 	}
 
-		if(NewJumps != m_Core.m_Jumps)
-		{
-			char aBuf[256];
-			if(NewJumps == -1)
-				str_format(aBuf, sizeof(aBuf), "You only have your ground jump now");
-			else if(NewJumps == 1)
-				str_format(aBuf, sizeof(aBuf), "You can jump %d time", NewJumps);
-			else
-				str_format(aBuf, sizeof(aBuf), "You can jump %d times", NewJumps);
-			GameServer()->SendChatTarget(GetPlayer()->GetCID(), aBuf);
+	// 	if(NewJumps != m_Core.m_Jumps)
+	// 	{
+	// 		char aBuf[256];
+	// 		if(NewJumps == -1)
+	// 			str_format(aBuf, sizeof(aBuf), "You only have your ground jump now");
+	// 		else if(NewJumps == 1)
+	// 			str_format(aBuf, sizeof(aBuf), "You can jump %d time", NewJumps);
+	// 		else
+	// 			str_format(aBuf, sizeof(aBuf), "You can jump %d times", NewJumps);
+	// 		GameServer()->SendChatTarget(GetPlayer()->GetCID(), aBuf);
 
-			if(NewJumps == 0 && !m_SuperJump)
-			{
-				m_NeededFaketuning |= FAKETUNE_NOJUMP;
-				GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
-			}
-			else if(m_Core.m_Jumps == 0)
-			{
-				m_NeededFaketuning &= ~FAKETUNE_NOJUMP;
-				GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
-			}
+	// 		if(NewJumps == 0 && !m_SuperJump)
+	// 		{
+	// 			m_NeededFaketuning |= FAKETUNE_NOJUMP;
+	// 			GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
+	// 		}
+	// 		else if(m_Core.m_Jumps == 0)
+	// 		{
+	// 			m_NeededFaketuning &= ~FAKETUNE_NOJUMP;
+	// 			GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone); // update tunings
+	// 		}
 
-			m_Core.m_Jumps = NewJumps;
-		}
-	}
-	else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_ADD_TIME && !m_LastPenalty)
-	{
-		int min = GameServer()->Collision()->GetSwitchDelay(MapIndex);
-		int sec = GameServer()->Collision()->GetSwitchNumber(MapIndex);
-		int Team = Teams()->m_Core.Team(m_Core.m_Id);
+	// 		m_Core.m_Jumps = NewJumps;
+	// 	}
+	// }
+	// else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_ADD_TIME && !m_LastPenalty)
+	// {
+	// 	int min = GameServer()->Collision()->GetSwitchDelay(MapIndex);
+	// 	int sec = GameServer()->Collision()->GetSwitchNumber(MapIndex);
+	// 	int Team = Teams()->m_Core.Team(m_Core.m_Id);
 
-		m_StartTime -= (min * 60 + sec) * Server()->TickSpeed();
+	// 	m_StartTime -= (min * 60 + sec) * Server()->TickSpeed();
 
-		if((g_Config.m_SvTeam == SV_TEAM_FORCED_SOLO || Team != TEAM_FLOCK) && Team != TEAM_SUPER)
-		{
-			for(int i = 0; i < MAX_CLIENTS; i++)
-			{
-				if(Teams()->m_Core.Team(i) == Team && i != m_Core.m_Id && GameServer()->m_apPlayers[i])
-				{
-					CCharacter *pChar = GameServer()->m_apPlayers[i]->GetCharacter();
+	// 	if((g_Config.m_SvTeam == SV_TEAM_FORCED_SOLO || Team != TEAM_FLOCK) && Team != TEAM_SUPER)
+	// 	{
+	// 		for(int i = 0; i < MAX_CLIENTS; i++)
+	// 		{
+	// 			if(Teams()->m_Core.Team(i) == Team && i != m_Core.m_Id && GameServer()->m_apPlayers[i])
+	// 			{
+	// 				CCharacter *pChar = GameServer()->m_apPlayers[i]->GetCharacter();
 
-					if(pChar)
-						pChar->m_StartTime = m_StartTime;
-				}
-			}
-		}
+	// 				if(pChar)
+	// 					pChar->m_StartTime = m_StartTime;
+	// 			}
+	// 		}
+	// 	}
 
-		m_LastPenalty = true;
-	}
-	else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_SUBTRACT_TIME && !m_LastBonus)
-	{
-		int min = GameServer()->Collision()->GetSwitchDelay(MapIndex);
-		int sec = GameServer()->Collision()->GetSwitchNumber(MapIndex);
-		int Team = Teams()->m_Core.Team(m_Core.m_Id);
+	// 	m_LastPenalty = true;
+	// }
+	// else if(GameServer()->Collision()->GetSwitchType(MapIndex) == TILE_SUBTRACT_TIME && !m_LastBonus)
+	// {
+	// 	int min = GameServer()->Collision()->GetSwitchDelay(MapIndex);
+	// 	int sec = GameServer()->Collision()->GetSwitchNumber(MapIndex);
+	// 	int Team = Teams()->m_Core.Team(m_Core.m_Id);
 
-		m_StartTime += (min * 60 + sec) * Server()->TickSpeed();
-		if(m_StartTime > Server()->Tick())
-			m_StartTime = Server()->Tick();
+	// 	m_StartTime += (min * 60 + sec) * Server()->TickSpeed();
+	// 	if(m_StartTime > Server()->Tick())
+	// 		m_StartTime = Server()->Tick();
 
-		if((g_Config.m_SvTeam == SV_TEAM_FORCED_SOLO || Team != TEAM_FLOCK) && Team != TEAM_SUPER)
-		{
-			for(int i = 0; i < MAX_CLIENTS; i++)
-			{
-				if(Teams()->m_Core.Team(i) == Team && i != m_Core.m_Id && GameServer()->m_apPlayers[i])
-				{
-					CCharacter *pChar = GameServer()->m_apPlayers[i]->GetCharacter();
+	// 	if((g_Config.m_SvTeam == SV_TEAM_FORCED_SOLO || Team != TEAM_FLOCK) && Team != TEAM_SUPER)
+	// 	{
+	// 		for(int i = 0; i < MAX_CLIENTS; i++)
+	// 		{
+	// 			if(Teams()->m_Core.Team(i) == Team && i != m_Core.m_Id && GameServer()->m_apPlayers[i])
+	// 			{
+	// 				CCharacter *pChar = GameServer()->m_apPlayers[i]->GetCharacter();
 
-					if(pChar)
-						pChar->m_StartTime = m_StartTime;
-				}
-			}
-		}
+	// 				if(pChar)
+	// 					pChar->m_StartTime = m_StartTime;
+	// 			}
+	// 		}
+	// 	}
 
-		m_LastBonus = true;
-	}
+	// 	m_LastBonus = true;
+	// }
 
-	if(GameServer()->Collision()->GetSwitchType(MapIndex) != TILE_ADD_TIME)
-	{
-		m_LastPenalty = false;
-	}
+	// if(GameServer()->Collision()->GetSwitchType(MapIndex) != TILE_ADD_TIME)
+	// {
+	// 	m_LastPenalty = false;
+	// }
 
-	if(GameServer()->Collision()->GetSwitchType(MapIndex) != TILE_SUBTRACT_TIME)
-	{
-		m_LastBonus = false;
-	}
+	// if(GameServer()->Collision()->GetSwitchType(MapIndex) != TILE_SUBTRACT_TIME)
+	// {
+	// 	m_LastBonus = false;
+	// }
 
-	int z = GameServer()->Collision()->IsTeleport(MapIndex);
-	if(!g_Config.m_SvOldTeleportHook && !g_Config.m_SvOldTeleportWeapons && z && !(*m_pTeleOuts)[z - 1].empty())
-	{
-		if(m_Super)
-			return;
-		int TeleOut = m_Core.m_pWorld->RandomOr0((*m_pTeleOuts)[z - 1].size());
-		m_Core.m_Pos = (*m_pTeleOuts)[z - 1][TeleOut];
-		if(!g_Config.m_SvTeleportHoldHook)
-		{
-			ResetHook();
-		}
-		if(g_Config.m_SvTeleportLoseWeapons)
-			ResetPickups();
-		return;
-	}
-	int evilz = GameServer()->Collision()->IsEvilTeleport(MapIndex);
-	if(evilz && !(*m_pTeleOuts)[evilz - 1].empty())
-	{
-		if(m_Super)
-			return;
-		int TeleOut = m_Core.m_pWorld->RandomOr0((*m_pTeleOuts)[evilz - 1].size());
-		m_Core.m_Pos = (*m_pTeleOuts)[evilz - 1][TeleOut];
-		if(!g_Config.m_SvOldTeleportHook && !g_Config.m_SvOldTeleportWeapons)
-		{
-			m_Core.m_Vel = vec2(0, 0);
+	// int z = GameServer()->Collision()->IsTeleport(MapIndex);
+	// if(!g_Config.m_SvOldTeleportHook && !g_Config.m_SvOldTeleportWeapons && z && !(*m_pTeleOuts)[z - 1].empty())
+	// {
+	// 	if(m_Super)
+	// 		return;
+	// 	int TeleOut = m_Core.m_pWorld->RandomOr0((*m_pTeleOuts)[z - 1].size());
+	// 	m_Core.m_Pos = (*m_pTeleOuts)[z - 1][TeleOut];
+	// 	if(!g_Config.m_SvTeleportHoldHook)
+	// 	{
+	// 		ResetHook();
+	// 	}
+	// 	if(g_Config.m_SvTeleportLoseWeapons)
+	// 		ResetPickups();
+	// 	return;
+	// }
+	// int evilz = GameServer()->Collision()->IsEvilTeleport(MapIndex);
+	// if(evilz && !(*m_pTeleOuts)[evilz - 1].empty())
+	// {
+	// 	if(m_Super)
+	// 		return;
+	// 	int TeleOut = m_Core.m_pWorld->RandomOr0((*m_pTeleOuts)[evilz - 1].size());
+	// 	m_Core.m_Pos = (*m_pTeleOuts)[evilz - 1][TeleOut];
+	// 	if(!g_Config.m_SvOldTeleportHook && !g_Config.m_SvOldTeleportWeapons)
+	// 	{
+	// 		m_Core.m_Vel = vec2(0, 0);
 
-			if(!g_Config.m_SvTeleportHoldHook)
-			{
-				ResetHook();
-				GameWorld()->ReleaseHooked(GetPlayer()->GetCID());
-			}
-			if(g_Config.m_SvTeleportLoseWeapons)
-			{
-				ResetPickups();
-			}
-		}
-		return;
-	}
-	if(GameServer()->Collision()->IsCheckEvilTeleport(MapIndex))
-	{
-		if(m_Super)
-			return;
-		// first check if there is a TeleCheckOut for the current recorded checkpoint, if not check previous checkpoints
-		for(int k = m_TeleCheckpoint - 1; k >= 0; k--)
-		{
-			if(!(*m_pTeleCheckOuts)[k].empty())
-			{
-				int TeleOut = m_Core.m_pWorld->RandomOr0((*m_pTeleCheckOuts)[k].size());
-				m_Core.m_Pos = (*m_pTeleCheckOuts)[k][TeleOut];
-				m_Core.m_Vel = vec2(0, 0);
+	// 		if(!g_Config.m_SvTeleportHoldHook)
+	// 		{
+	// 			ResetHook();
+	// 			GameWorld()->ReleaseHooked(GetPlayer()->GetCID());
+	// 		}
+	// 		if(g_Config.m_SvTeleportLoseWeapons)
+	// 		{
+	// 			ResetPickups();
+	// 		}
+	// 	}
+	// 	return;
+	// }
+	// if(GameServer()->Collision()->IsCheckEvilTeleport(MapIndex))
+	// {
+	// 	if(m_Super)
+	// 		return;
+	// 	// first check if there is a TeleCheckOut for the current recorded checkpoint, if not check previous checkpoints
+	// 	for(int k = m_TeleCheckpoint - 1; k >= 0; k--)
+	// 	{
+	// 		if(!(*m_pTeleCheckOuts)[k].empty())
+	// 		{
+	// 			int TeleOut = m_Core.m_pWorld->RandomOr0((*m_pTeleCheckOuts)[k].size());
+	// 			m_Core.m_Pos = (*m_pTeleCheckOuts)[k][TeleOut];
+	// 			m_Core.m_Vel = vec2(0, 0);
 
-				if(!g_Config.m_SvTeleportHoldHook)
-				{
-					ResetHook();
-					GameWorld()->ReleaseHooked(GetPlayer()->GetCID());
-				}
+	// 			if(!g_Config.m_SvTeleportHoldHook)
+	// 			{
+	// 				ResetHook();
+	// 				GameWorld()->ReleaseHooked(GetPlayer()->GetCID());
+	// 			}
 
-				return;
-			}
-		}
-		// if no checkpointout have been found (or if there no recorded checkpoint), teleport to start
-		vec2 SpawnPos;
-		if(GameServer()->m_pController->CanSpawn(m_pPlayer->GetTeam(), &SpawnPos, GameServer()->GetDDRaceTeam(GetPlayer()->GetCID())))
-		{
-			m_Core.m_Pos = SpawnPos;
-			m_Core.m_Vel = vec2(0, 0);
+	// 			return;
+	// 		}
+	// 	}
+	// 	// if no checkpointout have been found (or if there no recorded checkpoint), teleport to start
+	// 	vec2 SpawnPos;
+	// 	if(GameServer()->m_pController->CanSpawn(m_pPlayer->GetTeam(), &SpawnPos, GameServer()->GetDDRaceTeam(GetPlayer()->GetCID())))
+	// 	{
+	// 		m_Core.m_Pos = SpawnPos;
+	// 		m_Core.m_Vel = vec2(0, 0);
 
-			if(!g_Config.m_SvTeleportHoldHook)
-			{
-				ResetHook();
-				GameWorld()->ReleaseHooked(GetPlayer()->GetCID());
-			}
-		}
-		return;
-	}
-	if(GameServer()->Collision()->IsCheckTeleport(MapIndex))
-	{
-		if(m_Super)
-			return;
-		// first check if there is a TeleCheckOut for the current recorded checkpoint, if not check previous checkpoints
-		for(int k = m_TeleCheckpoint - 1; k >= 0; k--)
-		{
-			if(!(*m_pTeleCheckOuts)[k].empty())
-			{
-				int TeleOut = m_Core.m_pWorld->RandomOr0((*m_pTeleCheckOuts)[k].size());
-				m_Core.m_Pos = (*m_pTeleCheckOuts)[k][TeleOut];
+	// 		if(!g_Config.m_SvTeleportHoldHook)
+	// 		{
+	// 			ResetHook();
+	// 			GameWorld()->ReleaseHooked(GetPlayer()->GetCID());
+	// 		}
+	// 	}
+	// 	return;
+	// }
+	// if(GameServer()->Collision()->IsCheckTeleport(MapIndex))
+	// {
+	// 	if(m_Super)
+	// 		return;
+	// 	// first check if there is a TeleCheckOut for the current recorded checkpoint, if not check previous checkpoints
+	// 	for(int k = m_TeleCheckpoint - 1; k >= 0; k--)
+	// 	{
+	// 		if(!(*m_pTeleCheckOuts)[k].empty())
+	// 		{
+	// 			int TeleOut = m_Core.m_pWorld->RandomOr0((*m_pTeleCheckOuts)[k].size());
+	// 			m_Core.m_Pos = (*m_pTeleCheckOuts)[k][TeleOut];
 
-				if(!g_Config.m_SvTeleportHoldHook)
-				{
-					ResetHook();
-				}
+	// 			if(!g_Config.m_SvTeleportHoldHook)
+	// 			{
+	// 				ResetHook();
+	// 			}
 
-				return;
-			}
-		}
-		// if no checkpointout have been found (or if there no recorded checkpoint), teleport to start
-		vec2 SpawnPos;
-		if(GameServer()->m_pController->CanSpawn(m_pPlayer->GetTeam(), &SpawnPos, GameServer()->GetDDRaceTeam(GetPlayer()->GetCID())))
-		{
-			m_Core.m_Pos = SpawnPos;
+	// 			return;
+	// 		}
+	// 	}
+	// 	// if no checkpointout have been found (or if there no recorded checkpoint), teleport to start
+	// 	vec2 SpawnPos;
+	// 	if(GameServer()->m_pController->CanSpawn(m_pPlayer->GetTeam(), &SpawnPos, GameServer()->GetDDRaceTeam(GetPlayer()->GetCID())))
+	// 	{
+	// 		m_Core.m_Pos = SpawnPos;
 
-			if(!g_Config.m_SvTeleportHoldHook)
-			{
-				ResetHook();
-			}
-		}
-		return;
-	}
+	// 		if(!g_Config.m_SvTeleportHoldHook)
+	// 		{
+	// 			ResetHook();
+	// 		}
+	// 	}
+	// 	return;
+	// }
 }
 
 void CCharacter::HandleTuneLayer()

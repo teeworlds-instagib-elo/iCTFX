@@ -852,7 +852,7 @@ void CGameContext::ConXonX(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
 	int Mode = pResult->GetInteger(0);
-	g_Config.m_SvSpectatorSlots = MAX_CLIENTS - 2*Mode;
+	g_Config.m_SvSpectatorSlots = g_Config.m_SvMaxClients - 2*Mode;
 	pSelf->m_pController->DoWarmup(g_Config.m_SvWarTime);
 	char aBuf[128];
 

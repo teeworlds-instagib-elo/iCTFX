@@ -3763,6 +3763,17 @@ void CGameContext::SendGameMsg(int GameMsgID, int ParaI1, int ClientID)
 	Server()->SendMsg(&Msg, MSGFLAG_VITAL, ClientID);
 }
 
+void CGameContext::SendGameMsg(int GameMsgID, int ParaI1, int ParaI2, int ParaI3, int ClientID)
+{
+	CMsgPacker Msg(protocol7::NETMSGTYPE_SV_GAMEMSG);
+	Msg.AddInt(GameMsgID);
+	Msg.AddInt(ParaI1);
+	Msg.AddInt(ParaI2);
+	Msg.AddInt(ParaI3);
+	Msg.m_NoTranslate = true;
+	Server()->SendMsg(&Msg, MSGFLAG_VITAL, ClientID);
+}
+
 void CGameContext::SendChatResponseAll(const char *pLine, void *pUser)
 {
 	CGameContext *pSelf = (CGameContext *)pUser;

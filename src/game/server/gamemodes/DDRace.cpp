@@ -289,6 +289,7 @@ void CGameControllerDDRace::Tick()
 						// CAPTURE! \o/
 						m_aTeamscore[fi^1] += 100;
 						F->m_pCarryingCharacter->GetPlayer()->m_Score += 5;
+						int playerID = F->m_pCarryingCharacter->GetPlayer()->GetCID();
 						
 						// F->m_pCarryingCharacter->GetPlayer()->m_Stats.m_Captures++;
 
@@ -307,20 +308,20 @@ void CGameControllerDDRace::Tick()
 						{
 							str_format(aBuf, sizeof(aBuf), "The %s flag was captured by '%s'", fi ? "blue" : "red", Server()->ClientName(F->m_pCarryingCharacter->GetPlayer()->GetCID()));
 						}
-
 						// if(F->m_pCarryingCharacter->GetPlayer()->m_Stats.m_FastestCapture <= 0.1f || F->m_pCarryingCharacter->GetPlayer()->m_Stats.m_FastestCapture > CaptureTime)
 							// F->m_pCarryingCharacter->GetPlayer()->m_Stats.m_FastestCapture = CaptureTime;
 
-						GameServer()->SendChat(-1, -2, aBuf);
 						for(int i = 0; i < 2; i++)
 							m_apFlags[i]->Reset();
+						
+						// GameServer()->SendChat(-1, -2, aBuf);
 
 						GameServer()->CreateSoundGlobal(SOUND_CTF_CAPTURE);
 						for(int i = 0; i < MAX_CLIENTS; i++)
 						{
 							if(Server()->IsSixup(i))
 							{
-								GameServer()->SendGameMsg(protocol7::GAMEMSG_CTF_CAPTURE, fi, -1);
+								GameServer()->SendGameMsg(protocol7::GAMEMSG_CTF_CAPTURE, fi, playerID, Server()->Tick() - F->m_GrabTick, i);
 							}
 
 						}
@@ -357,7 +358,7 @@ void CGameControllerDDRace::Tick()
 							{
 								if(Server()->IsSixup(i))
 								{
-									GameServer()->SendGameMsg(protocol7::GAMEMSG_CTF_RETURN, fi, -1);
+									GameServer()->SendGameMsg(protocol7::GAMEMSG_CTF_RETURN, fi, i);
 								}
 
 							}
@@ -374,9 +375,8 @@ void CGameControllerDDRace::Tick()
 							{
 								if(Server()->IsSixup(i))
 								{
-									GameServer()->SendGameMsg(protocol7::GAMEMSG_CTF_GRAB, fi, -1);
+									GameServer()->SendGameMsg(protocol7::GAMEMSG_CTF_GRAB, fi, i);
 								}
-
 							}
 						}
 
