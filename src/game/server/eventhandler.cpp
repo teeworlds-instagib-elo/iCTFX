@@ -49,7 +49,7 @@ void CEventHandler::Snap(int SnappingClient)
 	for(int i = 0; i < m_NumEvents; i++)
 	{
 		if(SnappingClient == SERVER_DEMO_CLIENT || CmaskIsSet(m_aClientMasks[i], SnappingClient) ||
-			(GameServer()->m_apPlayers[SnappingClient] && !GameServer()->m_apPlayers[SnappingClient]->GetCharacter()) || 
+			//(GameServer()->m_apPlayers[SnappingClient] && !GameServer()->m_apPlayers[SnappingClient]->GetCharacter()) || 
 			(GameServer()->m_apPlayers[SnappingClient] && GameServer()->m_apPlayers[SnappingClient]->GetCharacter() && !GameServer()->m_apPlayers[SnappingClient]->GetCharacter()->IsAlive()))
 		{
 			CNetEvent_Common *ev = (CNetEvent_Common *)&m_aData[m_aOffsets[i]];
