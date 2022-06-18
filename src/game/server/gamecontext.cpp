@@ -27,7 +27,6 @@
 #include "entities/character.h"
 #include "gamemodes/DDRace.h"
 #include "player.h"
-#include "score.h"
 
 enum
 {
@@ -54,7 +53,6 @@ void CGameContext::Construct(int Resetting)
 
 	m_SqlRandomMapResult = nullptr;
 
-	m_pScore = nullptr;
 	m_NumMutes = 0;
 	m_NumVoteMutes = 0;
 
@@ -76,12 +74,6 @@ void CGameContext::Destruct(int Resetting)
 
 	if(Resetting == NO_RESET)
 		delete m_pVoteOptionHeap;
-
-	if(m_pScore)
-	{
-		delete m_pScore;
-		m_pScore = nullptr;
-	}
 }
 
 CGameContext::CGameContext()
@@ -1065,20 +1057,6 @@ void CGameContext::OnTick()
 		}
 	}
 
-	if(m_SqlRandomMapResult != nullptr && m_SqlRandomMapResult->m_Completed)
-	{
-		if(m_SqlRandomMapResult->m_Success)
-		{
-			if(PlayerExists(m_SqlRandomMapResult->m_ClientID) && m_SqlRandomMapResult->m_aMessage[0] != '\0')
-				SendChatTarget(m_SqlRandomMapResult->m_ClientID, m_SqlRandomMapResult->m_aMessage);
-			if(m_SqlRandomMapResult->m_aMap[0] != '\0')
-				Server()->ChangeMap(m_SqlRandomMapResult->m_aMap);
-			else
-				m_LastMapVote = 0;
-		}
-		m_SqlRandomMapResult = nullptr;
-	}
-
 #ifdef CONF_DEBUG
 	if(g_Config.m_DbgDummies)
 	{
@@ -1238,6 +1216,7 @@ void CGameContext::OnClientEnter(int ClientID)
 	}
 	m_pController->OnPlayerConnect(m_apPlayers[ClientID]);
 
+
 	if(Server()->IsSixup(ClientID))
 	{
 		{
@@ -1294,6 +1273,7 @@ void CGameContext::OnClientEnter(int ClientID)
 		m_apPlayers[ClientID]->m_EligibleForFinishCheck = time_get();
 		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL | MSGFLAG_NORECORD, ClientID);
 	}
+
 
 	IServer::CClientInfo Info;
 	Server()->GetClientInfo(ClientID, &Info);
@@ -1391,6 +1371,7 @@ void CGameContext::OnClientEnter(int ClientID)
 		Server()->GetClientAddr(ClientID, &Addr);
 		Mute(&Addr, g_Config.m_SvChatInitialDelay, Server()->ClientName(ClientID), "Initial chat delay", true);
 	}
+	
 }
 
 bool CGameContext::OnClientDataPersist(int ClientID, void *pData)
@@ -1531,9 +1512,6 @@ bool CGameContext::OnClientDDNetVersionKnown(int ClientID)
 
 	// First update the teams state.
 	((CGameControllerDDRace *)m_pController)->m_Teams.SendTeamsState(ClientID);
-
-	// Then send records.
-	SendRecord(ClientID);
 
 	// And report correct tunings.
 	if(ClientVersion >= VERSION_DDNET_EXTRATUNES)
@@ -1818,7 +1796,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			else
 				Team = CHAT_ALL;
 
-			if(str_startswith(pMsg->m_pMessage + 1, "go"))
+			if(str_startswith(pMsg->m_pMessage + 1, "go") && g_Config.m_SvStopGoFeature)
 			{
 				if(pPlayer->GetTeam() != TEAM_SPECTATORS)
 				{
@@ -1833,7 +1811,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				}
 			}
 
-			if(str_startswith(pMsg->m_pMessage + 1, "stop"))
+			if(str_startswith(pMsg->m_pMessage + 1, "stop") && g_Config.m_SvStopGoFeature)
 			{
 				if(pPlayer->GetTeam() != TEAM_SPECTATORS)
 				{
@@ -1867,7 +1845,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_copy(aWhisperMsg, pMsg->m_pMessage + 10, 256);
 					Converse(pPlayer->GetCID(), aWhisperMsg);
 				}
-				else if(str_startswith(pMsg->m_pMessage + 2, "on"))
+				else if(str_startswith(pMsg->m_pMessage + 2, "on") && !g_Config.m_SvSaveServer)
 				{
 					if(pPlayer->GetTeam() != TEAM_SPECTATORS)
 					{
@@ -2343,11 +2321,6 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				str_format(aChatText, sizeof(aChatText), "'%s' changed name to '%s'", aOldName, Server()->ClientName(ClientID));
 				SendChat(-1, CGameContext::CHAT_ALL, aChatText);
 
-				// reload scores
-				// Score()->PlayerData(ClientID)->Reset();
-				// m_apPlayers[ClientID]->m_Score = 0;
-				// Score()->LoadPlayerData(ClientID);
-
 				SixupNeedsUpdate = true;
 			}
 
@@ -2763,24 +2736,6 @@ void CGameContext::ConChangeMap(IConsole::IResult *pResult, void *pUserData)
 	pSelf->m_pController->ChangeMap(pResult->NumArguments() ? pResult->GetString(0) : "");
 }
 
-void CGameContext::ConRandomMap(IConsole::IResult *pResult, void *pUserData)
-{
-	CGameContext *pSelf = (CGameContext *)pUserData;
-
-	int Stars = pResult->NumArguments() ? pResult->GetInteger(0) : -1;
-
-	pSelf->m_pScore->RandomMap(pSelf->m_VoteCreator, Stars);
-}
-
-void CGameContext::ConRandomUnfinishedMap(IConsole::IResult *pResult, void *pUserData)
-{
-	CGameContext *pSelf = (CGameContext *)pUserData;
-
-	int Stars = pResult->NumArguments() ? pResult->GetInteger(0) : -1;
-
-	pSelf->m_pScore->RandomUnfinishedMap(pSelf->m_VoteCreator, Stars);
-}
-
 void CGameContext::ConRestart(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
@@ -3167,8 +3122,6 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("switch_open", "i[switch]", CFGFLAG_SERVER | CFGFLAG_GAME, ConSwitchOpen, this, "Whether a switch is deactivated by default (otherwise activated)");
 	Console()->Register("pause_game", "", CFGFLAG_SERVER, ConPause, this, "Pause/unpause game");
 	Console()->Register("change_map", "?r[map]", CFGFLAG_SERVER | CFGFLAG_STORE, ConChangeMap, this, "Change map");
-	Console()->Register("random_map", "?i[stars]", CFGFLAG_SERVER, ConRandomMap, this, "Random map");
-	Console()->Register("random_unfinished_map", "?i[stars]", CFGFLAG_SERVER, ConRandomUnfinishedMap, this, "Random unfinished map");
 	Console()->Register("restart", "?i[seconds]", CFGFLAG_SERVER | CFGFLAG_STORE, ConRestart, this, "Restart in x seconds (0 = abort)");
 	Console()->Register("broadcast", "r[message]", CFGFLAG_SERVER, ConBroadcast, this, "Broadcast message");
 	Console()->Register("say", "r[message]", CFGFLAG_SERVER, ConSay, this, "Say in chat");
@@ -3383,11 +3336,6 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 				m_TeeHistorian.RecordAuthInitial(i, Level, Server()->GetAuthName(i));
 			}
 		}
-	}
-
-	if(!m_pScore)
-	{
-		m_pScore = new CScore(this, ((CServer *)Server())->DbPool());
 	}
 
 	// setup core world
@@ -3870,19 +3818,6 @@ void CGameContext::OnSetAuthed(int ClientID, int Level)
 		{
 			m_TeeHistorian.RecordAuthLogout(ClientID);
 		}
-	}
-}
-
-void CGameContext::SendRecord(int ClientID)
-{
-	CNetMsg_Sv_Record Msg;
-	CNetMsg_Sv_RecordLegacy MsgLegacy;
-	MsgLegacy.m_PlayerTimeBest = Msg.m_PlayerTimeBest = Score()->PlayerData(ClientID)->m_BestTime * 100.0f;
-	MsgLegacy.m_ServerTimeBest = Msg.m_ServerTimeBest = m_pController->m_CurrentRecord * 100.0f; //TODO: finish this
-	Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, ClientID);
-	if(!Server()->IsSixup(ClientID) && GetClientVersion(ClientID) < VERSION_DDNET_MSG_LEGACY)
-	{
-		Server()->SendPackMsg(&MsgLegacy, MSGFLAG_VITAL, ClientID);
 	}
 }
 

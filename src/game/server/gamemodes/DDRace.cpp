@@ -12,12 +12,13 @@
 #include <game/version.h>
 #include <game/server/entities/flag.h>
 
+#include <limits>
 
 #define GAME_TYPE_NAME "iCTFX"
 #define TEST_TYPE_NAME "TestiCTFX"
 
 CGameControllerDDRace::CGameControllerDDRace(class CGameContext *pGameServer) :
-	IGameController(pGameServer), m_Teams(pGameServer), m_pInitResult(nullptr)
+	IGameController(pGameServer), m_Teams(pGameServer)
 {
 	m_pGameType = g_Config.m_SvTestingCommands ? TEST_TYPE_NAME : GAME_TYPE_NAME;
 	
@@ -28,13 +29,53 @@ CGameControllerDDRace::CGameControllerDDRace(class CGameContext *pGameServer) :
 	m_apFlags[1] = 0;
 	m_aTeamscore[TEAM_RED] = 0;
 	m_aTeamscore[TEAM_BLUE] = 0;
+	database = nullptr;
+	if(g_Config.m_SvSaveServer) {
+		database = CreateMysqlConnection("ddnet", "record", "ddnet", "thebestpassword", "localhost", 3306, true);
+		if(database != nullptr)
+		{
+			char aError[256] = "error message not initialized";
+			if(database->Connect(aError, sizeof(aError)))
+			{
+				dbg_msg("sql", "failed connecting to db: %s", aError);
+				return;
+			}
+			//save score
+			ServerStats server_stats{};
+			char error[4096] = {};
+			if (!database->GetServerStats("save_server", server_stats, error, sizeof(error))) {
+				m_aTeamscore[TEAM_RED] = server_stats.score_red;
+				m_aTeamscore[TEAM_BLUE] = server_stats.score_blue;
+			} else {
+				dbg_msg("sql", "failed to read stats: %s", error);
+			}
+			database->Disconnect();
+		}
+	}
 }
 
 CGameControllerDDRace::~CGameControllerDDRace() = default;
 
-CScore *CGameControllerDDRace::Score()
-{
-	return GameServer()->Score();
+void CGameControllerDDRace::UpdateServerStats() {
+	if(database != nullptr)
+	{
+		char aError[256] = "error message not initialized";
+		if(database->Connect(aError, sizeof(aError)))
+		{
+			dbg_msg("sql", "failed connecting to db: %s", aError);
+			return;
+		}
+		//save score
+		ServerStats server_stats{
+			m_aTeamscore[TEAM_RED],
+			m_aTeamscore[TEAM_BLUE]
+		};
+		char error[4096] = {};
+		if (database->AddServerStats("save_server", server_stats, error, sizeof(error))) {
+			dbg_msg("sql", "failed connecting to db: %s", error);
+		}
+		database->Disconnect();
+	}
 }
 
 void CGameControllerDDRace::OnCharacterSpawn(CCharacter *pChr)
@@ -48,81 +89,6 @@ void CGameControllerDDRace::OnCharacterSpawn(CCharacter *pChr)
 void CGameControllerDDRace::HandleCharacterTiles(CCharacter *pChr, int MapIndex)
 {
 	return; //:P
-	CPlayer *pPlayer = pChr->GetPlayer();
-	int ClientID = pPlayer->GetCID();
-
-	int m_TileIndex = GameServer()->Collision()->GetTileIndex(MapIndex);
-	int m_TileFIndex = GameServer()->Collision()->GetFTileIndex(MapIndex);
-
-	//Sensitivity
-	int S1 = GameServer()->Collision()->GetPureMapIndex(vec2(pChr->GetPos().x + pChr->GetProximityRadius() / 3.f, pChr->GetPos().y - pChr->GetProximityRadius() / 3.f));
-	int S2 = GameServer()->Collision()->GetPureMapIndex(vec2(pChr->GetPos().x + pChr->GetProximityRadius() / 3.f, pChr->GetPos().y + pChr->GetProximityRadius() / 3.f));
-	int S3 = GameServer()->Collision()->GetPureMapIndex(vec2(pChr->GetPos().x - pChr->GetProximityRadius() / 3.f, pChr->GetPos().y - pChr->GetProximityRadius() / 3.f));
-	int S4 = GameServer()->Collision()->GetPureMapIndex(vec2(pChr->GetPos().x - pChr->GetProximityRadius() / 3.f, pChr->GetPos().y + pChr->GetProximityRadius() / 3.f));
-	int Tile1 = GameServer()->Collision()->GetTileIndex(S1);
-	int Tile2 = GameServer()->Collision()->GetTileIndex(S2);
-	int Tile3 = GameServer()->Collision()->GetTileIndex(S3);
-	int Tile4 = GameServer()->Collision()->GetTileIndex(S4);
-	int FTile1 = GameServer()->Collision()->GetFTileIndex(S1);
-	int FTile2 = GameServer()->Collision()->GetFTileIndex(S2);
-	int FTile3 = GameServer()->Collision()->GetFTileIndex(S3);
-	int FTile4 = GameServer()->Collision()->GetFTileIndex(S4);
-
-	const int PlayerDDRaceState = pChr->m_DDRaceState;
-	bool IsOnStartTile = (m_TileIndex == TILE_START) || (m_TileFIndex == TILE_START) || FTile1 == TILE_START || FTile2 == TILE_START || FTile3 == TILE_START || FTile4 == TILE_START || Tile1 == TILE_START || Tile2 == TILE_START || Tile3 == TILE_START || Tile4 == TILE_START;
-	// start
-	if(IsOnStartTile && PlayerDDRaceState != DDRACE_CHEAT)
-	{
-		const int Team = GetPlayerTeam(ClientID);
-		if(m_Teams.GetSaving(Team))
-		{
-			GameServer()->SendStartWarning(ClientID, "You can't start while loading/saving of team is in progress");
-			pChr->Die(ClientID, WEAPON_WORLD);
-			return;
-		}
-		if(g_Config.m_SvTeam == SV_TEAM_MANDATORY && (Team == TEAM_FLOCK || m_Teams.Count(Team) <= 1))
-		{
-			GameServer()->SendStartWarning(ClientID, "You have to be in a team with other tees to start");
-			pChr->Die(ClientID, WEAPON_WORLD);
-			return;
-		}
-		if(g_Config.m_SvTeam != SV_TEAM_FORCED_SOLO && Team > TEAM_FLOCK && Team < TEAM_SUPER && m_Teams.Count(Team) < g_Config.m_SvMinTeamSize)
-		{
-			char aBuf[128];
-			str_format(aBuf, sizeof(aBuf), "Your team has fewer than %d players, so your team rank won't count", g_Config.m_SvMinTeamSize);
-			GameServer()->SendStartWarning(ClientID, aBuf);
-		}
-		if(g_Config.m_SvResetPickups)
-		{
-			pChr->ResetPickups();
-		}
-
-		m_Teams.OnCharacterStart(ClientID);
-		pChr->m_CpActive = -2;
-	}
-
-	// finish
-	if(((m_TileIndex == TILE_FINISH) || (m_TileFIndex == TILE_FINISH) || FTile1 == TILE_FINISH || FTile2 == TILE_FINISH || FTile3 == TILE_FINISH || FTile4 == TILE_FINISH || Tile1 == TILE_FINISH || Tile2 == TILE_FINISH || Tile3 == TILE_FINISH || Tile4 == TILE_FINISH) && PlayerDDRaceState == DDRACE_STARTED)
-		m_Teams.OnCharacterFinish(ClientID);
-
-	// unlock team
-	else if(((m_TileIndex == TILE_UNLOCK_TEAM) || (m_TileFIndex == TILE_UNLOCK_TEAM)) && m_Teams.TeamLocked(GetPlayerTeam(ClientID)))
-	{
-		m_Teams.SetTeamLock(GetPlayerTeam(ClientID), false);
-		GameServer()->SendChatTeam(GetPlayerTeam(ClientID), "Your team was unlocked by an unlock team tile");
-	}
-
-	// solo part
-	if(((m_TileIndex == TILE_SOLO_ENABLE) || (m_TileFIndex == TILE_SOLO_ENABLE)) && !m_Teams.m_Core.GetSolo(ClientID))
-	{
-		GameServer()->SendChatTarget(ClientID, "You are now in a solo part");
-		pChr->SetSolo(true);
-	}
-	else if(((m_TileIndex == TILE_SOLO_DISABLE) || (m_TileFIndex == TILE_SOLO_DISABLE)) && m_Teams.m_Core.GetSolo(ClientID))
-	{
-		GameServer()->SendChatTarget(ClientID, "You are now out of the solo part");
-		pChr->SetSolo(false);
-	}
 }
 
 int CGameControllerDDRace::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int WeaponID)
@@ -158,19 +124,17 @@ int CGameControllerDDRace::OnCharacterDeath(class CCharacter *pVictim, class CPl
 	return HadFlag;
 }
 
+#include <iostream>
+#include <fstream>
+#include "../../../engine/server.h"
+#include <string>
+using namespace std;
 
 bool teamP;
 void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 {
 	IGameController::OnPlayerConnect(pPlayer);
 	int ClientID = pPlayer->GetCID();
-
-	// init the player
-	Score()->PlayerData(ClientID)->Reset();
-
-	// Can't set score here as LoadScore() is threaded, run it in
-	// LoadScoreThreaded() instead
-	Score()->LoadPlayerData(ClientID);
 
 	if(!Server()->ClientPrevIngame(ClientID))
 	{
@@ -180,8 +144,66 @@ void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 
 		GameServer()->SendChatTarget(ClientID, "welcome to iCTFX!");
 	}
+
 	pPlayer->m_Score = 0;
+	pPlayer->m_Kills = 0;
+	pPlayer->m_Deaths = 0;
+	pPlayer->m_Touches = 0;
+	pPlayer->m_Captures = 0;
+	pPlayer->m_FastestCapture = -1;
+	pPlayer->m_Shots = 0;
+	pPlayer->m_Wallshots = 0;
+	pPlayer->m_WallshotKills = 0;
+	pPlayer->m_Suicides = 0;
+
+	if(database != nullptr)
+	{
+		char aError[256] = "error message not initialized";
+		if(database->Connect(aError, sizeof(aError)))
+		{
+			dbg_msg("sql", "failed connecting to db: %s", aError);
+			return;
+		}
+		//save score
+		Stats stats{};
+		char error[4096] = {};
+		if (!database->GetStats(Server()->ClientName(pPlayer->GetCID()), stats, error, sizeof(error))) {
+			pPlayer->m_Kills = stats.kills;
+			pPlayer->m_Deaths = stats.deaths;
+			pPlayer->m_Touches = stats.touches;
+			pPlayer->m_Captures = stats.captures;
+			pPlayer->m_FastestCapture = stats.fastest_capture;
+			pPlayer->m_Shots = stats.shots;
+			pPlayer->m_Wallshots = stats.wallshots;
+			pPlayer->m_WallshotKills = stats.wallshot_kills;
+			pPlayer->m_Suicides = stats.suicides;
+			pPlayer->m_Score = stats.captures * 5 + stats.touches + stats.kills - stats.suicides;
+		} else {
+			dbg_msg("sql", "failed to read stats: %s", error);
+		}
+		database->Disconnect();
+	}
 	
+	// if(g_Config.m_SvSaveServer)
+	// {
+	// 	//load score
+	// 	char str [64];
+	// 	strcpy(str, "scores/");
+	// 	strcat(str, Server()->ClientName(ClientID)); 
+	// 	ifstream playerFile(str);
+	// 	std::string tmp = "0";
+	// 	if(playerFile.is_open())
+	// 	{
+	// 		std::string tmp2;
+	// 		playerFile >> tmp;
+	// 		printf("%s score loaded %s\n", Server()->ClientName(ClientID), tmp.c_str());
+
+	// 	}else
+	// 		printf("%s score not loaded\n", Server()->ClientName(ClientID));
+	// 	pPlayer->m_Score = stoi(tmp);
+	// 	printf("score: %i\n", pPlayer->m_Score);
+	// 	playerFile.close();
+	// }
 }
 
 void CGameControllerDDRace::OnPlayerDisconnect(CPlayer *pPlayer, const char *pReason)
@@ -196,6 +218,31 @@ void CGameControllerDDRace::OnPlayerDisconnect(CPlayer *pPlayer, const char *pRe
 
 	if(g_Config.m_SvTeam != SV_TEAM_FORCED_SOLO)
 		m_Teams.SetForceCharacterTeam(ClientID, TEAM_FLOCK);
+	
+	if(database != nullptr)
+	{
+		char aError[256] = "error message not initialized";
+		if(database->Connect(aError, sizeof(aError)))
+		{
+			dbg_msg("sql", "failed connecting to db: %s", aError);
+			return;
+		}
+		//save score
+		Stats stats;
+		stats.kills = pPlayer->m_Kills;
+		stats.deaths = pPlayer->m_Deaths;
+		stats.touches = pPlayer->m_Touches;
+		stats.captures = pPlayer->m_Captures;
+		stats.fastest_capture = pPlayer->m_FastestCapture;
+		stats.shots = pPlayer->m_Shots;
+		stats.wallshots = pPlayer->m_Wallshots;
+		stats.wallshot_kills = pPlayer->m_WallshotKills;
+		stats.suicides = pPlayer->m_Suicides;
+
+		char error[4096] = {};
+		database->AddStats(Server()->ClientName(pPlayer->GetCID()), stats, error, sizeof(error));
+		database->Disconnect();
+	}
 }
 
 void CGameControllerDDRace::Snap(int SnappingClient)
@@ -243,17 +290,7 @@ void CGameControllerDDRace::Tick()
 		m_GameFlags = 0;
 	}
 	IGameController::Tick();
-	m_Teams.ProcessSaveTeam();
 	m_Teams.Tick();
-
-	if(m_pInitResult != nullptr && m_pInitResult->m_Completed)
-	{
-		if(m_pInitResult->m_Success)
-		{
-			m_CurrentRecord = m_pInitResult->m_CurrentRecord;
-		}
-		m_pInitResult = nullptr;
-	}
 
 	// if(Server()->IsSixup(0))
 	// 	GameServer()->SendGameMsg(protocol7::GAMEMSG_CTF_GRAB, 0, -1);
@@ -288,6 +325,7 @@ void CGameControllerDDRace::Tick()
 					{
 						// CAPTURE! \o/
 						m_aTeamscore[fi^1] += 100;
+						UpdateServerStats();
 						F->m_pCarryingCharacter->GetPlayer()->m_Score += 5;
 						int playerID = F->m_pCarryingCharacter->GetPlayer()->GetCID();
 						
@@ -308,8 +346,15 @@ void CGameControllerDDRace::Tick()
 						{
 							str_format(aBuf, sizeof(aBuf), "The %s flag was captured by '%s'", fi ? "blue" : "red", Server()->ClientName(F->m_pCarryingCharacter->GetPlayer()->GetCID()));
 						}
-						// if(F->m_pCarryingCharacter->GetPlayer()->m_Stats.m_FastestCapture <= 0.1f || F->m_pCarryingCharacter->GetPlayer()->m_Stats.m_FastestCapture > CaptureTime)
-							// F->m_pCarryingCharacter->GetPlayer()->m_Stats.m_FastestCapture = CaptureTime;
+
+						auto capture_time_millis = CaptureTime*1000;
+
+						if (F->m_pCarryingCharacter->GetPlayer()->m_FastestCapture < 0) {
+							F->m_pCarryingCharacter->GetPlayer()->m_FastestCapture = capture_time_millis;
+						} else if(F->m_pCarryingCharacter->GetPlayer()->m_FastestCapture > capture_time_millis) {
+							F->m_pCarryingCharacter->GetPlayer()->m_FastestCapture = capture_time_millis;
+						}
+						F->m_pCarryingCharacter->GetPlayer()->m_Captures++;
 
 						for(int i = 0; i < 2; i++)
 							m_apFlags[i]->Reset();
@@ -370,6 +415,7 @@ void CGameControllerDDRace::Tick()
 						if(F->m_AtStand)
 						{
 							m_aTeamscore[fi^1]++;
+							UpdateServerStats();
 							F->m_GrabTick = Server()->Tick();
 							for(int i = 0; i < MAX_CLIENTS; i++)
 							{
@@ -383,6 +429,7 @@ void CGameControllerDDRace::Tick()
 						F->m_AtStand = 0;
 						F->m_pCarryingCharacter = apCloseCCharacters[i];
 						F->m_pCarryingCharacter->GetPlayer()->m_Score += 1;
+						F->m_pCarryingCharacter->GetPlayer()->m_Touches++;
 						
 
 						char aBuf[256];
@@ -434,7 +481,7 @@ void CGameControllerDDRace::Tick()
 			}
 		}
 	
-	if(m_GameOverTick == -1 && !m_Warmup)
+	if(m_GameOverTick == -1 && !m_Warmup && !g_Config.m_SvSaveServer)
 	{
 		// check score win condition
 		if(!idm)

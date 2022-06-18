@@ -6,9 +6,8 @@
 #include "alloc.h"
 
 // this include should perhaps be removed
-#include "score.h"
 #include "teeinfo.h"
-
+#include <game/server/gamecontext.h>
 enum
 {
 	WEAPON_GAME = -3, // team switching etc
@@ -96,6 +95,16 @@ public:
 	int m_DieTick;
 	int m_PreviousDieTick;
 	int m_Score;
+	int m_Kills;
+	int m_Deaths;
+	int m_Touches;
+	int m_Captures;
+	int m_Suicides;
+	int m_FastestCapture; //in ms
+	int m_Shots;
+	int m_Wallshots;
+	int m_WallshotKills;
+	
 	int m_JoinTick;
 	bool m_ForceBalanced;
 	int m_LastActionTick;
@@ -204,9 +213,6 @@ public:
 
 	bool m_FirstPacket;
 	int64_t m_LastSQLQuery;
-	void ProcessScoreResult(CScorePlayerResult &Result);
-	std::shared_ptr<CScorePlayerResult> m_ScoreQueryResult;
-	std::shared_ptr<CScorePlayerResult> m_ScoreFinishResult;
 	bool m_NotEligibleForFinish;
 	int64_t m_EligibleForFinishCheck;
 	bool m_VotedForPractice;

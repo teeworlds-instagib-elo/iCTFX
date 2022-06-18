@@ -106,7 +106,7 @@ elseif(TARGET_OS STREQUAL "mac")
 endif()
 
 option(WEBSOCKETS "Enable websockets support" OFF)
-option(MYSQL "Enable mysql support" OFF)
+option(MYSQL "Enable mysql support" ON)
 option(TEST_MYSQL "Test mysql support in unit tests (also sets -DMYSQL=ON)" OFF)
 option(AUTOUPDATE "Enable the autoupdater" OFF)
 option(INFORM_UPDATE "Inform about available updates" ON)
@@ -114,7 +114,7 @@ option(VIDEORECORDER "Enable video recording support via FFmpeg" ON)
 option(UPNP "Enable UPnP support" OFF)
 option(ANTIBOT "Enable support for a dynamic anticheat library" OFF)
 option(HEADLESS_CLIENT "Build the client without graphics" OFF)
-option(CLIENT "Compile client" ON)
+option(CLIENT "Compile client" OFF)
 option(SERVER "Compile server" ON)
 option(TOOLS "Compile tools" ON)
 option(DOWNLOAD_GTEST "Download and compile GTest" ${AUTO_DEPENDENCIES_DEFAULT})
@@ -2221,12 +2221,6 @@ if(SERVER)
     gameworld.h
     player.cpp
     player.h
-    save.cpp
-    save.h
-    score.cpp
-    score.h
-    scoreworker.cpp
-    scoreworker.h
     teams.cpp
     teams.h
     teehistorian.cpp
@@ -2424,7 +2418,6 @@ if(GTEST_FOUND OR DOWNLOAD_GTEST)
     os.cpp
     packer.cpp
     prng.cpp
-    score.cpp
     secure_random.cpp
     serverbrowser.cpp
     serverinfo.cpp
@@ -2460,8 +2453,6 @@ if(GTEST_FOUND OR DOWNLOAD_GTEST)
     src/engine/server/sql_string_helpers.h
     src/game/server/teehistorian.cpp
     src/game/server/teehistorian.h
-    src/game/server/scoreworker.cpp
-    src/game/server/scoreworker.h
   )
 
   set(TARGET_TESTRUNNER testrunner)

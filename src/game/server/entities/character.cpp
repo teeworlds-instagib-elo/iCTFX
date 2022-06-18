@@ -13,8 +13,8 @@
 #include "projectile.h"
 
 #include "light.h"
-#include <game/server/score.h>
 #include <game/server/teams.h>
+#include <game/server/gamecontroller.h>
 
 MACRO_ALLOC_POOL_ID_IMPL(CCharacter, MAX_CLIENTS)
 
@@ -1310,32 +1310,6 @@ void CCharacter::FillAntibot(CAntibotCharacterData *pData)
 	pData->m_aLatestInputs[2].m_TargetY = m_LatestPrevPrevInput.m_TargetY;
 }
 
-void CCharacter::HandleBroadcast()
-{
-	CPlayerData *pData = GameServer()->Score()->PlayerData(m_pPlayer->GetCID());
-
-	if(m_DDRaceState == DDRACE_STARTED && m_CpLastBroadcast != m_CpActive &&
-		m_CpActive > -1 && m_CpTick > Server()->Tick() && m_pPlayer->GetClientVersion() == VERSION_VANILLA &&
-		pData->m_BestTime && pData->m_aBestCpTime[m_CpActive] != 0)
-	{
-		char aBroadcast[128];
-		float Diff = m_CpCurrent[m_CpActive] - pData->m_aBestCpTime[m_CpActive];
-		str_format(aBroadcast, sizeof(aBroadcast), "Checkpoint | Diff : %+5.2f", Diff);
-		GameServer()->SendBroadcast(aBroadcast, m_pPlayer->GetCID());
-		m_CpLastBroadcast = m_CpActive;
-		m_LastBroadcast = Server()->Tick();
-	}
-	else if((m_pPlayer->m_TimerType == CPlayer::TIMERTYPE_BROADCAST || m_pPlayer->m_TimerType == CPlayer::TIMERTYPE_GAMETIMER_AND_BROADCAST) && m_DDRaceState == DDRACE_STARTED && m_LastBroadcast + Server()->TickSpeed() * g_Config.m_SvTimeInBroadcastInterval <= Server()->Tick())
-	{
-		char aBuf[32];
-		int Time = (int64_t)100 * ((float)(Server()->Tick() - m_StartTime) / ((float)Server()->TickSpeed()));
-		str_time(Time, TIME_HOURS, aBuf, sizeof(aBuf));
-		GameServer()->SendBroadcast(aBuf, m_pPlayer->GetCID(), false);
-		m_CpLastBroadcast = m_CpActive;
-		m_LastBroadcast = Server()->Tick();
-	}
-}
-
 void CCharacter::HandleSkippableTiles(int Index)
 {
 	// handle death-tiles and leaving gamelayer
@@ -2072,12 +2046,6 @@ void CCharacter::SetTeams(CGameTeams *pTeams)
 	m_Core.SetTeamsCore(&m_pTeams->m_Core);
 }
 
-void CCharacter::SetRescue()
-{
-	m_RescueTee.Save(this);
-	m_SetSavePos = true;
-}
-
 void CCharacter::DDRaceTick()
 {
 	mem_copy(&m_Input, &m_SavedInput, sizeof(m_Input));
@@ -2128,10 +2096,6 @@ void CCharacter::DDRaceTick()
 					IsInFreeze = true;
 					break;
 				}
-			}
-			if(!IsInFreeze)
-			{
-				SetRescue();
 			}
 		}
 	}
@@ -2198,8 +2162,6 @@ void CCharacter::DDRacePostCoreTick()
 		m_TeleGunTeleport = false;
 		m_IsBlueTeleGunTeleport = false;
 	}
-
-	HandleBroadcast();
 }
 
 bool CCharacter::Freeze(int Seconds)
@@ -2351,35 +2313,6 @@ void CCharacter::DDRaceInit()
 	if(g_Config.m_SvTeam == SV_TEAM_MANDATORY && Team == TEAM_FLOCK)
 	{
 		GameServer()->SendStartWarning(GetPlayer()->GetCID(), "Please join a team before you start");
-	}
-}
-
-void CCharacter::Rescue()
-{
-	if(m_SetSavePos && !m_Super)
-	{
-		if(m_LastRescue + (int64_t)g_Config.m_SvRescueDelay * Server()->TickSpeed() > Server()->Tick())
-		{
-			char aBuf[256];
-			str_format(aBuf, sizeof(aBuf), "You have to wait %d seconds until you can rescue yourself", (int)((m_LastRescue + (int64_t)g_Config.m_SvRescueDelay * Server()->TickSpeed() - Server()->Tick()) / Server()->TickSpeed()));
-			GameServer()->SendChatTarget(GetPlayer()->GetCID(), aBuf);
-			return;
-		}
-
-		float StartTime = m_StartTime;
-		m_RescueTee.Load(this, Team());
-		// Don't load these from saved tee:
-		m_Core.m_Vel = vec2(0, 0);
-		m_Core.m_HookState = HOOK_IDLE;
-		m_StartTime = StartTime;
-		m_SavedInput.m_Direction = 0;
-		m_SavedInput.m_Jump = 0;
-		// simulate releasing the fire button
-		if((m_SavedInput.m_Fire & 1) != 0)
-			m_SavedInput.m_Fire++;
-		m_SavedInput.m_Fire &= INPUT_STATE_MASK;
-		m_SavedInput.m_Hook = 0;
-		m_pPlayer->Pause(CPlayer::PAUSE_NONE, true);
 	}
 }
 

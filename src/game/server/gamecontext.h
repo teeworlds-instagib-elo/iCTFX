@@ -102,8 +102,6 @@ class CGameContext : public IGameServer
 	static void ConSwitchOpen(IConsole::IResult *pResult, void *pUserData);
 	static void ConPause(IConsole::IResult *pResult, void *pUserData);
 	static void ConChangeMap(IConsole::IResult *pResult, void *pUserData);
-	static void ConRandomMap(IConsole::IResult *pResult, void *pUserData);
-	static void ConRandomUnfinishedMap(IConsole::IResult *pResult, void *pUserData);
 	static void ConRestart(IConsole::IResult *pResult, void *pUserData);
 	static void ConBroadcast(IConsole::IResult *pResult, void *pUserData);
 	static void ConSay(IConsole::IResult *pResult, void *pUserData);
@@ -116,12 +114,11 @@ class CGameContext : public IGameServer
 	static void ConAddMapVotes(IConsole::IResult *pResult, void *pUserData);
 	static void ConVote(IConsole::IResult *pResult, void *pUserData);
 	static void ConVoteNo(IConsole::IResult *pResult, void *pUserData);
-	static void ConDrySave(IConsole::IResult *pResult, void *pUserData);
 	static void ConDumpAntibot(IConsole::IResult *pResult, void *pUserData);
 	static void ConchainSpecialMotdupdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 
-	static void ConSwapTeams(IConsole::IResult *pResult, void *pUserData);;
-	static void ConShuffleTeams(IConsole::IResult *pResult, void *pUserData);;
+	static void ConSwapTeams(IConsole::IResult *pResult, void *pUserData);
+	static void ConShuffleTeams(IConsole::IResult *pResult, void *pUserData);
 	void Construct(int Resetting);
 	void Destruct(int Resetting);
 	void AddVote(const char *pDescription, const char *pCommand);
@@ -302,7 +299,6 @@ public:
 
 private:
 	bool m_VoteWillPass;
-	class CScore *m_pScore;
 
 	//DDRace Console Commands
 
@@ -369,20 +365,8 @@ private:
 
 	static void ConUTF8(IConsole::IResult *pResult, void *pUserData);
 	static void ConDND(IConsole::IResult *pResult, void *pUserData);
-	static void ConMapInfo(IConsole::IResult *pResult, void *pUserData);
 	static void ConTimeout(IConsole::IResult *pResult, void *pUserData);
-	static void ConPractice(IConsole::IResult *pResult, void *pUserData);
-	static void ConSwap(IConsole::IResult *pResult, void *pUserData);
-	static void ConSave(IConsole::IResult *pResult, void *pUserData);
-	static void ConLoad(IConsole::IResult *pResult, void *pUserData);
-	static void ConMap(IConsole::IResult *pResult, void *pUserData);
-	static void ConTeamRank(IConsole::IResult *pResult, void *pUserData);
-	static void ConRank(IConsole::IResult *pResult, void *pUserData);
 	static void ConBroadTime(IConsole::IResult *pResult, void *pUserData);
-	static void ConJoinTeam(IConsole::IResult *pResult, void *pUserData);
-	static void ConLockTeam(IConsole::IResult *pResult, void *pUserData);
-	static void ConUnlockTeam(IConsole::IResult *pResult, void *pUserData);
-	static void ConInviteTeam(IConsole::IResult *pResult, void *pUserData);
 	static void ConMe(IConsole::IResult *pResult, void *pUserData);
 	static void ConWhisper(IConsole::IResult *pResult, void *pUserData);
 	static void ConConverse(IConsole::IResult *pResult, void *pUserData);
@@ -397,8 +381,8 @@ private:
 	static void ConSayTimeAll(IConsole::IResult *pResult, void *pUserData);
 	static void ConTime(IConsole::IResult *pResult, void *pUserData);
 	static void ConSetTimerType(IConsole::IResult *pResult, void *pUserData);
-	static void ConRescue(IConsole::IResult *pResult, void *pUserData);
 	static void ConTele(IConsole::IResult *pResult, void *pUserData);
+	static void ConStats(IConsole::IResult *pResult, void *pUserData);
 	static void ConProtectedKill(IConsole::IResult *pResult, void *pUserData);
 
 	static void ConVoteMute(IConsole::IResult *pResult, void *pUserData);
@@ -448,7 +432,6 @@ private:
 
 public:
 	CLayers *Layers() { return &m_Layers; }
-	class CScore *Score() { return m_pScore; }
 
 	enum
 	{
@@ -467,7 +450,6 @@ public:
 	inline bool IsKickVote() const { return m_VoteType == VOTE_TYPE_KICK; }
 	inline bool IsSpecVote() const { return m_VoteType == VOTE_TYPE_SPECTATE; }
 
-	void SendRecord(int ClientID);
 	static void SendChatResponse(const char *pLine, void *pUser, ColorRGBA PrintColor = {1, 1, 1, 1});
 	static void SendChatResponseAll(const char *pLine, void *pUser);
 	virtual void OnSetAuthed(int ClientID, int Level);

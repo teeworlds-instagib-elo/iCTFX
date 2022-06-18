@@ -9,6 +9,7 @@
 #include <game/server/teams.h>
 
 #include "character.h"
+#include "../player.h"
 
 CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, int Owner, int Type) :
 	CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER)
@@ -24,13 +25,32 @@ CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEner
 	m_Type = Type;
 	m_TeleportCancelled = false;
 	m_IsBlueTeleport = false;
+
+	m_DidHit = false;
+
 	m_TuneZone = GameServer()->Collision()->IsTune(GameServer()->Collision()->GetMapIndex(m_Pos));
 	CCharacter *pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
 	m_TeamMask = pOwnerChar ? pOwnerChar->Teams()->TeamMask(pOwnerChar->Team(), -1, m_Owner) : 0;
 	m_BelongsToPracticeTeam = pOwnerChar && pOwnerChar->Teams()->IsPractice(pOwnerChar->Team());
+	pOwnerChar->GetPlayer()->m_Shots++;
 
 	GameWorld()->InsertEntity(this);
 	DoBounce();
+}
+
+CLaser::~CLaser() {
+	if (m_Bounces > 0) {
+		CPlayer *pOwner = GameServer()->m_apPlayers[m_Owner];
+		if (!pOwner) {
+			return;
+		}
+
+		pOwner->m_Wallshots++;
+
+		if (m_DidHit) {
+			pOwner->m_WallshotKills++;
+		}
+	}
 }
 
 bool CLaser::HitCharacter(vec2 From, vec2 To)
@@ -39,6 +59,7 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 	CCharacter *pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
 	CCharacter *pHit;
 	bool pDontHitSelf = g_Config.m_SvOldLaser || (m_Bounces == 0 && !m_WasTele);
+	
 
 	if(pOwnerChar ? (!(pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_LASER) && m_Type == WEAPON_LASER) || (!(pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_SHOTGUN) && m_Type == WEAPON_SHOTGUN) : g_Config.m_SvHit)
 		pHit = GameServer()->m_World.IntersectCharacter(m_Pos, To, 0.f, At, pOwnerChar, m_Owner);
@@ -47,9 +68,11 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 
 	if(!pHit || (pHit == pOwnerChar && g_Config.m_SvOldLaser) || (pHit != pOwnerChar && pOwnerChar ? (pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_LASER && m_Type == WEAPON_LASER) || (pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_SHOTGUN && m_Type == WEAPON_SHOTGUN) : !g_Config.m_SvHit))
 		return false;
+	
 	m_From = From;
 	m_Pos = At;
 	m_Energy = -1;
+	m_DidHit = true;
 	pHit->TakeDamage(vec2(0.f, 0.f), GameServer()->Tuning()->m_LaserDamage, m_Owner, WEAPON_LASER);
 	return true;
 }
@@ -88,6 +111,7 @@ void CLaser::DoBounce()
 
 			m_Energy -= distance(m_From, m_Pos) + GameServer()->Tuning()->m_LaserBounceCost;
 			m_Bounces++;
+			
 
 			if(m_Bounces > GameServer()->Tuning()->m_LaserBounceNum)
 				m_Energy = -1;

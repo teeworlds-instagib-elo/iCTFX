@@ -5,7 +5,6 @@
 
 #include <engine/antibot.h>
 #include <game/server/entity.h>
-#include <game/server/save.h>
 
 class CAntibot;
 class CGameTeams;
@@ -25,8 +24,6 @@ enum
 class CCharacter : public CEntity
 {
 	MACRO_ALLOC_POOL_ID()
-
-	friend class CSaveTee; // need to use core
 
 public:
 	//character's size
@@ -168,16 +165,13 @@ private:
 	int m_LastBroadcast;
 	void DDRaceInit();
 	void HandleSkippableTiles(int Index);
-	void SetRescue();
 	void DDRaceTick();
 	void DDRacePostCoreTick();
-	void HandleBroadcast();
 	void HandleTuneLayer();
 	void SendZoneMsgs();
 	IAntibot *Antibot();
 
 	bool m_SetSavePos;
-	CSaveTee m_RescueTee;
 	bool m_Solo;
 
 public:
@@ -272,8 +266,6 @@ public:
 	bool HasTelegunGun() { return m_Core.m_HasTelegunGun; }
 	bool HasTelegunGrenade() { return m_Core.m_HasTelegunGrenade; }
 	bool HasTelegunLaser() { return m_Core.m_HasTelegunLaser; }
-
-	CSaveTee &GetRescueTeeRef() { return m_RescueTee; }
 };
 
 enum
