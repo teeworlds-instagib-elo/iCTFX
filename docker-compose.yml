@@ -1,0 +1,15 @@
+version: '3.9'
+
+services:
+  db:
+    image: mariadb:10.7
+    ports:
+      - 3306:3306
+    volumes:
+      - ~/apps/mariadb:/var/lib/mysql
+      - /var/run/mysqld:/run/mysqld
+    environment:
+      - MYSQL_ROOT_PASSWORD=ZLxJuqoUipavwGatXedg
+      - MYSQL_PASSWORD=thebestpassword
+      - MYSQL_USER=ddnet
+      - MYSQL_DATABASE=ddnet

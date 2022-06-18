@@ -4,8 +4,6 @@
 
 #include <engine/shared/config.h>
 #include <game/server/gamecontext.h>
-#include <game/server/score.h>
-#include <game/teamscore.h>
 
 #include <utility>
 
@@ -26,7 +24,6 @@ class CGameTeams
 	bool m_TeamLocked[NUM_TEAMS];
 	uint64_t m_Invited[NUM_TEAMS];
 	bool m_Practice[NUM_TEAMS];
-	std::shared_ptr<CScoreSaveResult> m_pSaveTeamResult[NUM_TEAMS];
 	uint64_t m_LastSwap[NUM_TEAMS];
 	bool m_TeamSentStartWarning[NUM_TEAMS];
 	// `m_TeamUnfinishableKillTick` is -1 by default and gets set when a
@@ -45,8 +42,6 @@ class CGameTeams
 	*/
 	void KillTeam(int Team, int NewStrongID, int ExceptID = -1);
 	bool TeamFinished(int Team);
-	void OnTeamFinish(CPlayer **Players, unsigned int Size, float Time, const char *pTimestamp);
-	void OnFinish(CPlayer *Player, float Time, const char *pTimestamp);
 
 public:
 	enum
@@ -121,7 +116,6 @@ public:
 	void ResetSavedTeam(int ClientID, int Team);
 	void RequestTeamSwap(CPlayer *pPlayer, CPlayer *pTargetPlayer, int Team);
 	void SwapTeamCharacters(CPlayer *pPlayer, CPlayer *pTargetPlayer, int Team);
-	void ProcessSaveTeam();
 
 	int GetFirstEmptyTeam() const;
 
@@ -166,21 +160,6 @@ public:
 	void SetFinished(int ClientID, bool Finished)
 	{
 		m_TeeFinished[ClientID] = Finished;
-	}
-
-	void SetSaving(int TeamID, std::shared_ptr<CScoreSaveResult> &SaveResult)
-	{
-		m_pSaveTeamResult[TeamID] = SaveResult;
-	}
-
-	bool GetSaving(int TeamID)
-	{
-		if(TeamID < TEAM_FLOCK || TeamID >= TEAM_SUPER)
-			return false;
-		if(g_Config.m_SvTeam != SV_TEAM_FORCED_SOLO && TeamID == TEAM_FLOCK)
-			return false;
-
-		return m_pSaveTeamResult[TeamID] != nullptr;
 	}
 
 	void SetPractice(int Team, bool Enabled)

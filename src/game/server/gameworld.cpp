@@ -9,6 +9,7 @@
 #include <algorithm>
 #include <engine/shared/config.h>
 #include <utility>
+#include <game/server/gamecontroller.h>
 
 //////////////////////////////////////////////////
 // game world

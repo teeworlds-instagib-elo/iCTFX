@@ -284,7 +284,7 @@ void CServer::CClient::Reset()
 	m_LastAckedSnapshot = -1;
 	m_LastInputTick = -1;
 	m_SnapRate = CClient::SNAPRATE_INIT;
-	m_Score = 0;
+	// m_Score = 0;
 	m_NextMapChunk = 0;
 	m_Flags = 0;
 }
@@ -2419,21 +2419,21 @@ int CServer::Run()
 		return -1;
 	}
 
-	if(Config()->m_SvSqliteFile[0] != '\0')
-	{
-		auto pSqliteConn = CreateSqliteConnection(Config()->m_SvSqliteFile, true);
+	// if(Config()->m_SvSqliteFile[0] != '\0')
+	// {
+	// 	auto pSqliteConn = CreateSqliteConnection(Config()->m_SvSqliteFile, true);
 
-		if(Config()->m_SvUseSQL)
-		{
-			DbPool()->RegisterDatabase(std::move(pSqliteConn), CDbConnectionPool::WRITE_BACKUP);
-		}
-		else
-		{
-			auto pCopy = std::unique_ptr<IDbConnection>(pSqliteConn->Copy());
-			DbPool()->RegisterDatabase(std::move(pSqliteConn), CDbConnectionPool::READ);
-			DbPool()->RegisterDatabase(std::move(pCopy), CDbConnectionPool::WRITE);
-		}
-	}
+	// 	if(Config()->m_SvUseSQL)
+	// 	{
+	// 		DbPool()->RegisterDatabase(std::move(pSqliteConn), CDbConnectionPool::WRITE_BACKUP);
+	// 	}
+	// 	else
+	// 	{
+	// 		auto pCopy = std::unique_ptr<IDbConnection>(pSqliteConn->Copy());
+	// 		DbPool()->RegisterDatabase(std::move(pSqliteConn), CDbConnectionPool::READ);
+	// 		DbPool()->RegisterDatabase(std::move(pCopy), CDbConnectionPool::WRITE);
+	// 	}
+	// }
 
 	// start server
 	NETADDR BindAddr;
@@ -2757,14 +2757,6 @@ void CServer::ConTestingCommands(CConsole::IResult *pResult, void *pUser)
 	CConsole *pThis = static_cast<CConsole *>(pUser);
 	char aBuf[128];
 	str_format(aBuf, sizeof(aBuf), "Value: %d", pThis->Config()->m_SvTestingCommands);
-	pThis->Print(CConsole::OUTPUT_LEVEL_STANDARD, "console", aBuf);
-}
-
-void CServer::ConRescue(CConsole::IResult *pResult, void *pUser)
-{
-	CConsole *pThis = static_cast<CConsole *>(pUser);
-	char aBuf[128];
-	str_format(aBuf, sizeof(aBuf), "Value: %d", pThis->Config()->m_SvRescue);
 	pThis->Print(CConsole::OUTPUT_LEVEL_STANDARD, "console", aBuf);
 }
 
@@ -3711,7 +3703,6 @@ int main(int argc, const char **argv)
 		pConsole->ParseArguments(argc - 1, &argv[1]);
 
 	pConsole->Register("sv_test_cmds", "", CFGFLAG_SERVER, CServer::ConTestingCommands, pConsole, "Turns testing commands aka cheats on/off (setting only works in initial config)");
-	pConsole->Register("sv_rescue", "", CFGFLAG_SERVER, CServer::ConRescue, pConsole, "Allow /rescue command so players can teleport themselves out of freeze (setting only works in initial config)");
 
 	pEngine->InitLogfile();
 

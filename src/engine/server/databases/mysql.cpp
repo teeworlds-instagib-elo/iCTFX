@@ -98,7 +98,10 @@ public:
 	virtual void GetString(int Col, char *pBuffer, int BufferSize);
 	virtual int GetBlob(int Col, unsigned char *pBuffer, int BufferSize);
 
-	virtual bool AddPoints(const char *pPlayer, int Points, char *pError, int ErrorSize);
+	virtual bool AddStats(char const* pPlayer, Stats const& stats, char *pError, int ErrorSize);
+	virtual bool GetStats(char const* pPlayer, Stats& stats, char *pError, int ErrorSize);
+	virtual bool AddServerStats(char const* pServer, ServerStats const& stats, char *pError, int ErrorSize);
+	virtual bool GetServerStats(char const* pServer, ServerStats& stats, char *pError, int ErrorSize);
 
 private:
 	class CStmtDeleter
@@ -107,7 +110,7 @@ private:
 		void operator()(MYSQL_STMT *pStmt) const;
 	};
 
-	char m_aErrorDetail[128];
+	char m_aErrorDetail[4096];
 	void StoreErrorMysql(const char *pContext);
 	void StoreErrorStmt(const char *pContext);
 	bool ConnectImpl();
@@ -203,7 +206,7 @@ bool CMysqlConnection::PrepareAndExecuteStatement(const char *pStmt)
 
 void CMysqlConnection::Print(IConsole *pConsole, const char *Mode)
 {
-	char aBuf[512];
+	char aBuf[4096];
 	str_format(aBuf, sizeof(aBuf),
 		"MySQL-%s: DB: '%s' Prefix: '%s' User: '%s' IP: <{'%s'}> Port: %d",
 		Mode, m_aDatabase, GetPrefix(), m_aUser, m_aIp, m_Port);
@@ -304,25 +307,20 @@ bool CMysqlConnection::ConnectImpl()
 
 	if(m_Setup)
 	{
-		char aCreateRace[1024];
-		char aCreateTeamrace[1024];
-		char aCreateMaps[1024];
-		char aCreateSaves[1024];
-		char aCreatePoints[1024];
-		FormatCreateRace(aCreateRace, sizeof(aCreateRace));
-		FormatCreateTeamrace(aCreateTeamrace, sizeof(aCreateTeamrace), "VARBINARY(16)");
-		FormatCreateMaps(aCreateMaps, sizeof(aCreateMaps));
-		FormatCreateSaves(aCreateSaves, sizeof(aCreateSaves));
-		FormatCreatePoints(aCreatePoints, sizeof(aCreatePoints));
+		char aCreateUsers[1024];
+		char aCreateServer[1024];
+		FormatCreateUsers(aCreateUsers, sizeof(aCreateUsers));
+		FormatCreateServer(aCreateServer, sizeof(aCreateServer));
 
-		if(PrepareAndExecuteStatement(aCreateRace) ||
-			PrepareAndExecuteStatement(aCreateTeamrace) ||
-			PrepareAndExecuteStatement(aCreateMaps) ||
-			PrepareAndExecuteStatement(aCreateSaves) ||
-			PrepareAndExecuteStatement(aCreatePoints))
+		if(PrepareAndExecuteStatement(aCreateUsers))
 		{
 			return true;
 		}
+		if(PrepareAndExecuteStatement(aCreateServer))
+		{
+			return true;
+		}
+		PrepareAndExecuteStatement("INSERT INTO stats_server(server_name, red_score, blue_score) VALUES ('save_server', 0, 0)");
 		m_Setup = false;
 	}
 	dbg_msg("mysql", "connection established");
@@ -681,26 +679,121 @@ const char *CMysqlConnection::MedianMapTime(char *pBuffer, int BufferSize) const
 	return pBuffer;
 }
 
-bool CMysqlConnection::AddPoints(const char *pPlayer, int Points, char *pError, int ErrorSize)
+bool CMysqlConnection::AddStats(char const* pPlayer, Stats const& stats, char *pError, int ErrorSize)
 {
-	char aBuf[512];
-	str_format(aBuf, sizeof(aBuf),
-		"INSERT INTO %s_points(Name, Points) "
-		"VALUES (?, ?) "
-		"ON DUPLICATE KEY UPDATE Points=Points+?",
-		GetPrefix());
+	auto aBuf = "INSERT INTO stats(name, kills, deaths, touches, captures, fastest_capture, suicides, shots, wallshots, wallshot_kills) "
+	"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+	"ON DUPLICATE KEY UPDATE "
+	"kills=?, deaths=?, touches=?, "
+	"captures=?, fastest_capture=?, suicides=?, shots=?, wallshots=?, wallshot_kills=?";
 	if(PrepareStatement(aBuf, pError, ErrorSize))
 	{
 		return true;
 	}
 	BindString(1, pPlayer);
-	BindInt(2, Points);
-	BindInt(3, Points);
+	BindInt(2, stats.kills);
+	BindInt(3, stats.deaths);
+	BindInt(4, stats.touches);
+	BindInt(5, stats.captures);
+	BindInt(6, stats.fastest_capture);
+	BindInt(7, stats.suicides);
+	BindInt(8, stats.shots);
+	BindInt(9, stats.wallshots);
+	BindInt(10, stats.wallshot_kills);
+	BindInt(11, stats.kills);
+	BindInt(12, stats.deaths);
+	BindInt(13, stats.touches);
+	BindInt(14, stats.captures);
+	BindInt(15, stats.fastest_capture);
+	BindInt(16, stats.suicides);
+	BindInt(17, stats.shots);
+	BindInt(18, stats.wallshots);
+	BindInt(19, stats.wallshot_kills);
+	int NumUpdated;
+	if(ExecuteUpdate(&NumUpdated, pError, ErrorSize))
+	{
+		dbg_msg("mysql", "error: %s", pError);
+		return true;
+	}
+	return false;
+}
+
+bool CMysqlConnection::GetStats(char const* pPlayer, Stats& stats, char *pError, int ErrorSize) {
+	char aBuf[4096];
+	str_format(aBuf, sizeof(aBuf),
+		"SELECT kills, deaths, touches, captures, fastest_capture, suicides, shots, wallshots, wallshot_kills FROM stats WHERE name = ?");
+	if(PrepareStatement(aBuf, pError, ErrorSize))
+	{
+		return true;
+	}
+	BindString(1, pPlayer);
+	bool Last;
+	if(Step(&Last, pError, ErrorSize))
+	{
+		return true;
+	}
+
+	if(!Last)
+	{
+		stats.kills = GetInt(1);
+		stats.deaths = GetInt(2);
+		stats.touches = GetInt(3);
+		stats.captures = GetInt(4);
+		stats.fastest_capture = GetInt(5);
+		stats.suicides = GetInt(6);
+		stats.shots = GetInt(7);
+		stats.wallshots = GetInt(8);
+		stats.wallshot_kills = GetInt(9);
+	}
+	return false;
+}
+
+bool CMysqlConnection::AddServerStats(char const* pServer, ServerStats const& stats, char *pError, int ErrorSize) {
+	char aBuf[4096];
+	str_format(aBuf, sizeof(aBuf),
+		"INSERT INTO stats_server(server_name, red_score, blue_score)"
+		"VALUES (?, ?, ?) "
+		"ON DUPLICATE KEY UPDATE "
+		"red_score=?, blue_score=?");
+	if(PrepareStatement(aBuf, pError, ErrorSize))
+	{
+		return true;
+	}
+	BindString(1, pServer);
+	BindInt(2, stats.score_red);
+	BindInt(3, stats.score_blue);
+	BindInt(4, stats.score_red);
+	BindInt(5, stats.score_blue);
 	int NumUpdated;
 	if(ExecuteUpdate(&NumUpdated, pError, ErrorSize))
 	{
 		return true;
 	}
+	return false;
+}
+
+bool CMysqlConnection::GetServerStats(char const* pServer, ServerStats& stats, char *pError, int ErrorSize) {
+	char aBuf[4096];
+	str_format(aBuf, sizeof(aBuf),
+		"SELECT red_score, blue_score FROM stats_server WHERE server_name = ?");
+	if(PrepareStatement(aBuf, pError, ErrorSize))
+	{
+		return true;
+	}
+	BindString(1, pServer);
+	bool Last;
+	if(Step(&Last, pError, ErrorSize))
+	{
+		return true;
+	}
+	if(!Last)
+	{
+		stats.score_red = GetInt(1);
+		stats.score_blue = GetInt(2);
+		dbg_msg("mysql", "red: %d", stats.score_red);
+		dbg_msg("mysql", "blue: %d", stats.score_blue);
+	}
+
 	return false;
 }
 

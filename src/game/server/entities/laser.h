@@ -9,6 +9,7 @@ class CLaser : public CEntity
 {
 public:
 	CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, int Owner, int Type);
+	virtual ~CLaser();
 
 	virtual void Reset() override;
 	virtual void Tick() override;
@@ -30,6 +31,8 @@ private:
 	int m_EvalTick;
 	int m_Owner;
 	int m_TeamMask;
+
+	bool m_DidHit;
 
 	// DDRace
 

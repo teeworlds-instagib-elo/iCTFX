@@ -4,18 +4,20 @@
 #include <game/server/entities/door.h>
 #include <game/server/gamecontroller.h>
 #include <game/server/teams.h>
+#include <engine/server/databases/connection.h>
 
 #include <map>
 #include <vector>
 
-struct CScoreInitResult;
 class CGameControllerDDRace : public IGameController
 {
 public:
 	CGameControllerDDRace(class CGameContext *pGameServer);
 	~CGameControllerDDRace();
 
-	CScore *Score();
+	void UpdateServerStats();
+
+	std::unique_ptr<IDbConnection> database;
 	
 
 	void OnCharacterSpawn(class CCharacter *pChr) override;
@@ -42,7 +44,5 @@ public:
 
 	std::map<int, std::vector<vec2>> m_TeleOuts;
 	std::map<int, std::vector<vec2>> m_TeleCheckOuts;
-
-	std::shared_ptr<CScoreInitResult> m_pInitResult;
 };
 #endif // GAME_SERVER_GAMEMODES_DDRACE_H

@@ -482,12 +482,23 @@ void IGameController::StartRound()
 		if(pPlayer)
 		{
 			const int team = pPlayer->GetTeam();
-			pPlayer->m_Score = 0;
+			if(!g_Config.m_SvSaveServer)
+			{
+				pPlayer->m_Score = 0;
+				pPlayer->m_Deaths = 0;
+				pPlayer->m_Kills = 0;
+				pPlayer->m_Captures = 0;
+				pPlayer->m_FastestCapture = 0;
+				pPlayer->m_Suicides = 0;
+				pPlayer->m_Touches = 0;
+			}
 		}
 	}
 
-	m_aTeamscore[TEAM_RED] =  0;
-	m_aTeamscore[TEAM_BLUE] = 0;
+	if(!g_Config.m_SvSaveServer) {
+		m_aTeamscore[TEAM_RED] =  0;
+		m_aTeamscore[TEAM_BLUE] = 0;
+	}
 }
 
 void IGameController::ChangeMap(const char *pToMap)
@@ -512,9 +523,11 @@ int IGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *
 	// do scoreing
 	if(!pKiller || Weapon == WEAPON_GAME)
 		return 0;
+	pVictim->GetPlayer()->m_Deaths++;
 	if(pKiller == pVictim->GetPlayer())
 	{
 		pVictim->GetPlayer()->m_Score--; // suicide
+		pVictim->GetPlayer()->m_Suicides++;
 	}
 	else
 	{
@@ -525,6 +538,7 @@ int IGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *
 		else
 		{
 			pKiller->m_Score++; // normal kill
+			pKiller->m_Kills++;
 		}
 	}
 	pVictim->GetPlayer()->m_RespawnTick = Server()->Tick()+Server()->TickSpeed()*0.5f;
