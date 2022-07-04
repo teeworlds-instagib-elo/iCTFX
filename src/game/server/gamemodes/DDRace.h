@@ -18,7 +18,6 @@ public:
 	void UpdateServerStats();
 
 	std::unique_ptr<IDbConnection> database;
-	
 
 	void OnCharacterSpawn(class CCharacter *pChr) override;
 	int OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int WeaponID) override;
