@@ -212,9 +212,6 @@ if(NOT MSVC AND NOT HAIKU)
   # -fstack-protector-all doesn't work on MinGW.
   add_c_compiler_flag_if_supported(OUR_FLAGS -fstack-protector-all)
 
-  # Disable exceptions as DDNet does not use them.
-  add_c_compiler_flag_if_supported(OUR_FLAGS -fno-exceptions)
-
   # Inaccurate floating point numbers cause problems on mingw-w64-gcc when
   # compiling for x86, might cause problems elsewhere. So don't store floats
   # in registers but keep them at higher accuracy.
@@ -2228,6 +2225,7 @@ if(SERVER)
     teeinfo.cpp
     teeinfo.h
   )
+  
   set(GAME_GENERATED_SERVER
     "src/game/generated/server_data.cpp"
     "src/game/generated/server_data.h"
@@ -2268,7 +2266,15 @@ if(SERVER)
     $<TARGET_OBJECTS:game-shared>
     $<TARGET_OBJECTS:mastersrv-shared>
   )
-  target_link_libraries(${TARGET_SERVER} ${LIBS_SERVER})
+
+  add_library(asio INTERFACE)
+  target_compile_options(asio INTERFACE
+    -DASIO_STANDALONE)
+  target_include_directories(asio INTERFACE ddnet-libs/asio/include)
+  target_link_libraries(asio INTERFACE ${CMAKE_THREAD_LIBS_INIT})
+
+  target_link_libraries(${TARGET_SERVER} ${LIBS_SERVER} asio)
+
   list(APPEND TARGETS_OWN ${TARGET_SERVER})
   list(APPEND TARGETS_LINK ${TARGET_SERVER})
 

@@ -6,6 +6,8 @@
 #include <game/server/teams.h>
 #include <engine/server/databases/connection.h>
 
+#include <asio.hpp>
+
 #include <map>
 #include <vector>
 
@@ -16,9 +18,6 @@ public:
 	~CGameControllerDDRace();
 
 	void UpdateServerStats();
-
-	std::unique_ptr<IDbConnection> database;
-	
 
 	void OnCharacterSpawn(class CCharacter *pChr) override;
 	int OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int WeaponID) override;
@@ -39,10 +38,14 @@ public:
 	void InitTeleporter();
 
 	int GetPlayerTeam(int ClientID) const;
+	
+	IDbConnection GetDatabaseConnection();
 
 	CGameTeams m_Teams;
 
 	std::map<int, std::vector<vec2>> m_TeleOuts;
 	std::map<int, std::vector<vec2>> m_TeleCheckOuts;
+
+	asio::io_context io;
 };
 #endif // GAME_SERVER_GAMEMODES_DDRACE_H
