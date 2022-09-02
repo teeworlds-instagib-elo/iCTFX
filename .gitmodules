@@ -4,6 +4,7 @@
 [submodule "external/cxxpool"]
     path = external/cxxpool
 	url = https://github.com/teeworlds-instagib-elo/cxxpool
+    branch = disable_exceptions
 [submodule "external/eventpp"]
     path = external/eventpp
     url = https://github.com/wqking/eventpp
