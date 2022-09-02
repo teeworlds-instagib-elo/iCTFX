@@ -2219,6 +2219,8 @@ if(SERVER)
     gamemodes/DDRace.h
     gameworld.cpp
     gameworld.h
+    sql_handler.h
+    sql_handler.cpp
     player.cpp
     player.h
     teams.cpp

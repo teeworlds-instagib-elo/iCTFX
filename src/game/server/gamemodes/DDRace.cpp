@@ -29,9 +29,9 @@ CGameControllerDDRace::CGameControllerDDRace(class CGameContext *pGameServer) :
 	m_apFlags[1] = 0;
 	m_aTeamscore[TEAM_RED] = 0;
 	m_aTeamscore[TEAM_BLUE] = 0;
-	database = nullptr;
+	
 	if(g_Config.m_SvSaveServer) {
-		database = CreateMysqlConnection("ddnet", "record", "ddnet", "thebestpassword", "localhost", 3306, true);
+		auto database = CreateMysqlConnection("ddnet", "record", "ddnet", "thebestpassword", "localhost", 3306, true);
 		if(database != nullptr)
 		{
 			char aError[256] = "error message not initialized";
@@ -51,30 +51,22 @@ CGameControllerDDRace::CGameControllerDDRace(class CGameContext *pGameServer) :
 			}
 			database->Disconnect();
 		}
+		sql_handler = make_unique<SqlHandler>();
 	}
 }
 
 CGameControllerDDRace::~CGameControllerDDRace() = default;
 
 void CGameControllerDDRace::UpdateServerStats() {
-	if(database != nullptr)
+	if(g_Config.m_SvSaveServer)
 	{
-		char aError[256] = "error message not initialized";
-		if(database->Connect(aError, sizeof(aError)))
-		{
-			dbg_msg("sql", "failed connecting to db: %s", aError);
-			return;
-		}
 		//save score
 		ServerStats server_stats{
 			m_aTeamscore[TEAM_RED],
 			m_aTeamscore[TEAM_BLUE]
 		};
-		char error[4096] = {};
-		if (database->AddServerStats("save_server", server_stats, error, sizeof(error))) {
-			dbg_msg("sql", "failed connecting to db: %s", error);
-		}
-		database->Disconnect();
+
+		sql_handler->set_server_stats(server_stats);
 	}
 }
 
@@ -156,54 +148,10 @@ void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 	pPlayer->m_WallshotKills = 0;
 	pPlayer->m_Suicides = 0;
 
-	if(database != nullptr)
+	if(g_Config.m_SvSaveServer)
 	{
-		char aError[256] = "error message not initialized";
-		if(database->Connect(aError, sizeof(aError)))
-		{
-			dbg_msg("sql", "failed connecting to db: %s", aError);
-			return;
-		}
-		//save score
-		Stats stats{};
-		char error[4096] = {};
-		if (!database->GetStats(Server()->ClientName(pPlayer->GetCID()), stats, error, sizeof(error))) {
-			pPlayer->m_Kills = stats.kills;
-			pPlayer->m_Deaths = stats.deaths;
-			pPlayer->m_Touches = stats.touches;
-			pPlayer->m_Captures = stats.captures;
-			pPlayer->m_FastestCapture = stats.fastest_capture;
-			pPlayer->m_Shots = stats.shots;
-			pPlayer->m_Wallshots = stats.wallshots;
-			pPlayer->m_WallshotKills = stats.wallshot_kills;
-			pPlayer->m_Suicides = stats.suicides;
-			pPlayer->m_Score = stats.captures * 5 + stats.touches + stats.kills - stats.suicides;
-		} else {
-			dbg_msg("sql", "failed to read stats: %s", error);
-		}
-		database->Disconnect();
+		sql_handler->get_player_stats(pPlayer, Server()->ClientName(pPlayer->GetCID()));
 	}
-	
-	// if(g_Config.m_SvSaveServer)
-	// {
-	// 	//load score
-	// 	char str [64];
-	// 	strcpy(str, "scores/");
-	// 	strcat(str, Server()->ClientName(ClientID)); 
-	// 	ifstream playerFile(str);
-	// 	std::string tmp = "0";
-	// 	if(playerFile.is_open())
-	// 	{
-	// 		std::string tmp2;
-	// 		playerFile >> tmp;
-	// 		printf("%s score loaded %s\n", Server()->ClientName(ClientID), tmp.c_str());
-
-	// 	}else
-	// 		printf("%s score not loaded\n", Server()->ClientName(ClientID));
-	// 	pPlayer->m_Score = stoi(tmp);
-	// 	printf("score: %i\n", pPlayer->m_Score);
-	// 	playerFile.close();
-	// }
 }
 
 void CGameControllerDDRace::OnPlayerDisconnect(CPlayer *pPlayer, const char *pReason)
@@ -219,14 +167,8 @@ void CGameControllerDDRace::OnPlayerDisconnect(CPlayer *pPlayer, const char *pRe
 	if(g_Config.m_SvTeam != SV_TEAM_FORCED_SOLO)
 		m_Teams.SetForceCharacterTeam(ClientID, TEAM_FLOCK);
 	
-	if(database != nullptr)
+	if(g_Config.m_SvSaveServer)
 	{
-		char aError[256] = "error message not initialized";
-		if(database->Connect(aError, sizeof(aError)))
-		{
-			dbg_msg("sql", "failed connecting to db: %s", aError);
-			return;
-		}
 		//save score
 		Stats stats;
 		stats.kills = pPlayer->m_Kills;
@@ -239,9 +181,7 @@ void CGameControllerDDRace::OnPlayerDisconnect(CPlayer *pPlayer, const char *pRe
 		stats.wallshot_kills = pPlayer->m_WallshotKills;
 		stats.suicides = pPlayer->m_Suicides;
 
-		char error[4096] = {};
-		database->AddStats(Server()->ClientName(pPlayer->GetCID()), stats, error, sizeof(error));
-		database->Disconnect();
+		sql_handler->set_stats(Server()->ClientName(pPlayer->GetCID()), stats);
 	}
 }
 
