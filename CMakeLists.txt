@@ -2268,8 +2268,8 @@ if(SERVER)
     $<TARGET_OBJECTS:game-shared>
     $<TARGET_OBJECTS:mastersrv-shared>
   )
-  target_link_libraries(${TARGET_SERVER} ${LIBS_SERVER})
-  target_include_directories(${TARGET_SERVER} external/cxxpool/src external/eventpp/include)
+  include_directories(external/cxxpool/src external/eventpp/include)
+  target_link_libraries(${TARGET_SERVER} ${LIBS_SERVER} eventpp)
   list(APPEND TARGETS_OWN ${TARGET_SERVER})
   list(APPEND TARGETS_LINK ${TARGET_SERVER})
 
