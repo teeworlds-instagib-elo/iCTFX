@@ -8,6 +8,9 @@
 // this include should perhaps be removed
 #include "teeinfo.h"
 #include <game/server/gamecontext.h>
+
+#include <atomic>
+
 enum
 {
 	WEAPON_GAME = -3, // team switching etc
