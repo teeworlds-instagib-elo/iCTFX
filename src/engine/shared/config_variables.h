@@ -166,7 +166,6 @@ MACRO_CONFIG_INT(SvRconVote, sv_rcon_vote, 0, 0, 1, CFGFLAG_SERVER, "Only allow 
 MACRO_CONFIG_INT(SvScorelimit, sv_scorelimit, 20, 0, 1000, CFGFLAG_SERVER, "Score limit (0 disables)")
 MACRO_CONFIG_INT(SvTimelimit, sv_timelimit, 0, 0, 1000, CFGFLAG_SERVER, "Time limit in minutes (0 disables)")
 MACRO_CONFIG_STR(SvGametype, sv_gametype, 32, "ictf", CFGFLAG_SERVER, "Game type (idm, ictf)")
-MACRO_CONFIG_INT(SvStopGoFeature, sv_stopgo_feature, 1, 0, 1, CFGFLAG_SERVER, "Enable stop/go-feature in chat")
 MACRO_CONFIG_INT(SvSaveServer, sv_save_server, 1, 0, 1, CFGFLAG_SERVER, "Enables save server features")
 MACRO_CONFIG_INT(SvGoTime, sv_go_time, 5, 0, 10, CFGFLAG_SERVER, "The restart time for the go-command")
 MACRO_CONFIG_INT(SvWarTime, sv_war_time, 15, 0, 600, CFGFLAG_SERVER, "Default warmup-time before a war")

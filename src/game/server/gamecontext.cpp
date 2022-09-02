@@ -1765,24 +1765,28 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 			if(Length >= 2 && str_startswith(pMsg->m_pMessage, "go"))
 			{
-				if(pPlayer->GetTeam() != TEAM_SPECTATORS)
-				{
-					char aBuf[32];
-					str_format(aBuf, sizeof(aBuf), "continue game");
-					char bBuf[32];
-					str_format(bBuf, sizeof(aBuf), "go");
-					StartVote(aBuf, bBuf, "continue", "continue");
-					pPlayer->m_Vote = 1;
-					pPlayer->m_VotePos = ++m_VotePos;
-					m_VoteUpdate = true;
+				if(!g_Config.m_SvSaveServer) {
+					if(pPlayer->GetTeam() != TEAM_SPECTATORS)
+					{
+						char aBuf[32];
+						str_format(aBuf, sizeof(aBuf), "continue game");
+						char bBuf[32];
+						str_format(bBuf, sizeof(aBuf), "go");
+						StartVote(aBuf, bBuf, "continue", "continue");
+						pPlayer->m_Vote = 1;
+						pPlayer->m_VotePos = ++m_VotePos;
+						m_VoteUpdate = true;
+					}
 				}
 			}
 
 			if(Length >= 4 && str_startswith(pMsg->m_pMessage, "stop"))
 			{
-				if(pPlayer->GetTeam() != TEAM_SPECTATORS)
-				{
-					ConStop(0, this);
+				if(!g_Config.m_SvSaveServer) {
+					if(pPlayer->GetTeam() != TEAM_SPECTATORS)
+					{
+						ConStop(0, this);
+					}
 				}
 			}
 
@@ -1796,7 +1800,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			else
 				Team = CHAT_ALL;
 
-			if(str_startswith(pMsg->m_pMessage + 1, "go") && g_Config.m_SvStopGoFeature)
+			if(str_startswith(pMsg->m_pMessage + 1, "go") && !g_Config.m_SvSaveServer)
 			{
 				if(pPlayer->GetTeam() != TEAM_SPECTATORS)
 				{
@@ -1811,7 +1815,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				}
 			}
 
-			if(str_startswith(pMsg->m_pMessage + 1, "stop") && g_Config.m_SvStopGoFeature)
+			if(str_startswith(pMsg->m_pMessage + 1, "stop") && !g_Config.m_SvSaveServer)
 			{
 				if(pPlayer->GetTeam() != TEAM_SPECTATORS)
 				{
@@ -2316,6 +2320,8 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				str_copy(aOldName, Server()->ClientName(ClientID), sizeof(aOldName));
 
 				Server()->SetClientName(ClientID, pMsg->m_pName);
+
+				m_pController->OnPlayerNameChange(pPlayer);
 
 				char aChatText[256];
 				str_format(aChatText, sizeof(aChatText), "'%s' changed name to '%s'", aOldName, Server()->ClientName(ClientID));
