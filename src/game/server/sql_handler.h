@@ -62,7 +62,7 @@ private:
 	std::function<void(void *)> make_callback(std::function<void(T *, IDbConnection *)> &&callback)
 	{
 		auto database = CreateMysqlConnection("ddnet", "record", "ddnet", "thebestpassword", "localhost", 3306, true);
-		return [this, callback](void *ev) {
+		return [this, callback, &database](void *ev) {
 			auto data = static_cast<T *>(ev);
 			m_thread_pool.push(
 				[this, &database](std::function<void(T *, IDbConnection *)> callback, T *data) {
