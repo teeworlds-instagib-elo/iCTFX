@@ -2269,7 +2269,7 @@ if(SERVER)
     $<TARGET_OBJECTS:mastersrv-shared>
   )
   include_directories(external/cxxpool/src external/eventpp/include)
-  target_link_libraries(${TARGET_SERVER} ${LIBS_SERVER} eventpp)
+  target_link_libraries(${TARGET_SERVER} ${LIBS_SERVER})
   list(APPEND TARGETS_OWN ${TARGET_SERVER})
   list(APPEND TARGETS_LINK ${TARGET_SERVER})
 
