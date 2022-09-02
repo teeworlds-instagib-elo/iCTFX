@@ -421,6 +421,8 @@ void IGameController::OnPlayerConnect(CPlayer *pPlayer)
 	}
 }
 
+void IGameController::OnPlayerNameChange(class CPlayer *pPlayer) {}
+
 void IGameController::OnPlayerDisconnect(class CPlayer *pPlayer, const char *pReason)
 {
 	pPlayer->OnDisconnect();
