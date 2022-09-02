@@ -1,3 +1,9 @@
 [submodule "ddnet-libs"]
 	path = ddnet-libs
 	url = https://github.com/ddnet/ddnet-libs
+[submodule ".\\external\\cxxpool"]
+	path = .\\external\\cxxpool
+	url = https://github.com/bloomen/cxxpool
+[submodule ".\\external\\eventpp"]
+	path = .\\external\\eventpp
+	url = https://github.com/wqking/eventpp
