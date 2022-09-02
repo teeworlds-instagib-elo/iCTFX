@@ -67,7 +67,6 @@ private:
 			m_thread_pool.push(
 				[this, &database](std::function<void(T *, IDbConnection *)> callback, T *data) {
 					callback(data, database);
-					free(data);
 				},
 				callback, data);
 		};
