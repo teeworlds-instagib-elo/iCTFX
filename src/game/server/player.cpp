@@ -222,12 +222,11 @@ void CPlayer::Tick()
 
 	if(Server()->GetNetErrorString(m_ClientID)[0])
 	{
-		m_Afk = true;
-
 		char aBuf[512];
-		str_format(aBuf, sizeof(aBuf), "'%s' would have timed out, but can use timeout protection now", Server()->ClientName(m_ClientID));
+		str_format(aBuf, sizeof(aBuf), "'%s' timed out", Server()->ClientName(m_ClientID));
 		GameServer()->SendChat(-1, CGameContext::CHAT_ALL, aBuf);
 		Server()->ResetNetErrorString(m_ClientID);
+		GameServer()->OnClientDrop(m_ClientID, "TimeOut");
 	}
 
 	if(!GameServer()->m_World.m_Paused)

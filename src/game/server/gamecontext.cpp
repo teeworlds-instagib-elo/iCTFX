@@ -1696,6 +1696,25 @@ void CGameContext::CensorMessage(char *pCensoredMessage, const char *pMessage, i
 	}
 }
 
+int StrLeftComp(const char *pOrigin, const char *pSub)
+{
+	const char *pSlide = pOrigin;
+	while(*pSlide && *pSub)
+	{
+		if(*pSlide == *pSub)
+		{
+			pSlide++;
+			pSub++;
+
+			if(*pSub == '\0' && (*pSlide == ' ' || *pSlide == '\0'))
+				return pSlide - pOrigin;
+		}
+		else
+			return 0;
+	}
+	return 0;
+}
+
 void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 {
 	if(m_TeeHistorianActive)
@@ -1796,7 +1815,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			else
 				Team = CHAT_ALL;
 
-			if(str_startswith(pMsg->m_pMessage + 1, "go") && g_Config.m_SvStopGoFeature)
+			if(StrLeftComp(pMsg->m_pMessage, "go") && g_Config.m_SvStopGoFeature)
 			{
 				if(pPlayer->GetTeam() != TEAM_SPECTATORS)
 				{
@@ -1811,7 +1830,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				}
 			}
 
-			if(str_startswith(pMsg->m_pMessage + 1, "stop") && g_Config.m_SvStopGoFeature)
+			if(StrLeftComp(pMsg->m_pMessage, "stop") && g_Config.m_SvStopGoFeature)
 			{
 				if(pPlayer->GetTeam() != TEAM_SPECTATORS)
 				{
