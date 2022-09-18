@@ -518,7 +518,7 @@ void CCharacter::FireWeapon()
 
 	case WEAPON_SHOTGUN:
 	{
-		int ShotSpread = 2;
+		int ShotSpread = 5;
 
 		for(int i = -ShotSpread; i <= ShotSpread; ++i)
 		{
@@ -532,7 +532,7 @@ void CCharacter::FireWeapon()
 				ProjStartPos,
 				vec2(cosf(a), sinf(a))*Speed,
 				(int)(Server()->TickSpeed()*GameServer()->Tuning()->m_ShotgunLifetime),
-				1, 0, 0, -1);
+				0, 0, 0, -1);
 		}
 
 		GameServer()->CreateSound(m_Pos, SOUND_SHOTGUN_FIRE);
