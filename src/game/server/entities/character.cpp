@@ -463,6 +463,29 @@ void CCharacter::FireWeapon()
 	}
 	break;
 
+	case WEAPON_NINJA:
+	{
+		// reset Hit objects
+		m_NumObjectsHit = 0;
+
+		m_Ninja.m_ActivationDir = Direction;
+		m_Ninja.m_CurrentMoveTime = g_pData->m_Weapons.m_Ninja.m_Movetime * Server()->TickSpeed() / 1000;
+		m_Ninja.m_OldVelAmount = length(m_Core.m_Vel);
+
+		GameServer()->CreateSound(m_Pos, SOUND_NINJA_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
+	}
+	break;
+
+	case WEAPON_LASER:
+	{
+		float LaserReach = GameServer()->Tuning()->m_LaserReach;
+		new CLaser(GameWorld(), m_Pos, Direction, LaserReach, m_pPlayer->GetCID(), WEAPON_LASER);
+		GameServer()->CreateSound(m_Pos, SOUND_LASER_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
+	}
+	if (!g_Config.m_SvOhNo) {
+		break;
+	}
+
 	case WEAPON_GUN:
 	{
 		if(!m_Jetpack || !m_pPlayer->m_NinjaJetpack || m_Core.m_HasTelegunGun)
@@ -489,38 +512,34 @@ void CCharacter::FireWeapon()
 			GameServer()->CreateSound(m_Pos, SOUND_GUN_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
 		}
 	}
-	break;
+	if (!g_Config.m_SvOhNo) {
+		break;
+	}
 
 	case WEAPON_SHOTGUN:
 	{
-		/*int ShotSpread = 2;
+		int ShotSpread = 2;
 
-			for(int i = -ShotSpread; i <= ShotSpread; ++i)
-			{
-				float Spreading[] = {-0.185f, -0.070f, 0, 0.070f, 0.185f};
-				float a = angle(Direction);
-				a += Spreading[i+2];
-				float v = 1-(absolute(i)/(float)ShotSpread);
-				float Speed = mix((float)GameServer()->Tuning()->m_ShotgunSpeeddiff, 1.0f, v);
-				CProjectile *pProj = new CProjectile(GameWorld(), WEAPON_SHOTGUN,
-					m_pPlayer->GetCID(),
-					ProjStartPos,
-					vec2(cosf(a), sinf(a))*Speed,
-					(int)(Server()->TickSpeed()*GameServer()->Tuning()->m_ShotgunLifetime),
-					1, 0, 0, -1);
-			}
+		for(int i = -ShotSpread; i <= ShotSpread; ++i)
+		{
+			float Spreading[] = {-0.185f, -0.070f, 0, 0.070f, 0.185f};
+			float a = angle(Direction);
+			a += Spreading[i+2];
+			float v = 1-(absolute(i)/(float)ShotSpread);
+			float Speed = mix((float)GameServer()->Tuning()->m_ShotgunSpeeddiff, 1.0f, v);
+			CProjectile *pProj = new CProjectile(GameWorld(), WEAPON_SHOTGUN,
+				m_pPlayer->GetCID(),
+				ProjStartPos,
+				vec2(cosf(a), sinf(a))*Speed,
+				(int)(Server()->TickSpeed()*GameServer()->Tuning()->m_ShotgunLifetime),
+				1, 0, 0, -1);
+		}
 
-			GameServer()->CreateSound(m_Pos, SOUND_SHOTGUN_FIRE);*/
-		float LaserReach;
-		if(!m_TuneZone)
-			LaserReach = GameServer()->Tuning()->m_LaserReach;
-		else
-			LaserReach = GameServer()->TuningList()[m_TuneZone].m_LaserReach;
-
-		new CLaser(&GameServer()->m_World, m_Pos, Direction, LaserReach, m_pPlayer->GetCID(), WEAPON_SHOTGUN);
-		GameServer()->CreateSound(m_Pos, SOUND_SHOTGUN_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
+		GameServer()->CreateSound(m_Pos, SOUND_SHOTGUN_FIRE);
 	}
-	break;
+	if (!g_Config.m_SvOhNo) {
+		break;
+	}
 
 	case WEAPON_GRENADE:
 	{
@@ -545,28 +564,9 @@ void CCharacter::FireWeapon()
 
 		GameServer()->CreateSound(m_Pos, SOUND_GRENADE_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
 	}
-	break;
-
-	case WEAPON_LASER:
-	{
-		float LaserReach = GameServer()->Tuning()->m_LaserReach;
-		new CLaser(GameWorld(), m_Pos, Direction, LaserReach, m_pPlayer->GetCID(), WEAPON_LASER);
-		GameServer()->CreateSound(m_Pos, SOUND_LASER_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
+	if (!g_Config.m_SvOhNo) {
+		break;
 	}
-	break;
-
-	case WEAPON_NINJA:
-	{
-		// reset Hit objects
-		m_NumObjectsHit = 0;
-
-		m_Ninja.m_ActivationDir = Direction;
-		m_Ninja.m_CurrentMoveTime = g_pData->m_Weapons.m_Ninja.m_Movetime * Server()->TickSpeed() / 1000;
-		m_Ninja.m_OldVelAmount = length(m_Core.m_Vel);
-
-		GameServer()->CreateSound(m_Pos, SOUND_NINJA_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
-	}
-	break;
 	}
 
 	m_AttackTick = Server()->Tick();
