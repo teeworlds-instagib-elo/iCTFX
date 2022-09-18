@@ -382,7 +382,7 @@ void CCharacter::FireWeapon()
 	{
 		if(GameWorld()->m_WorldConfig.m_IsVanilla)
 		{
-			int ShotSpread = 2;
+			int ShotSpread = 5;
 			for(int i = -ShotSpread; i <= ShotSpread; ++i)
 			{
 				float Spreading[] = {-0.185f, -0.070f, 0, 0.070f, 0.185f};

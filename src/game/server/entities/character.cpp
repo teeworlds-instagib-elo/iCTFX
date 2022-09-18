@@ -912,9 +912,9 @@ void CCharacter::Die(int Killer, int Weapon)
 
 bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 {
-	/*m_Core.m_Vel += Force;
+	m_Core.m_Vel += Force;
 
-	if(GameServer()->m_pController->IsFriendlyFire(m_pPlayer->GetCID(), From) && !g_Config.m_SvTeamdamage)
+	if(GameServer()->m_pController->IsFriendlyFire(m_pPlayer->GetCID(), From))
 		return false;
 
 	// m_pPlayer only inflicts half damage on self
@@ -935,30 +935,30 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 		GameServer()->CreateDamageInd(m_Pos, 0, Dmg);
 	}
 
-	if(Dmg)
-	{
-		if(m_Armor)
-		{
-			if(Dmg > 1)
-			{
-				m_Health--;
-				Dmg--;
-			}
+	// if(Dmg)
+	// {
+	// 	if(m_Armor)
+	// 	{
+	// 		if(Dmg > 1)
+	// 		{
+	// 			m_Health--;
+	// 			Dmg--;
+	// 		}
 
-			if(Dmg > m_Armor)
-			{
-				Dmg -= m_Armor;
-				m_Armor = 0;
-			}
-			else
-			{
-				m_Armor -= Dmg;
-				Dmg = 0;
-			}
-		}
+	// 		if(Dmg > m_Armor)
+	// 		{
+	// 			Dmg -= m_Armor;
+	// 			m_Armor = 0;
+	// 		}
+	// 		else
+	// 		{
+	// 			m_Armor -= Dmg;
+	// 			Dmg = 0;
+	// 		}
+	// 	}
 
-		m_Health -= Dmg;
-	}
+	// 	m_Health -= Dmg;
+	// }
 
 	m_DamageTakenTick = Server()->Tick();
 
@@ -996,7 +996,8 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 	if (Dmg > 2)
 		GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_LONG);
 	else
-		GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_SHORT);*/
+		GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_SHORT);
+
 	if(GameServer()->m_pController->IsFriendlyFire(m_pPlayer->GetCID(), From))
 		return false;
 	if(Dmg)
@@ -1005,8 +1006,6 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 		m_EmoteStop = Server()->Tick() + 500 * Server()->TickSpeed() / 1000;
 	}
 	m_Health = 0;
-
-	
 
 	// do damage Hit sound
 	if(From >= 0 && From != m_pPlayer->GetCID() && GameServer()->m_apPlayers[From])
