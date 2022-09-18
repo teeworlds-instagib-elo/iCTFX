@@ -14,8 +14,8 @@
 
 #include <limits>
 
-#define GAME_TYPE_NAME "iCTFX"
-#define TEST_TYPE_NAME "TestiCTFX"
+#define GAME_TYPE_NAME "oh_no"
+#define TEST_TYPE_NAME "oh_no"
 
 CGameControllerDDRace::CGameControllerDDRace(class CGameContext *pGameServer) :
 	IGameController(pGameServer), m_Teams(pGameServer), sql_handler(std::make_unique<SqlHandler>())
@@ -138,7 +138,7 @@ void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 		str_format(aBuf, sizeof(aBuf), "'%s' entered and joined the %s", Server()->ClientName(ClientID), GetTeamName(pPlayer->GetTeam()));
 		GameServer()->SendChat(-1, CGameContext::CHAT_ALL, aBuf, -1, CGameContext::CHAT_SIX);
 
-		GameServer()->SendChatTarget(ClientID, "welcome to iCTFX!");
+		GameServer()->SendChatTarget(ClientID, "welcome to oh_no!");
 	}
 
 	pPlayer->m_Score = 0;
