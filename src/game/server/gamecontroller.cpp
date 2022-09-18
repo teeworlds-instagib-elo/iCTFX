@@ -1061,7 +1061,7 @@ void IGameController::DoTeamChange(CPlayer *pPlayer, int Team, bool DoChatMsg)
 bool IGameController::IsFriendlyFire(int ClientID1, int ClientID2)
 {
 	if(ClientID1 == ClientID2)
-		return false;
+		return true;
 
 	if(IsTeamplay())
 	{
