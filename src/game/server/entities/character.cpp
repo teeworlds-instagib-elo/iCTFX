@@ -29,7 +29,6 @@ CCharacter::CCharacter(CGameWorld *pWorld) :
 	// never intilize both to zero
 	m_Input.m_TargetX = 0;
 	m_Input.m_TargetY = -1;
-	// m_LastWeapon = WEAPON_GRENADE;
 
 	m_LatestPrevPrevInput = m_LatestPrevInput = m_LatestInput = m_PrevInput = m_SavedInput = m_Input;
 }
@@ -65,7 +64,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 
 	m_Core.Reset();
 	m_Core.Init(&GameServer()->m_World.m_Core, GameServer()->Collision());
-	// m_Core.m_ActiveWeapon = m_LastWeapon;
+	m_Core.m_ActiveWeapon = m_pPlayer->m_LastWeapon;
 	m_Core.m_Pos = m_Pos;
 	GameServer()->m_World.m_Core.m_apCharacters[m_pPlayer->GetCID()] = &m_Core;
 
@@ -110,7 +109,7 @@ void CCharacter::SetWeapon(int W)
 	if(W == m_Core.m_ActiveWeapon)
 		return;
 
-	m_LastWeapon = m_Core.m_ActiveWeapon;
+	m_pPlayer->m_LastWeapon = m_Core.m_ActiveWeapon;
 	m_QueuedWeapon = -1;
 	m_Core.m_ActiveWeapon = W;
 	GameServer()->CreateSound(m_Pos, SOUND_WEAPON_SWITCH, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
@@ -642,7 +641,7 @@ void CCharacter::GiveNinja()
 	m_aWeapons[WEAPON_NINJA].m_Got = true;
 	m_aWeapons[WEAPON_NINJA].m_Ammo = -1;
 	if(m_Core.m_ActiveWeapon != WEAPON_NINJA)
-		m_LastWeapon = m_Core.m_ActiveWeapon;
+		m_pPlayer->m_LastWeapon = m_Core.m_ActiveWeapon;
 	m_Core.m_ActiveWeapon = WEAPON_NINJA;
 
 	if(!m_aWeapons[WEAPON_NINJA].m_Got)
@@ -653,7 +652,7 @@ void CCharacter::RemoveNinja()
 {
 	m_Ninja.m_CurrentMoveTime = 0;
 	m_aWeapons[WEAPON_NINJA].m_Got = false;
-	m_Core.m_ActiveWeapon = m_LastWeapon;
+	m_Core.m_ActiveWeapon = m_pPlayer->m_LastWeapon;
 
 	SetWeapon(m_Core.m_ActiveWeapon);
 }

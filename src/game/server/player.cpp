@@ -20,6 +20,8 @@ CPlayer::CPlayer(CGameContext *pGameServer, int ClientID, int Team)
 	m_ClientID = ClientID;
 	m_Team = Team;
 	m_NumInputs = 0;
+	
+	m_LastWeapon = WEAPON_GRENADE;
 	Reset();
 	GameServer()->Antibot()->OnPlayerInit(m_ClientID);
 }
