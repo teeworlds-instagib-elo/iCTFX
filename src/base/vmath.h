@@ -108,14 +108,7 @@ inline float length(const vector2_base<float> &a)
 
 inline float angle(const vector2_base<float> &a)
 {
-	if(a.x == 0 && a.y == 0)
-		return 0.0f;
-	else if(a.x == 0)
-		return a.y < 0 ? -pi / 2 : pi / 2;
-	float result = atanf(a.y / a.x);
-	if(a.x < 0)
-		result = result + pi;
-	return result;
+	return atan2f(a.y, a.x);
 }
 
 template<typename T>

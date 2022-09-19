@@ -386,13 +386,13 @@ void CCharacter::FireWeapon()
 	// }
 
 	// check for ammo
-	// if(!m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo)
-	// {
-	// 	/*// 125ms is a magical limit of how fast a human can click
-	// 	m_ReloadTimer = 125 * Server()->TickSpeed() / 1000;
-	// 	GameServer()->CreateSound(m_Pos, SOUND_WEAPON_NOAMMO);*/
-	// 	return;
-	// }
+	if(!m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo)
+	{
+		// 125ms is a magical limit of how fast a human can click
+		m_ReloadTimer = 125 * Server()->TickSpeed() / 1000;
+		GameServer()->CreateSound(m_Pos, SOUND_WEAPON_NOAMMO);
+		return;
+	}
 
 	vec2 ProjStartPos = m_Pos + Direction * GetProximityRadius() * 0.75f;
 	switch(m_Core.m_ActiveWeapon)
@@ -595,10 +595,6 @@ void CCharacter::HandleWeapons()
 {
 	//ninja
 	HandleNinja();
-	HandleJetpack();
-
-	if(m_PainSoundTimer > 0)
-		m_PainSoundTimer--;
 
 	// check reload timer
 	if(m_ReloadTimer)
@@ -609,6 +605,32 @@ void CCharacter::HandleWeapons()
 
 	// fire Weapon, if wanted
 	FireWeapon();
+
+	// ammo regen
+	int AmmoRegenTime = g_pData->m_Weapons.m_aId[m_Core.m_ActiveWeapon].m_Ammoregentime;
+	if(AmmoRegenTime && m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo >= 0)
+	{
+		// If equipped and not active, regen ammo?
+		if(m_ReloadTimer <= 0)
+		{
+			if(m_aWeapons[m_Core.m_ActiveWeapon].m_AmmoRegenStart < 0)
+				m_aWeapons[m_Core.m_ActiveWeapon].m_AmmoRegenStart = Server()->Tick();
+
+			if((Server()->Tick() - m_aWeapons[m_Core.m_ActiveWeapon].m_AmmoRegenStart) >= AmmoRegenTime * Server()->TickSpeed() / 1000)
+			{
+				// Add some ammo
+				m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo = minimum(m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo + 1,
+					g_pData->m_Weapons.m_aId[m_Core.m_ActiveWeapon].m_Maxammo);
+				m_aWeapons[m_Core.m_ActiveWeapon].m_AmmoRegenStart = -1;
+			}
+		}
+		else
+		{
+			m_aWeapons[m_Core.m_ActiveWeapon].m_AmmoRegenStart = -1;
+		}
+	}
+
+	return;
 }
 
 void CCharacter::GiveNinja()
