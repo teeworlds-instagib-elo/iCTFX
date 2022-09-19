@@ -556,9 +556,9 @@ void IGameController::OnCharacterSpawn(class CCharacter *pChr)
 	// default health
 	pChr->IncreaseHealth(10);
 
-	// give default weapons
-	pChr->GiveWeapon(WEAPON_HAMMER);
-	pChr->GiveWeapon(WEAPON_GUN);
+	// // give default weapons
+	// pChr->GiveWeapon(WEAPON_HAMMER);
+	// pChr->GiveWeapon(WEAPON_GUN);
 }
 
 void IGameController::HandleCharacterTiles(CCharacter *pChr, int MapIndex)
