@@ -129,7 +129,7 @@ void CProjectile::Tick()
 			GameServer()->CreateSound(CurPos, m_SoundImpact);
 
 		if(m_Explosive)
-			GameServer()->CreateExplosion(CurPos, m_Owner, m_Type, m_Owner == -1, (!OwnerChar ? -1 : OwnerChar->Team());
+			GameServer()->CreateExplosion(CurPos, m_Owner, m_Type, m_Owner == -1, (!OwnerChar ? -1 : OwnerChar->Team()), -1);
 
 		else if(TargetChr)
 			TargetChr->TakeDamage(m_Direction * max(0.001f, m_Force), 0, m_Owner, m_Type);
