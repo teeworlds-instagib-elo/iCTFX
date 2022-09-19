@@ -558,6 +558,9 @@ void CCharacter::FireWeapon()
 			float Spreading[] = {-0.185f, -0.070f, 0, 0.070f, 0.185f};
 			float a = angle(Direction);
 			a += Spreading[i+2];
+			char aBuf[256];
+			str_format(aBuf, sizeof(aBuf), "shot player='%d:%s' team=%d weapon=%d", m_pPlayer->GetCID(), Server()->ClientName(m_pPlayer->GetCID()), m_pPlayer->GetTeam(), m_ActiveWeapon);
+			GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
 			float v = 1-(absolute(i)/(float)ShotSpread);
 			float Speed = mix((float)GameServer()->Tuning()->m_ShotgunSpeeddiff, 1.0f, v);
 			new CProjectile(GameWorld(), WEAPON_SHOTGUN,
