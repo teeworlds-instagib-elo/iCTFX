@@ -33,6 +33,9 @@ CCharacter::CCharacter(CGameWorld *pWorld) :
 	m_LatestPrevPrevInput = m_LatestPrevInput = m_LatestInput = m_PrevInput = m_SavedInput = m_Input;
 }
 
+int CCharacter::GetLastWeapon() { return m_pPlayer->m_LastWeapon; }
+void CCharacter::SetLastWeapon(int LastWeap) { m_pPlayer->m_LastWeapon = LastWeap; }
+
 void CCharacter::Reset()
 {
 	Destroy();

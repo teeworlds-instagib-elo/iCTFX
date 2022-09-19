@@ -241,8 +241,8 @@ public:
 	int m_WeaponChangeTick;
 
 	// Setters/Getters because i don't want to modify vanilla vars access modifiers
-	int GetLastWeapon() { return m_pPlayer->m_LastWeapon; }
-	void SetLastWeapon(int LastWeap) { m_pPlayer->m_LastWeapon = LastWeap; }
+	int GetLastWeapon();
+	void SetLastWeapon(int LastWeap);
 	int GetActiveWeapon() { return m_Core.m_ActiveWeapon; }
 	void SetActiveWeapon(int ActiveWeap) { m_Core.m_ActiveWeapon = ActiveWeap; }
 	void SetLastAction(int LastAction) { m_LastAction = LastAction; }
