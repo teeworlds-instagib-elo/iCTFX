@@ -33,8 +33,8 @@ CCharacter::CCharacter(CGameWorld *pWorld) :
 	m_LatestPrevPrevInput = m_LatestPrevInput = m_LatestInput = m_PrevInput = m_SavedInput = m_Input;
 }
 
-int CCharacter::GetLastWeapon() { return m_pPlayer->m_LastWeapon; }
-void CCharacter::SetLastWeapon(int LastWeap) { m_pPlayer->m_LastWeapon = LastWeap; }
+int CCharacter::GetLastWeapon() { return m_Core.m_LastWeapon; }
+void CCharacter::SetLastWeapon(int LastWeap) { m_Core.m_LastWeapon = LastWeap; }
 
 void CCharacter::Reset()
 {
@@ -67,7 +67,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 
 	m_Core.Reset();
 	m_Core.Init(&GameServer()->m_World.m_Core, GameServer()->Collision());
-	m_Core.m_ActiveWeapon = m_pPlayer->m_LastWeapon;
+	m_Core.m_ActiveWeapon = m_Core.m_LastWeapon;
 	m_Core.m_Pos = m_Pos;
 	GameServer()->m_World.m_Core.m_apCharacters[m_pPlayer->GetCID()] = &m_Core;
 
@@ -112,7 +112,7 @@ void CCharacter::SetWeapon(int W)
 	if(W == m_Core.m_ActiveWeapon)
 		return;
 
-	m_pPlayer->m_LastWeapon = m_Core.m_ActiveWeapon;
+	m_Core.m_LastWeapon = m_Core.m_ActiveWeapon;
 	m_QueuedWeapon = -1;
 	m_Core.m_ActiveWeapon = W;
 	GameServer()->CreateSound(m_Pos, SOUND_WEAPON_SWITCH, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
@@ -446,13 +446,12 @@ void CCharacter::FireWeapon()
 			vec2 Temp = pTarget->m_Core.m_Vel + normalize(Dir + vec2(0.f, -1.1f)) * 10.0f;
 			Temp = ClampVel(pTarget->m_MoveRestrictions, Temp);
 			Temp -= pTarget->m_Core.m_Vel;
-			pTarget->TakeDamage((vec2(0.f, -1.0f) + Temp) * Strength, g_pData->m_Weapons.m_Hammer.m_pBase->m_Damage,
-				m_pPlayer->GetCID(), m_Core.m_ActiveWeapon);
-			pTarget->UnFreeze();
-
 			if(m_FreezeHammer) {
 				pTarget->Freeze();
-				return;
+			} else {
+				pTarget->TakeDamage((vec2(0.f, -1.0f) + Temp) * Strength, g_pData->m_Weapons.m_Hammer.m_pBase->m_Damage,
+					m_pPlayer->GetCID(), m_Core.m_ActiveWeapon);
+				pTarget->UnFreeze();
 			}
 
 			Antibot()->OnHammerHit(m_pPlayer->GetCID(), pTarget->GetPlayer()->GetCID());
@@ -646,7 +645,7 @@ void CCharacter::GiveNinja()
 	m_aWeapons[WEAPON_NINJA].m_Got = true;
 	m_aWeapons[WEAPON_NINJA].m_Ammo = -1;
 	if(m_Core.m_ActiveWeapon != WEAPON_NINJA)
-		m_pPlayer->m_LastWeapon = m_Core.m_ActiveWeapon;
+		m_Core.m_LastWeapon = m_Core.m_ActiveWeapon;
 	m_Core.m_ActiveWeapon = WEAPON_NINJA;
 
 	if(!m_aWeapons[WEAPON_NINJA].m_Got)
@@ -657,7 +656,7 @@ void CCharacter::RemoveNinja()
 {
 	m_Ninja.m_CurrentMoveTime = 0;
 	m_aWeapons[WEAPON_NINJA].m_Got = false;
-	m_Core.m_ActiveWeapon = m_pPlayer->m_LastWeapon;
+	m_Core.m_ActiveWeapon = m_Core.m_LastWeapon;
 
 	SetWeapon(m_Core.m_ActiveWeapon);
 }
