@@ -452,6 +452,7 @@ void CCharacter::FireWeapon()
 
 			if(m_FreezeHammer) {
 				pTarget->Freeze();
+				return;
 			}
 
 			Antibot()->OnHammerHit(m_pPlayer->GetCID(), pTarget->GetPlayer()->GetCID());
