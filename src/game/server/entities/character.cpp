@@ -29,7 +29,7 @@ CCharacter::CCharacter(CGameWorld *pWorld) :
 	// never intilize both to zero
 	m_Input.m_TargetX = 0;
 	m_Input.m_TargetY = -1;
-	m_LastWeapon = WEAPON_GUN;
+	// m_LastWeapon = WEAPON_GRENADE;
 
 	m_LatestPrevPrevInput = m_LatestPrevInput = m_LatestInput = m_PrevInput = m_SavedInput = m_Input;
 }
@@ -65,7 +65,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 
 	m_Core.Reset();
 	m_Core.Init(&GameServer()->m_World.m_Core, GameServer()->Collision());
-	m_Core.m_ActiveWeapon = m_LastWeapon;
+	// m_Core.m_ActiveWeapon = m_LastWeapon;
 	m_Core.m_Pos = m_Pos;
 	GameServer()->m_World.m_Core.m_apCharacters[m_pPlayer->GetCID()] = &m_Core;
 
