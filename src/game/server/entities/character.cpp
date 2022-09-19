@@ -447,6 +447,8 @@ void CCharacter::FireWeapon()
 			Temp -= pTarget->m_Core.m_Vel;
 			if(m_FreezeHammer) {
 				pTarget->Freeze();
+				pTarget->TakeDamage((vec2(0.f, -1.0f) + Temp) * Strength, 0,
+					m_pPlayer->GetCID(), m_Core.m_ActiveWeapon);
 			} else {
 				pTarget->TakeDamage((vec2(0.f, -1.0f) + Temp) * Strength, g_pData->m_Weapons.m_Hammer.m_pBase->m_Damage,
 					m_pPlayer->GetCID(), m_Core.m_ActiveWeapon);
@@ -947,7 +949,7 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 {
 	m_Core.m_Vel += Force;
 
-	if(GameServer()->m_pController->IsFriendlyFire(m_pPlayer->GetCID(), From))
+	if(GameServer()->m_pController->IsFriendlyFire(m_pPlayer->GetCID(), From) || Dmg == 0)
 		return false;
 
 	m_DamageTaken++;
@@ -962,66 +964,6 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 	{
 		m_DamageTaken = 0;
 		GameServer()->CreateDamageInd(m_Pos, 0, Dmg);
-	}
-
-	// if(Dmg)
-	// {
-	// 	if(m_Armor)
-	// 	{
-	// 		if(Dmg > 1)
-	// 		{
-	// 			m_Health--;
-	// 			Dmg--;
-	// 		}
-
-	// 		if(Dmg > m_Armor)
-	// 		{
-	// 			Dmg -= m_Armor;
-	// 			m_Armor = 0;
-	// 		}
-	// 		else
-	// 		{
-	// 			m_Armor -= Dmg;
-	// 			Dmg = 0;
-	// 		}
-	// 	}
-
-	// 	m_Health -= Dmg;
-	// }
-
-	m_Health = 0;
-
-	m_DamageTakenTick = Server()->Tick();
-
-	// do damage Hit sound
-	if(From >= 0 && From != m_pPlayer->GetCID() && GameServer()->m_apPlayers[From])
-	{
-		int64_t Mask = CmaskOne(From);
-		for(int i = 0; i < MAX_CLIENTS; i++)
-		{
-			if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetTeam() == TEAM_SPECTATORS && GameServer()->m_apPlayers[i]->m_SpectatorID == From)
-				Mask |= CmaskOne(i);
-		}
-		GameServer()->CreateSound(GameServer()->m_apPlayers[From]->m_ViewPos, SOUND_HIT, Mask);
-	}
-
-	// check for death
-	if(m_Health <= 0)
-	{
-		Die(From, Weapon);
-
-		// set attacker's face to happy (taunt!)
-		if (From >= 0 && From != m_pPlayer->GetCID() && GameServer()->m_apPlayers[From])
-		{
-			CCharacter *pChr = GameServer()->m_apPlayers[From]->GetCharacter();
-			if (pChr)
-			{
-				pChr->m_EmoteType = EMOTE_HAPPY;
-				pChr->m_EmoteStop = Server()->Tick() + Server()->TickSpeed();
-			}
-		}
-
-		return false;
 	}
 
 	if (Dmg > 2)
