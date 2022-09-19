@@ -450,8 +450,9 @@ void CCharacter::FireWeapon()
 				m_pPlayer->GetCID(), m_Core.m_ActiveWeapon);
 			pTarget->UnFreeze();
 
-			if(m_FreezeHammer)
+			if(m_FreezeHammer) {
 				pTarget->Freeze();
+			}
 
 			Antibot()->OnHammerHit(m_pPlayer->GetCID(), pTarget->GetPlayer()->GetCID());
 
@@ -2319,7 +2320,7 @@ void CCharacter::DDRaceInit()
 	m_SuperJump = false;
 	m_Jetpack = false;
 	m_Core.m_Jumps = 2;
-	m_FreezeHammer = false;
+	m_FreezeHammer = g_Config.m_SvFreezeHammer;
 
 	int Team = Teams()->m_Core.Team(m_Core.m_Id);
 
