@@ -2263,12 +2263,12 @@ void CCharacter::GiveAllWeapons()
 
 void CCharacter::ResetPickups()
 {
-	for(int i = WEAPON_SHOTGUN; i < NUM_WEAPONS - 1; i++)
-	{
-		m_aWeapons[i].m_Got = false;
-		if(m_Core.m_ActiveWeapon == i)
-			m_Core.m_ActiveWeapon = WEAPON_GUN;
-	}
+	// for(int i = WEAPON_SHOTGUN; i < NUM_WEAPONS - 1; i++)
+	// {
+	// 	m_aWeapons[i].m_Got = false;
+	// 	if(m_Core.m_ActiveWeapon == i)
+	// 		m_Core.m_ActiveWeapon = WEAPON_GUN;
+	// }
 }
 
 void CCharacter::SetEndlessHook(bool Enable)

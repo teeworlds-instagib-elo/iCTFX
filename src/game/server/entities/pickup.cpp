@@ -64,75 +64,75 @@ void CPickup::Tick()
 				continue;
 			bool Sound = false;
 			// player picked us up, is someone was hooking us, let them go
-			switch(m_Type)
-			{
-			case POWERUP_HEALTH:
-				if(pChr->Freeze())
-					GameServer()->CreateSound(m_Pos, SOUND_PICKUP_HEALTH, pChr->TeamMask());
-				break;
+			// switch(m_Type)
+			// {
+			// case POWERUP_HEALTH:
+			// 	if(pChr->Freeze())
+			// 		GameServer()->CreateSound(m_Pos, SOUND_PICKUP_HEALTH, pChr->TeamMask());
+			// 	break;
 
-			case POWERUP_ARMOR:
-				if(pChr->Team() == TEAM_SUPER)
-					continue;
-				for(int j = WEAPON_SHOTGUN; j < NUM_WEAPONS; j++)
-				{
-					if(pChr->GetWeaponGot(j))
-					{
-						pChr->SetWeaponGot(j, false);
-						pChr->SetWeaponAmmo(j, 0);
-						Sound = true;
-					}
-				}
-				pChr->SetNinjaActivationDir(vec2(0, 0));
-				pChr->SetNinjaActivationTick(-500);
-				pChr->SetNinjaCurrentMoveTime(0);
-				if(Sound)
-				{
-					pChr->SetLastWeapon(WEAPON_GUN);
-					GameServer()->CreateSound(m_Pos, SOUND_PICKUP_ARMOR, pChr->TeamMask());
-				}
-				if(pChr->GetActiveWeapon() >= WEAPON_SHOTGUN)
-					pChr->SetActiveWeapon(WEAPON_HAMMER);
-				break;
+			// case POWERUP_ARMOR:
+			// 	if(pChr->Team() == TEAM_SUPER)
+			// 		continue;
+			// 	for(int j = WEAPON_SHOTGUN; j < NUM_WEAPONS; j++)
+			// 	{
+			// 		if(pChr->GetWeaponGot(j))
+			// 		{
+			// 			pChr->SetWeaponGot(j, false);
+			// 			pChr->SetWeaponAmmo(j, 0);
+			// 			Sound = true;
+			// 		}
+			// 	}
+			// 	pChr->SetNinjaActivationDir(vec2(0, 0));
+			// 	pChr->SetNinjaActivationTick(-500);
+			// 	pChr->SetNinjaCurrentMoveTime(0);
+			// 	if(Sound)
+			// 	{
+			// 		pChr->SetLastWeapon(WEAPON_GUN);
+			// 		GameServer()->CreateSound(m_Pos, SOUND_PICKUP_ARMOR, pChr->TeamMask());
+			// 	}
+			// 	if(pChr->GetActiveWeapon() >= WEAPON_SHOTGUN)
+			// 		pChr->SetActiveWeapon(WEAPON_HAMMER);
+			// 	break;
 
-			case POWERUP_WEAPON:
+			// case POWERUP_WEAPON:
 
-				if(m_Subtype >= 0 && m_Subtype < NUM_WEAPONS && (!pChr->GetWeaponGot(m_Subtype) || pChr->GetWeaponAmmo(m_Subtype) != -1))
-				{
-					pChr->GiveWeapon(m_Subtype);
+			// 	if(m_Subtype >= 0 && m_Subtype < NUM_WEAPONS && (!pChr->GetWeaponGot(m_Subtype) || pChr->GetWeaponAmmo(m_Subtype) != -1))
+			// 	{
+			// 		pChr->GiveWeapon(m_Subtype);
 
-					//RespawnTime = g_pData->m_aPickups[m_Type].m_Respawntime;
+			// 		//RespawnTime = g_pData->m_aPickups[m_Type].m_Respawntime;
 
-					if(m_Subtype == WEAPON_GRENADE)
-						GameServer()->CreateSound(m_Pos, SOUND_PICKUP_GRENADE, pChr->TeamMask());
-					else if(m_Subtype == WEAPON_SHOTGUN)
-						GameServer()->CreateSound(m_Pos, SOUND_PICKUP_SHOTGUN, pChr->TeamMask());
-					else if(m_Subtype == WEAPON_LASER)
-						GameServer()->CreateSound(m_Pos, SOUND_PICKUP_SHOTGUN, pChr->TeamMask());
+			// 		if(m_Subtype == WEAPON_GRENADE)
+			// 			GameServer()->CreateSound(m_Pos, SOUND_PICKUP_GRENADE, pChr->TeamMask());
+			// 		else if(m_Subtype == WEAPON_SHOTGUN)
+			// 			GameServer()->CreateSound(m_Pos, SOUND_PICKUP_SHOTGUN, pChr->TeamMask());
+			// 		else if(m_Subtype == WEAPON_LASER)
+			// 			GameServer()->CreateSound(m_Pos, SOUND_PICKUP_SHOTGUN, pChr->TeamMask());
 
-					if(pChr->GetPlayer())
-						GameServer()->SendWeaponPickup(pChr->GetPlayer()->GetCID(), m_Subtype);
-				}
-				break;
+			// 		if(pChr->GetPlayer())
+			// 			GameServer()->SendWeaponPickup(pChr->GetPlayer()->GetCID(), m_Subtype);
+			// 	}
+			// 	break;
 
-			case POWERUP_NINJA:
-			{
-				// activate ninja on target player
-				pChr->GiveNinja();
-				//RespawnTime = g_pData->m_aPickups[m_Type].m_Respawntime;
+			// case POWERUP_NINJA:
+			// {
+			// 	// activate ninja on target player
+			// 	pChr->GiveNinja();
+			// 	//RespawnTime = g_pData->m_aPickups[m_Type].m_Respawntime;
 
-				/*// loop through all players, setting their emotes
-					CCharacter *pC = static_cast<CCharacter *>(GameServer()->m_World.FindFirst(CGameWorld::ENTTYPE_CHARACTER));
-					for(; pC; pC = (CCharacter *)pC->TypeNext())
-					{
-						if (pC != pChr)
-							pC->SetEmote(EMOTE_SURPRISE, Server()->Tick() + Server()->TickSpeed());
-					}*/
-				break;
-			}
-			default:
-				break;
-			};
+			// 	/*// loop through all players, setting their emotes
+			// 		CCharacter *pC = static_cast<CCharacter *>(GameServer()->m_World.FindFirst(CGameWorld::ENTTYPE_CHARACTER));
+			// 		for(; pC; pC = (CCharacter *)pC->TypeNext())
+			// 		{
+			// 			if (pC != pChr)
+			// 				pC->SetEmote(EMOTE_SURPRISE, Server()->Tick() + Server()->TickSpeed());
+			// 		}*/
+			// 	break;
+			// }
+			// default:
+			// 	break;
+			// };
 
 			/*if(RespawnTime >= 0)
 			{
