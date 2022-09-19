@@ -65,6 +65,9 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 
 	m_Core.Reset();
 	m_Core.Init(&GameServer()->m_World.m_Core, GameServer()->Collision());
+	if (!g_Config.m_SvOhNo && g_Config.m_SvAllWeapons) {
+		GiveAllWeapons();
+	}
 	m_Core.m_ActiveWeapon = WEAPON_GRENADE;
 	m_Core.m_Pos = m_Pos;
 	GameServer()->m_World.m_Core.m_apCharacters[m_pPlayer->GetCID()] = &m_Core;
@@ -545,7 +548,7 @@ void CCharacter::FireWeapon()
 
 	case WEAPON_SHOTGUN:
 	{
-		int ShotSpread = 5;
+		int ShotSpread = 2;
 
 		for(int i = -ShotSpread; i <= ShotSpread; ++i)
 		{
@@ -554,7 +557,7 @@ void CCharacter::FireWeapon()
 			a += Spreading[i+2];
 			float v = 1-(absolute(i)/(float)ShotSpread);
 			float Speed = mix((float)GameServer()->Tuning()->m_ShotgunSpeeddiff, 1.0f, v);
-			CProjectile *pProj = new CProjectile(GameWorld(), WEAPON_SHOTGUN,
+			new CProjectile(GameWorld(), WEAPON_SHOTGUN,
 				m_pPlayer->GetCID(),
 				ProjStartPos,
 				vec2(cosf(a), sinf(a))*Speed,

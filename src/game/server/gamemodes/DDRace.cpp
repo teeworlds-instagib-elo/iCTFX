@@ -14,13 +14,10 @@
 
 #include <limits>
 
-#define GAME_TYPE_NAME "oh_no"
-#define TEST_TYPE_NAME "oh_no"
-
 CGameControllerDDRace::CGameControllerDDRace(class CGameContext *pGameServer) :
 	IGameController(pGameServer), m_Teams(pGameServer), sql_handler(std::make_unique<SqlHandler>())
 {
-	m_pGameType = g_Config.m_SvTestingCommands ? TEST_TYPE_NAME : GAME_TYPE_NAME;
+	m_pGameType = g_Config.m_SvOhNo ? "oh no" : g_Config.m_SvAllWeapons ? "aCTFx" : "iCTFx";
 	
 	m_GameFlags = GAMEFLAG_TEAMS|GAMEFLAG_FLAGS;
 

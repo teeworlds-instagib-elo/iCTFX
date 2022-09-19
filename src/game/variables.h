@@ -175,6 +175,7 @@ MACRO_CONFIG_INT(SvDeepfly, sv_deepfly, 1, 0, 1, CFGFLAG_SERVER | CFGFLAG_GAME, 
 MACRO_CONFIG_INT(SvDestroyBulletsOnDeath, sv_destroy_bullets_on_death, 1, 0, 1, CFGFLAG_SERVER | CFGFLAG_GAME, "Destroy bullets when their owner dies")
 MACRO_CONFIG_INT(SvDestroyLasersOnDeath, sv_destroy_lasers_on_death, 0, 0, 1, CFGFLAG_SERVER | CFGFLAG_GAME, "Destroy lasers when their owner dies")
 MACRO_CONFIG_INT(SvOhNo, sv_oh_no, 0, 0, 1, CFGFLAG_SERVER | CFGFLAG_GAME, "oh no")
+MACRO_CONFIG_INT(SvAllWeapons, sv_all_weapons, 0, 0, 1, CFGFLAG_SERVER | CFGFLAG_GAME, "all weapons")
 
 MACRO_CONFIG_INT(SvMapUpdateRate, sv_mapupdaterate, 5, 1, 100, CFGFLAG_SERVER, "64 player id <-> vanilla id players map update rate")
 
