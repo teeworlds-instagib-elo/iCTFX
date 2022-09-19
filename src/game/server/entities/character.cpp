@@ -87,7 +87,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone);
 
 	Server()->StartRecord(m_pPlayer->GetCID());
-	
+
 	if (!g_Config.m_SvOhNo && g_Config.m_SvAllWeapons) {
 		GiveAllWeapons();
 	}
@@ -104,7 +104,6 @@ void CCharacter::Destroy()
 
 void CCharacter::SetWeapon(int W)
 {
-	return; //ictf
 	if(W == m_Core.m_ActiveWeapon)
 		return;
 
@@ -2225,7 +2224,7 @@ void CCharacter::GiveWeapon(int Weapon, bool Remove)
 
 void CCharacter::GiveAllWeapons()
 {
-	for(int i = WEAPON_GUN; i < NUM_WEAPONS - 1; i++)
+	for(int i = WEAPON_GUN; i < WEAPON_NINJA - 1; i++)
 	{
 		GiveWeapon(i);
 	}
