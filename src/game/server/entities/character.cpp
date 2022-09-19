@@ -65,9 +65,6 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 
 	m_Core.Reset();
 	m_Core.Init(&GameServer()->m_World.m_Core, GameServer()->Collision());
-	if (!g_Config.m_SvOhNo && g_Config.m_SvAllWeapons) {
-		GiveAllWeapons();
-	}
 	m_Core.m_ActiveWeapon = WEAPON_GRENADE;
 	m_Core.m_Pos = m_Pos;
 	GameServer()->m_World.m_Core.m_apCharacters[m_pPlayer->GetCID()] = &m_Core;
@@ -90,6 +87,10 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	GameServer()->SendTuningParams(m_pPlayer->GetCID(), m_TuneZone);
 
 	Server()->StartRecord(m_pPlayer->GetCID());
+	
+	if (!g_Config.m_SvOhNo && g_Config.m_SvAllWeapons) {
+		GiveAllWeapons();
+	}
 
 	return true;
 }
