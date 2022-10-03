@@ -517,7 +517,7 @@ void CCharacter::FireWeapon()
 		else
 			LaserReach = GameServer()->TuningList()[m_TuneZone].m_LaserReach;
 
-		new CLaser(&GameServer()->m_World, m_Pos, Direction, LaserReach, m_pPlayer->GetCID(), WEAPON_SHOTGUN);
+		new CLaser(&GameServer()->m_World, m_Pos, Direction, LaserReach, m_pPlayer, WEAPON_SHOTGUN);
 		GameServer()->CreateSound(m_Pos, SOUND_SHOTGUN_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
 	}
 	break;
@@ -550,7 +550,7 @@ void CCharacter::FireWeapon()
 	case WEAPON_LASER:
 	{
 		float LaserReach = GameServer()->Tuning()->m_LaserReach;
-		new CLaser(GameWorld(), m_Pos, Direction, LaserReach, m_pPlayer->GetCID(), WEAPON_LASER);
+		new CLaser(GameWorld(), m_Pos, Direction, LaserReach, m_pPlayer, WEAPON_LASER);
 		GameServer()->CreateSound(m_Pos, SOUND_LASER_FIRE, Teams()->TeamMask(Team(), -1, m_pPlayer->GetCID()));
 	}
 	break;
