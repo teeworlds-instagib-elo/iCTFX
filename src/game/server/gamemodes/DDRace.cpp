@@ -18,7 +18,7 @@
 #define TEST_TYPE_NAME "TestiCTFX"
 
 CGameControllerDDRace::CGameControllerDDRace(class CGameContext *pGameServer) :
-	IGameController(pGameServer), m_Teams(pGameServer)
+	IGameController(pGameServer), m_Teams(pGameServer), sql_handler(std::make_unique<SqlHandler>())
 {
 	m_pGameType = g_Config.m_SvTestingCommands ? TEST_TYPE_NAME : GAME_TYPE_NAME;
 	
@@ -29,9 +29,9 @@ CGameControllerDDRace::CGameControllerDDRace(class CGameContext *pGameServer) :
 	m_apFlags[1] = 0;
 	m_aTeamscore[TEAM_RED] = 0;
 	m_aTeamscore[TEAM_BLUE] = 0;
-	database = nullptr;
+	
 	if(g_Config.m_SvSaveServer) {
-		database = CreateMysqlConnection("ddnet", "record", "ddnet", "thebestpassword", "localhost", 3306, true);
+		auto database = CreateMysqlConnection("ddnet", "record", "ddnet", "thebestpassword", "localhost", 3306, true);
 		if(database != nullptr)
 		{
 			char aError[256] = "error message not initialized";
@@ -51,30 +51,26 @@ CGameControllerDDRace::CGameControllerDDRace(class CGameContext *pGameServer) :
 			}
 			database->Disconnect();
 		}
+		sql_handler->start();
 	}
 }
 
-CGameControllerDDRace::~CGameControllerDDRace() = default;
+CGameControllerDDRace::~CGameControllerDDRace() {
+	if (g_Config.m_SvSaveServer) {
+		sql_handler->stop();
+	}
+};
 
 void CGameControllerDDRace::UpdateServerStats() {
-	if(database != nullptr)
+	if(g_Config.m_SvSaveServer)
 	{
-		char aError[256] = "error message not initialized";
-		if(database->Connect(aError, sizeof(aError)))
-		{
-			dbg_msg("sql", "failed connecting to db: %s", aError);
-			return;
-		}
 		//save score
 		ServerStats server_stats{
 			m_aTeamscore[TEAM_RED],
 			m_aTeamscore[TEAM_BLUE]
 		};
-		char error[4096] = {};
-		if (database->AddServerStats("save_server", server_stats, error, sizeof(error))) {
-			dbg_msg("sql", "failed connecting to db: %s", error);
-		}
-		database->Disconnect();
+
+		sql_handler->set_server_stats(server_stats);
 	}
 }
 
@@ -156,54 +152,29 @@ void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 	pPlayer->m_WallshotKills = 0;
 	pPlayer->m_Suicides = 0;
 
-	if(database != nullptr)
+	if(g_Config.m_SvSaveServer)
 	{
-		char aError[256] = "error message not initialized";
-		if(database->Connect(aError, sizeof(aError)))
-		{
-			dbg_msg("sql", "failed connecting to db: %s", aError);
-			return;
-		}
-		//save score
-		Stats stats{};
-		char error[4096] = {};
-		if (!database->GetStats(Server()->ClientName(pPlayer->GetCID()), stats, error, sizeof(error))) {
-			pPlayer->m_Kills = stats.kills;
-			pPlayer->m_Deaths = stats.deaths;
-			pPlayer->m_Touches = stats.touches;
-			pPlayer->m_Captures = stats.captures;
-			pPlayer->m_FastestCapture = stats.fastest_capture;
-			pPlayer->m_Shots = stats.shots;
-			pPlayer->m_Wallshots = stats.wallshots;
-			pPlayer->m_WallshotKills = stats.wallshot_kills;
-			pPlayer->m_Suicides = stats.suicides;
-			pPlayer->m_Score = stats.captures * 5 + stats.touches + stats.kills - stats.suicides;
-		} else {
-			dbg_msg("sql", "failed to read stats: %s", error);
-		}
-		database->Disconnect();
+		sql_handler->get_player_stats(pPlayer, Server()->ClientName(pPlayer->GetCID()));
 	}
-	
-	// if(g_Config.m_SvSaveServer)
-	// {
-	// 	//load score
-	// 	char str [64];
-	// 	strcpy(str, "scores/");
-	// 	strcat(str, Server()->ClientName(ClientID)); 
-	// 	ifstream playerFile(str);
-	// 	std::string tmp = "0";
-	// 	if(playerFile.is_open())
-	// 	{
-	// 		std::string tmp2;
-	// 		playerFile >> tmp;
-	// 		printf("%s score loaded %s\n", Server()->ClientName(ClientID), tmp.c_str());
+}
 
-	// 	}else
-	// 		printf("%s score not loaded\n", Server()->ClientName(ClientID));
-	// 	pPlayer->m_Score = stoi(tmp);
-	// 	printf("score: %i\n", pPlayer->m_Score);
-	// 	playerFile.close();
-	// }
+void CGameControllerDDRace::OnPlayerNameChange(class CPlayer *pPlayer)
+{
+	pPlayer->m_Score = 0;
+	pPlayer->m_Kills = 0;
+	pPlayer->m_Deaths = 0;
+	pPlayer->m_Touches = 0;
+	pPlayer->m_Captures = 0;
+	pPlayer->m_FastestCapture = -1;
+	pPlayer->m_Shots = 0;
+	pPlayer->m_Wallshots = 0;
+	pPlayer->m_WallshotKills = 0;
+	pPlayer->m_Suicides = 0;
+
+	if(g_Config.m_SvSaveServer)
+	{
+		sql_handler->get_player_stats(pPlayer, Server()->ClientName(pPlayer->GetCID()));
+	}
 }
 
 void CGameControllerDDRace::OnPlayerDisconnect(CPlayer *pPlayer, const char *pReason)
@@ -219,14 +190,8 @@ void CGameControllerDDRace::OnPlayerDisconnect(CPlayer *pPlayer, const char *pRe
 	if(g_Config.m_SvTeam != SV_TEAM_FORCED_SOLO)
 		m_Teams.SetForceCharacterTeam(ClientID, TEAM_FLOCK);
 	
-	if(database != nullptr)
+	if(g_Config.m_SvSaveServer)
 	{
-		char aError[256] = "error message not initialized";
-		if(database->Connect(aError, sizeof(aError)))
-		{
-			dbg_msg("sql", "failed connecting to db: %s", aError);
-			return;
-		}
 		//save score
 		Stats stats;
 		stats.kills = pPlayer->m_Kills;
@@ -239,9 +204,7 @@ void CGameControllerDDRace::OnPlayerDisconnect(CPlayer *pPlayer, const char *pRe
 		stats.wallshot_kills = pPlayer->m_WallshotKills;
 		stats.suicides = pPlayer->m_Suicides;
 
-		char error[4096] = {};
-		database->AddStats(Server()->ClientName(pPlayer->GetCID()), stats, error, sizeof(error));
-		database->Disconnect();
+		sql_handler->set_stats(Server()->ClientName(pPlayer->GetCID()), stats);
 	}
 }
 
@@ -292,9 +255,6 @@ void CGameControllerDDRace::Tick()
 	IGameController::Tick();
 	m_Teams.Tick();
 
-	// if(Server()->IsSixup(0))
-	// 	GameServer()->SendGameMsg(protocol7::GAMEMSG_CTF_GRAB, 0, -1);
-
 
 	if(!idm)
 		for(int fi = 0; fi < 2; fi++)
@@ -305,13 +265,13 @@ void CGameControllerDDRace::Tick()
 				continue;
 
 			// flag hits death-tile or left the game layer, reset it
-			// if(GameServer()->Collision()->GetCollisionAt(F->m_Pos.x, F->m_Pos.y)&CCollision::COLFLAG_DEATH || F->GameLayerClipped(F->m_Pos))
-			// {
-			// 	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", "flag_return");
-			// 	GameServer()->CreateSoundGlobal(SOUND_CTF_RETURN);
-			// 	F->Reset();
-			// 	continue;
-			// }
+			if(GameServer()->Collision()->GetCollisionAt(F->m_Pos.x, F->m_Pos.y) == TILE_DEATH || F->GameLayerClipped(F->m_Pos))
+			{
+				GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", "flag_return");
+				GameServer()->CreateSoundGlobal(SOUND_CTF_RETURN);
+				F->Reset();
+				continue;
+			}
 
 			//
 			if(F->m_pCarryingCharacter)

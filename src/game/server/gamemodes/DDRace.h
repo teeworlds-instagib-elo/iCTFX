@@ -9,6 +9,8 @@
 #include <map>
 #include <vector>
 
+#include <game/server/sql_handler.h>
+
 class CGameControllerDDRace : public IGameController
 {
 public:
@@ -16,9 +18,6 @@ public:
 	~CGameControllerDDRace();
 
 	void UpdateServerStats();
-
-	std::unique_ptr<IDbConnection> database;
-	
 
 	void OnCharacterSpawn(class CCharacter *pChr) override;
 	int OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int WeaponID) override;
@@ -29,6 +28,7 @@ public:
 
 	void OnPlayerConnect(class CPlayer *pPlayer) override;
 	void OnPlayerDisconnect(class CPlayer *pPlayer, const char *pReason) override;
+	void OnPlayerNameChange(class CPlayer *pPlayer) override;
 
 	void Tick() override;
 
@@ -44,5 +44,8 @@ public:
 
 	std::map<int, std::vector<vec2>> m_TeleOuts;
 	std::map<int, std::vector<vec2>> m_TeleCheckOuts;
+
+private:
+	std::unique_ptr<SqlHandler> sql_handler;
 };
 #endif // GAME_SERVER_GAMEMODES_DDRACE_H

@@ -2219,6 +2219,8 @@ if(SERVER)
     gamemodes/DDRace.h
     gameworld.cpp
     gameworld.h
+    sql_handler.h
+    sql_handler.cpp
     player.cpp
     player.h
     teams.cpp
@@ -2268,6 +2270,7 @@ if(SERVER)
     $<TARGET_OBJECTS:game-shared>
     $<TARGET_OBJECTS:mastersrv-shared>
   )
+  include_directories(external/cxxpool/src external/eventpp/include)
   target_link_libraries(${TARGET_SERVER} ${LIBS_SERVER})
   list(APPEND TARGETS_OWN ${TARGET_SERVER})
   list(APPEND TARGETS_LINK ${TARGET_SERVER})

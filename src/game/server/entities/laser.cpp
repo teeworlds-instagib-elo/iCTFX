@@ -11,11 +11,11 @@
 #include "character.h"
 #include "../player.h"
 
-CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, int Owner, int Type) :
+CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, CPlayer *pPlayer, int Type) :
 	CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER)
 {
 	m_Pos = Pos;
-	m_Owner = Owner;
+	m_Owner = pPlayer->GetCID();
 	m_Energy = StartEnergy;
 	m_Dir = Direction;
 	m_Bounces = 0;

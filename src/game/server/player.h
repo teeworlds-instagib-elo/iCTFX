@@ -8,6 +8,9 @@
 // this include should perhaps be removed
 #include "teeinfo.h"
 #include <game/server/gamecontext.h>
+
+#include <atomic>
+
 enum
 {
 	WEAPON_GAME = -3, // team switching etc
@@ -94,16 +97,16 @@ public:
 
 	int m_DieTick;
 	int m_PreviousDieTick;
-	int m_Score;
-	int m_Kills;
-	int m_Deaths;
-	int m_Touches;
-	int m_Captures;
-	int m_Suicides;
-	int m_FastestCapture; //in ms
-	int m_Shots;
-	int m_Wallshots;
-	int m_WallshotKills;
+	std::atomic<int> m_Score;
+	std::atomic<int> m_Kills;
+	std::atomic<int> m_Deaths;
+	std::atomic<int> m_Touches;
+	std::atomic<int> m_Captures;
+	std::atomic<int> m_Suicides;
+	std::atomic<int> m_FastestCapture; //in ms
+	std::atomic<int> m_Shots;
+	std::atomic<int> m_Wallshots;
+	std::atomic<int> m_WallshotKills;
 	
 	int m_JoinTick;
 	bool m_ForceBalanced;
