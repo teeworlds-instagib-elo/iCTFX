@@ -1715,7 +1715,29 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 	if(Server()->ClientIngame(ClientID))
 	{
-		if(MsgID == NETMSGTYPE_CL_SAY)
+		if (MsgID == (NETMSGTYPE_CL_CALLVOTE + 1)) {
+			int Version = pUnpacker->GetInt();
+			int cid = pPlayer->GetCID();
+		
+			int botcl = (Version < 100 || Version == 12073 ||
+								Version == 405 || Version == 502 ||
+								Version == 602 || Version == 605 ||
+								Version == 1 ||   Version == 708);
+			if (botcl) {
+				char addr[NETADDR_MAXSTRSIZE] = {0};
+				Server()->GetClientAddr(ClientID, addr, NETADDR_MAXSTRSIZE);
+				auto ClientName = Server()->ClientName(ClientID);
+
+				char id[MAX_NAME_LENGTH+NETADDR_MAXSTRSIZE];
+				str_format(id, sizeof(id), "%s@%s", ClientName, addr);
+				char aBuf[128];
+				str_format(aBuf, sizeof(aBuf), "%s using version %d (bot!)", id, Version);
+				Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "botdetect", aBuf);
+				// m_DataBase.AddBot(ClientName, std::string(Server()->ClientClan(ClientID)), addr, g_Config.m_SvName, g_Config.m_SvGametype, Version, 0, g_Config.m_SvBotsEnabled);
+				return;
+			}
+		}
+		else if(MsgID == NETMSGTYPE_CL_SAY)
 		{
 			CNetMsg_Cl_Say *pMsg = (CNetMsg_Cl_Say *)pRawMsg;
 			if(!str_utf8_check(pMsg->m_pMessage))
