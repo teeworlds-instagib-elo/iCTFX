@@ -31,7 +31,7 @@ CGameControllerDDRace::CGameControllerDDRace(class CGameContext *pGameServer) :
 	m_aTeamscore[TEAM_BLUE] = 0;
 	
 	if(g_Config.m_SvSaveServer) {
-		auto database = CreateMysqlConnection("ddnet", "record", "ddnet", "thebestpassword", "localhost", 3306, true);
+		auto database = CreateMysqlConnection(g_Config.m_SqlDatabase, g_Config.m_SqlPrefix, g_Config.m_SqlUser, g_Config.m_SqlPass, g_Config.m_SqlHost, g_Config.m_SqlPort, g_Config.m_SqlSetup);
 		if(database != nullptr)
 		{
 			char aError[256] = "error message not initialized";

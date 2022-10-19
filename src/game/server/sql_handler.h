@@ -11,6 +11,8 @@
 #include <engine/server/databases/connection.h>
 #include <game/server/player.h>
 
+#include <engine/shared/config.h>
+
 class SqlHandler
 {
 	enum class EventType
