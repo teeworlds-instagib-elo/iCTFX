@@ -170,6 +170,13 @@ MACRO_CONFIG_INT(SvSaveServer, sv_save_server, 1, 0, 1, CFGFLAG_SERVER, "Enables
 MACRO_CONFIG_INT(SvGoTime, sv_go_time, 5, 0, 10, CFGFLAG_SERVER, "The restart time for the go-command")
 MACRO_CONFIG_INT(SvWarTime, sv_war_time, 15, 0, 600, CFGFLAG_SERVER, "Default warmup-time before a war")
 
+MACRO_CONFIG_STR(SqlDatabase, sql_database, 32, "ddnet", CFGFLAG_SERVER, "Sql database name")
+MACRO_CONFIG_STR(SqlPrefix, sql_prefix, 32, "record", CFGFLAG_SERVER, "Sql prefix")
+MACRO_CONFIG_STR(SqlUser, sql_user, 32, "ddnet", CFGFLAG_SERVER, "Sql username")
+MACRO_CONFIG_STR(SqlPass, sql_pass, 32, "thebestpassword", CFGFLAG_SERVER, "Sql password")
+MACRO_CONFIG_STR(SqlHost, sql_host, 32, "localhost", CFGFLAG_SERVER, "Sql host")
+MACRO_CONFIG_INT(SqlPort, sql_port, 3306, 0, 61000, CFGFLAG_SERVER, "Sql port")
+MACRO_CONFIG_INT(SqlSetup, sql_setup, 1, 0, 1, CFGFLAG_SERVER, "Setup default mysql scheme")
 
 MACRO_CONFIG_INT(SvPlayerDemoRecord, sv_player_demo_record, 0, 0, 1, CFGFLAG_SERVER, "Automatically record demos for each player")
 MACRO_CONFIG_INT(SvDemoChat, sv_demo_chat, 0, 0, 1, CFGFLAG_SERVER, "Record chat for demos")
