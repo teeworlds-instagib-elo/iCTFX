@@ -43,6 +43,7 @@ void SqlHandler::get_player_stats_handler(void *ev)
 		int snapped_x;
 		do
 		{
+			snapped_x = pPlayer->m_FastestCapture;
 			if(snapped_x > target_value)
 			{
 				break;
