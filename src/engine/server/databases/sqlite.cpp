@@ -56,6 +56,8 @@ public:
 	virtual bool GetStats(char const* pPlayer, Stats& stats, char *pError, int ErrorSize);
 	virtual bool AddServerStats(char const* pServer, ServerStats const& stats, char *pError, int ErrorSize);
 	virtual bool GetServerStats(char const* pServer, ServerStats& stats, char *pError, int ErrorSize);
+	virtual bool GetTop5(std::vector<PlayerWithScore> &stats, char* pError, int ErrorSize);
+	virtual bool GetRank(char const* pPlayer, int &rank, char *pError, int ErrorSize);
 
 private:
 	// copy of config vars
@@ -393,6 +395,17 @@ bool CSqliteConnection::AddServerStats(char const* pServer, ServerStats const& s
 }
 
 bool CSqliteConnection::GetServerStats(char const* pServer, ServerStats& stats, char *pError, int ErrorSize) {
+	str_copy(pError, "not implemented", ErrorSize);
+	return true;
+}
+
+
+bool CSqliteConnection::GetTop5(std::vector<PlayerWithScore> &stats, char* pError, int ErrorSize) {
+	str_copy(pError, "not implemented", ErrorSize);
+	return true;
+}
+
+bool CSqliteConnection::GetRank(char const* pPlayer, int &rank, char *pError, int ErrorSize) {
 	str_copy(pError, "not implemented", ErrorSize);
 	return true;
 }

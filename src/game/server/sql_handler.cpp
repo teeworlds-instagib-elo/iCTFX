@@ -95,6 +95,64 @@ void SqlHandler::set_server_stats_handler(void *ev)
 	database->Disconnect();
 }
 
+void SqlHandler::show_rank_handler(void *ev)
+{
+	auto data = static_cast<GetPlayerStatsData *>(ev);
+	auto database = CreateMysqlConnection(g_Config.m_SqlDatabase, g_Config.m_SqlPrefix, g_Config.m_SqlUser, g_Config.m_SqlPass, g_Config.m_SqlHost, g_Config.m_SqlPort, g_Config.m_SqlSetup);
+	char aError[256] = "error message not initialized";
+	if(database->Connect(aError, sizeof(aError)))
+	{
+		dbg_msg("sql", "failed connecting to db: %s", aError);
+		return;
+	}
+	auto player_name = data->player_name;
+	auto pPlayer = data->pPlayer;
+	// save score
+	int rank;
+	char error[4096] = {};
+	if(!database->GetRank(player_name.c_str(), rank, error, sizeof(error)))
+	{
+		char aBuf [128];
+		str_format(aBuf, sizeof(aBuf), "Your rank is: %i", rank);
+		pPlayer->SendChat(aBuf);
+	}
+	else
+	{
+		dbg_msg("sql", "failed to read stats: %s", error);
+	}
+	database->Disconnect();
+}
+
+void SqlHandler::show_top5_handler(void *ev)
+{
+	auto data = static_cast<ShowTop5Data *>(ev);
+	auto database = CreateMysqlConnection(g_Config.m_SqlDatabase, g_Config.m_SqlPrefix, g_Config.m_SqlUser, g_Config.m_SqlPass, g_Config.m_SqlHost, g_Config.m_SqlPort, g_Config.m_SqlSetup);
+	char aError[256] = "error message not initialized";
+	if(database->Connect(aError, sizeof(aError)))
+	{
+		dbg_msg("sql", "failed connecting to db: %s", aError);
+		return;
+	};
+	auto pPlayer = data->pPlayer;
+	// save score
+	std::vector<PlayerWithScore> top5{};
+	char error[4096] = {};
+	if(!database->GetTop5(top5, error, sizeof(error)))
+	{
+		char aBuf [128];
+		pPlayer->SendChat("Top5:");
+		for (int i = 0; i < top5.size(); i++) {
+			str_format(aBuf, sizeof(aBuf), "%i. %s with %i points", i + 1, top5[i].name, top5[i].score);
+			pPlayer->SendChat(aBuf);
+		}
+	}
+	else
+	{
+		dbg_msg("sql", "failed to read stats: %s", error);
+	}
+	database->Disconnect();
+}
+
 SqlHandler::SqlHandler() :
 	m_thread_pool(get_proc_count())
 {
@@ -104,6 +162,8 @@ SqlHandler::SqlHandler() :
 	m_queue.appendListener(EventType::CreatePlayer, make_callback(&SqlHandler::get_player_stats_handler));
 	m_queue.appendListener(EventType::SetStats, make_callback(&SqlHandler::set_stats_handler));
 	m_queue.appendListener(EventType::SetServerStats, make_callback(&SqlHandler::set_server_stats_handler));
+	m_queue.appendListener(EventType::ShowRank, make_callback(&SqlHandler::show_rank_handler));
+	m_queue.appendListener(EventType::ShowTop5, make_callback(&SqlHandler::show_top5_handler));
 }
 
 void SqlHandler::start()
@@ -146,6 +206,21 @@ void SqlHandler::set_server_stats(const ServerStats stats)
 	SetServerStatsData *data = new SetServerStatsData();
 	data->stats = stats;
 	m_queue.enqueue(EventType::SetServerStats, data);
+}
+
+void SqlHandler::show_top5(CPlayer *pPlayer)
+{
+	ShowTop5Data *data = new ShowTop5Data();
+	data->pPlayer = pPlayer;
+	m_queue.enqueue(EventType::ShowTop5, data);
+}
+
+void SqlHandler::show_rank(CPlayer *pPlayer, const std::string player_name)
+{
+	GetPlayerStatsData *data = new GetPlayerStatsData();
+	data->pPlayer = pPlayer;
+	data->player_name = player_name;
+	m_queue.enqueue(EventType::ShowRank, data);
 }
 
 void SqlHandler::threadloop()

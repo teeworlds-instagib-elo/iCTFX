@@ -902,3 +902,7 @@ void CPlayer::SpectatePlayerName(const char *pName)
 		}
 	}
 }
+
+void CPlayer::SendChat(const char* message) {
+	GameServer()->SendChatTarget(m_ClientID, message);
+}

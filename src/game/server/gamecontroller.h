@@ -6,6 +6,7 @@
 #include <base/vmath.h>
 #include <engine/map.h>
 #include <game/server/entities/flag.h>
+#include <game/server/sql_handler.h>
 
 /*
 	Class: Game Controller
@@ -67,6 +68,8 @@ public:
 	int m_aTeamscore[2];
 	class CFlag *m_apFlags[2];
 	bool idm; //todo, not this shitty solution
+	
+	std::unique_ptr<SqlHandler> sql_handler;
 
 	IGameController(class CGameContext *pGameServer);
 	virtual ~IGameController();

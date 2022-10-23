@@ -18,7 +18,7 @@
 #define TEST_TYPE_NAME "TestiCTFX"
 
 CGameControllerDDRace::CGameControllerDDRace(class CGameContext *pGameServer) :
-	IGameController(pGameServer), m_Teams(pGameServer), sql_handler(std::make_unique<SqlHandler>())
+	IGameController(pGameServer), m_Teams(pGameServer)
 {
 	m_pGameType = g_Config.m_SvTestingCommands ? TEST_TYPE_NAME : GAME_TYPE_NAME;
 	

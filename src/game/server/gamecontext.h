@@ -383,6 +383,8 @@ private:
 	static void ConSetTimerType(IConsole::IResult *pResult, void *pUserData);
 	static void ConTele(IConsole::IResult *pResult, void *pUserData);
 	static void ConStats(IConsole::IResult *pResult, void *pUserData);
+	static void ConRank(IConsole::IResult *pResult, void *pUserData);
+	static void ConTop5(IConsole::IResult *pResult, void *pUserData);
 	static void ConProtectedKill(IConsole::IResult *pResult, void *pUserData);
 
 	static void ConVoteMute(IConsole::IResult *pResult, void *pUserData);
