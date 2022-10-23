@@ -44,8 +44,5 @@ public:
 
 	std::map<int, std::vector<vec2>> m_TeleOuts;
 	std::map<int, std::vector<vec2>> m_TeleCheckOuts;
-
-private:
-	std::unique_ptr<SqlHandler> sql_handler;
 };
 #endif // GAME_SERVER_GAMEMODES_DDRACE_H

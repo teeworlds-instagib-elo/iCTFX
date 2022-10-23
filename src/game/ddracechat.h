@@ -42,6 +42,8 @@ CHAT_COMMAND("timer", "?s['gametimer'|'broadcast'|'both'|'none'|'cycle']", CFGFL
 CHAT_COMMAND("tp", "?r[player name]", CFGFLAG_CHAT | CFGFLAG_SERVER, ConTele, this, "Teleport yourself to player or to where you are spectating if no player name is given")
 CHAT_COMMAND("teleport", "?r[player name]", CFGFLAG_CHAT | CFGFLAG_SERVER, ConTele, this, "Teleport yourself to player or to where you are spectating if no player name is given")
 CHAT_COMMAND("stats", "?r[player name]", CFGFLAG_CHAT | CFGFLAG_SERVER, ConStats, this, "Give stats like fastest cap")
+CHAT_COMMAND("rank", "?r[player name]", CFGFLAG_CHAT | CFGFLAG_SERVER, ConRank, this, "Show rank")
+CHAT_COMMAND("top5", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConTop5, this, "Show top5")
 
 CHAT_COMMAND("kill", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConProtectedKill, this, "Kill yourself when kill-protected during a long game (use f1, kill for regular kill)")
 

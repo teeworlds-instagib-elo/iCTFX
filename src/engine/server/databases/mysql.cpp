@@ -102,6 +102,8 @@ public:
 	virtual bool GetStats(char const* pPlayer, Stats& stats, char *pError, int ErrorSize);
 	virtual bool AddServerStats(char const* pServer, ServerStats const& stats, char *pError, int ErrorSize);
 	virtual bool GetServerStats(char const* pServer, ServerStats& stats, char *pError, int ErrorSize);
+	virtual bool GetTop5(std::vector<PlayerWithScore> &top5, char* pError, int ErrorSize);
+	virtual bool GetRank(char const* pPlayer, int &rank, char *pError, int ErrorSize);
 
 private:
 	class CStmtDeleter
@@ -744,6 +746,95 @@ bool CMysqlConnection::GetStats(char const* pPlayer, Stats& stats, char *pError,
 		stats.shots = GetInt(7);
 		stats.wallshots = GetInt(8);
 		stats.wallshot_kills = GetInt(9);
+	}
+	return false;
+}
+
+bool CMysqlConnection::GetRank(char const* pPlayer, int &rank, char *pError, int ErrorSize) {
+	char aBuf[4096];
+	str_format(aBuf, sizeof(aBuf),
+" WITH scores AS ("
+"   SELECT"
+"     name,"
+"     captures,"
+"     touches,"
+"     kills,"
+"     suicides,"
+"     captures * 5 + touches + kills - suicides AS score,"
+"     RANK() OVER (ORDER BY score DESC) AS rank"
+"   FROM"
+"     stats"
+"   ORDER BY"
+"     score DESC"
+" )"
+" SELECT"
+"   rank"
+" FROM"
+"   scores"
+" WHERE"
+"   name = ?;");
+	if(PrepareStatement(aBuf, pError, ErrorSize))
+	{
+		return true;
+	}
+	BindString(1, pPlayer);
+	bool Last;
+	if(Step(&Last, pError, ErrorSize))
+	{
+		return true;
+	}
+
+	if(!Last)
+	{
+		rank = GetInt(1);
+	}
+	return false;
+}
+
+bool CMysqlConnection::GetTop5(std::vector<PlayerWithScore> &top5, char* pError, int ErrorSize) {
+	char aBuf[4096];
+	str_format(aBuf, sizeof(aBuf),
+" WITH scores AS ("
+"   SELECT"
+"     name,"
+"     captures,"
+"     touches,"
+"     kills,"
+"     suicides,"
+"     captures * 5 + touches + kills - suicides AS score"
+"   FROM"
+"     stats"
+" )"
+" SELECT"
+"   name,"
+"   score"
+" FROM"
+"   scores"
+" ORDER BY"
+"   score DESC"
+" LIMIT 5;"
+);
+	if(PrepareStatement(aBuf, pError, ErrorSize))
+	{
+		return true;
+	}
+	bool Last;
+	for (;;) {
+		if(Step(&Last, pError, ErrorSize))
+		{
+			return true;
+		}
+
+		if(!Last)
+		{
+			PlayerWithScore pws;
+			;
+			GetString(1, pws.name, 128);
+			pws.score = GetInt(2);
+			top5.push_back(pws);
+		} else {
+			break;
+		}
 	}
 	return false;
 }

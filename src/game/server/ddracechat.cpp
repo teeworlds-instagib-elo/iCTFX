@@ -922,6 +922,23 @@ void CGameContext::ConStats(IConsole::IResult *pResult, void *pUserData)
 	
 }
 
+
+void CGameContext::ConRank(IConsole::IResult *pResult, void *pUserData) {
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if(!CheckClientID(pResult->m_ClientID))
+		return;
+	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
+	pSelf->m_pController->sql_handler->show_rank(pPlayer, pSelf->Server()->ClientName(pResult->m_ClientID));
+}
+
+void CGameContext::ConTop5(IConsole::IResult *pResult, void *pUserData) {
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	if(!CheckClientID(pResult->m_ClientID))
+		return;
+	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
+	pSelf->m_pController->sql_handler->show_top5(pPlayer);
+}
+
 void CGameContext::ConProtectedKill(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;

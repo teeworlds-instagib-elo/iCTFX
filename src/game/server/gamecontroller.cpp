@@ -19,7 +19,7 @@
 #include "entities/projectile.h"
 #include <game/layers.h>
 
-IGameController::IGameController(class CGameContext *pGameServer)
+IGameController::IGameController(class CGameContext *pGameServer): sql_handler(std::make_unique<SqlHandler>())
 {
 	m_pGameServer = pGameServer;
 	m_pConfig = m_pGameServer->Config();
