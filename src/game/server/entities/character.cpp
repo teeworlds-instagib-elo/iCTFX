@@ -43,7 +43,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_EmoteStop = -1;
 	m_LastAction = -1;
 	m_LastNoAmmoSound = -1;
-	m_LastWeapon = WEAPON_LASER;
+	m_LastWeapon = WEAPON_GRENADE;
 	m_QueuedWeapon = -1;
 	m_LastRefillJumps = false;
 	m_LastPenalty = false;
@@ -65,7 +65,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 
 	m_Core.Reset();
 	m_Core.Init(&GameServer()->m_World.m_Core, GameServer()->Collision());
-	m_Core.m_ActiveWeapon = WEAPON_LASER;
+	m_Core.m_ActiveWeapon = WEAPON_GRENADE;
 	m_Core.m_Pos = m_Pos;
 	GameServer()->m_World.m_Core.m_apCharacters[m_pPlayer->GetCID()] = &m_Core;
 
@@ -912,53 +912,56 @@ void CCharacter::Die(int Killer, int Weapon)
 
 bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 {
-	/*m_Core.m_Vel += Force;
+	// /*m_Core.m_Vel += Force;
 
-	if(GameServer()->m_pController->IsFriendlyFire(m_pPlayer->GetCID(), From) && !g_Config.m_SvTeamdamage)
-		return false;
+	if(GameServer()->m_pController->IsFriendlyFire(m_pPlayer->GetCID(), From))// && !g_Config.m_SvTeamdamage)
+		Dmg = 0;
 
 	// m_pPlayer only inflicts half damage on self
-	if(From == m_pPlayer->GetCID())
-		Dmg = maximum(1, Dmg/2);
+	// if(From == m_pPlayer->GetCID())
+	// 	Dmg = maximum(1, Dmg/2);
 
-	m_DamageTaken++;
+	// m_DamageTaken++;
 
 	// create healthmod indicator
-	if(Server()->Tick() < m_DamageTakenTick+25)
-	{
-		// make sure that the damage indicators doesn't group together
-		GameServer()->CreateDamageInd(m_Pos, m_DamageTaken*0.25f, Dmg);
-	}
-	else
-	{
-		m_DamageTaken = 0;
-		GameServer()->CreateDamageInd(m_Pos, 0, Dmg);
-	}
+	// if(Server()->Tick() < m_DamageTakenTick+25)
+	// {
+	// 	// make sure that the damage indicators doesn't group together
+	// 	GameServer()->CreateDamageInd(m_Pos, m_DamageTaken*0.25f, Dmg);
+	// }
+	// else
+	// {
+	// 	m_DamageTaken = 0;
+	// 	GameServer()->CreateDamageInd(m_Pos, 0, Dmg);
+	// }
 
-	if(Dmg)
-	{
-		if(m_Armor)
-		{
-			if(Dmg > 1)
-			{
-				m_Health--;
-				Dmg--;
-			}
+	// if(Dmg)
+	// {
+	// 	if(m_Armor)
+	// 	{
+	// 		if(Dmg > 1)
+	// 		{
+	// 			m_Health--;
+	// 			Dmg--;
+	// 		}
 
-			if(Dmg > m_Armor)
-			{
-				Dmg -= m_Armor;
-				m_Armor = 0;
-			}
-			else
-			{
-				m_Armor -= Dmg;
-				Dmg = 0;
-			}
-		}
+	// 		if(Dmg > m_Armor)
+	// 		{
+	// 			Dmg -= m_Armor;
+	// 			m_Armor = 0;
+	// 		}
+	// 		else
+	// 		{
+	// 			m_Armor -= Dmg;
+	// 			Dmg = 0;
+	// 		}
+	// 	}
 
-		m_Health -= Dmg;
-	}
+	// 	m_Health -= Dmg;
+	// }
+
+	if(Dmg >= 4)	//magic funny number
+		m_Health = From == m_pPlayer->GetCID() ? m_Health : 0;
 
 	m_DamageTakenTick = Server()->Tick();
 
@@ -993,10 +996,10 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 		return false;
 	}
 
-	if (Dmg > 2)
-		GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_LONG);
-	else
-		GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_SHORT);*/
+	// if (Dmg > 2)
+	// 	GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_LONG);
+	// else
+	// 	GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_SHORT);
 	if(GameServer()->m_pController->IsFriendlyFire(m_pPlayer->GetCID(), From))
 		return false;
 	if(Dmg)
@@ -1004,9 +1007,6 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 		m_EmoteType = EMOTE_PAIN;
 		m_EmoteStop = Server()->Tick() + 500 * Server()->TickSpeed() / 1000;
 	}
-	m_Health = 0;
-
-	
 
 	// do damage Hit sound
 	if(From >= 0 && From != m_pPlayer->GetCID() && GameServer()->m_apPlayers[From])
