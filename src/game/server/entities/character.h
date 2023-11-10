@@ -57,6 +57,8 @@ public:
 	void ResetHook();
 	void ResetInput();
 	void FireWeapon();
+	void AddSpree();
+	void EndSpree(int killer);
 
 	void Die(int Killer, int Weapon);
 	bool TakeDamage(vec2 Force, int Dmg, int From, int Weapon);

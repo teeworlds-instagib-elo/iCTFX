@@ -26,10 +26,10 @@ CHAT_COMMAND("specvoted", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConToggleSpecVoted,
 CHAT_COMMAND("dnd", "", CFGFLAG_CHAT | CFGFLAG_SERVER | CFGFLAG_NONTEEHISTORIC, ConDND, this, "Toggle Do Not Disturb (no chat and server messages)")
 CHAT_COMMAND("timeout", "?s[code]", CFGFLAG_CHAT | CFGFLAG_SERVER, ConTimeout, this, "Set timeout protection code s")
 
-CHAT_COMMAND("stop", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConStop, this, "Vote a map by name")
-CHAT_COMMAND("go", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConGo, this, "Vote a map by name")
-CHAT_COMMAND("reset", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConReset, this, "Vote a map by name")
-CHAT_COMMAND("restart", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConRestart, this, "Vote a map by name")
+CHAT_COMMAND("stop", "", CFGFLAG_SERVER, ConStop, this, "stop game")
+CHAT_COMMAND("go", "", CFGFLAG_SERVER, ConGo, this, "continue game")
+CHAT_COMMAND("reset", "", CFGFLAG_SERVER, ConReset, this, "reset spectators")
+CHAT_COMMAND("restart", "", CFGFLAG_SERVER, ConRestart, this, "restart")
 
 CHAT_COMMAND("showothers", "?i['0'|'1'|'2']", CFGFLAG_CHAT | CFGFLAG_SERVER, ConShowOthers, this, "Whether to show players from other teams or not (off by default), optional i = 0 for off, i = 1 for on, i = 2 for own team only")
 CHAT_COMMAND("showall", "?i['0'|'1']", CFGFLAG_CHAT | CFGFLAG_SERVER, ConShowAll, this, "Whether to show players at any distance (off by default), optional i = 0 for off else for on")

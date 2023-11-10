@@ -219,6 +219,9 @@ void CGameContext::CreateExplosion(vec2 Pos, int Owner, int Weapon, bool NoDamag
 		pEvent->m_Y = (int)Pos.y;
 	}
 
+	if(NoDamage)
+		return;
+
 	// deal damage
 	CCharacter *apEnts[MAX_CLIENTS];
 	float Radius = 135.0f;
@@ -1784,8 +1787,14 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			if(pEnd != 0)
 				*(const_cast<char *>(pEnd)) = 0;
 
+			int GameTeam = ((CGameControllerDDRace *)m_pController)->m_Teams.m_Core.Team(pPlayer->GetCID());
+			if(Team)
+				Team = pPlayer->GetTeam();
+			else
+				Team = CHAT_ALL;
 
-			if(Length >= 2 && str_startswith(pMsg->m_pMessage, "go"))
+
+			if(Length >= 2 && Length <= 3 && str_endswith_nocase(pMsg->m_pMessage, "go") != 0)
 			{
 				if(!g_Config.m_SvSaveServer) {
 					if(pPlayer->GetTeam() != TEAM_SPECTATORS)
@@ -1798,16 +1807,58 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						pPlayer->m_Vote = 1;
 						pPlayer->m_VotePos = ++m_VotePos;
 						m_VoteUpdate = true;
+						SendChat(ClientID, Team, pMsg->m_pMessage, ClientID);
+						return;
 					}
 				}
 			}
 
-			if(Length >= 4 && str_startswith(pMsg->m_pMessage, "stop"))
+			if(Length >= 4 && Length <= 5 && str_endswith_nocase(pMsg->m_pMessage, "stop") != 0)
 			{
 				if(!g_Config.m_SvSaveServer) {
 					if(pPlayer->GetTeam() != TEAM_SPECTATORS)
 					{
 						ConStop(0, this);
+						SendChat(ClientID, Team, pMsg->m_pMessage, ClientID);
+						return;
+					}
+				}
+			}
+
+			if(Length == 6 && str_endswith_nocase(pMsg->m_pMessage, "reset") != 0)
+			{
+				if(!g_Config.m_SvSaveServer) {
+					if(pPlayer->GetTeam() != TEAM_SPECTATORS)
+					{
+						char aBuf[32];
+						str_format(aBuf, sizeof(aBuf), "reset spectator slots");
+						char bBuf[32];
+						str_format(bBuf, sizeof(aBuf), "reset");
+						StartVote(aBuf, bBuf, "reset", "reset spectator slots");
+						pPlayer->m_Vote = 1;
+						pPlayer->m_VotePos = ++m_VotePos;
+						m_VoteUpdate = true;
+						SendChat(ClientID, Team, pMsg->m_pMessage, ClientID);
+						return;
+					}
+				}
+			}
+
+			if(Length == 8 && str_endswith_nocase(pMsg->m_pMessage, "restart") != 0)
+			{
+				if(!g_Config.m_SvSaveServer) {
+					if(pPlayer->GetTeam() != TEAM_SPECTATORS)
+					{
+						char aBuf[32];
+						str_format(aBuf, sizeof(aBuf), "restart game");
+						char bBuf[32];
+						str_format(bBuf, sizeof(aBuf), "restart");
+						StartVote(aBuf, bBuf, "restart", "restart game");
+						pPlayer->m_Vote = 1;
+						pPlayer->m_VotePos = ++m_VotePos;
+						m_VoteUpdate = true;
+						SendChat(ClientID, Team, pMsg->m_pMessage, ClientID);
+						return;
 					}
 				}
 			}
@@ -1816,26 +1867,20 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			if(Length == 0 || (pMsg->m_pMessage[0] != '/' && (g_Config.m_SvSpamprotection && pPlayer->m_LastChat && pPlayer->m_LastChat + Server()->TickSpeed() * ((31 + Length) / 32) > Server()->Tick())))
 				return;
 
-			int GameTeam = ((CGameControllerDDRace *)m_pController)->m_Teams.m_Core.Team(pPlayer->GetCID());
-			if(Team)
-				Team = pPlayer->GetTeam();
-			else
-				Team = CHAT_ALL;
-
-			if(str_startswith(pMsg->m_pMessage + 1, "go") && !g_Config.m_SvSaveServer)
-			{
-				if(pPlayer->GetTeam() != TEAM_SPECTATORS)
-				{
-					char aBuf[32];
-					str_format(aBuf, sizeof(aBuf), "continue game");
-					char bBuf[32];
-					str_format(bBuf, sizeof(aBuf), "go");
-					StartVote(aBuf, bBuf, "continue", "continue");
-					pPlayer->m_Vote = 1;
-					pPlayer->m_VotePos = ++m_VotePos;
-					m_VoteUpdate = true;
-				}
-			}
+			// if(str_comp_nocase(pMsg->m_pMessage + 1, "go") == 0&& !g_Config.m_SvSaveServer)
+			// {
+			// 	if(pPlayer->GetTeam() != TEAM_SPECTATORS)
+			// 	{
+			// 		char aBuf[32];
+			// 		str_format(aBuf, sizeof(aBuf), "continue game");
+			// 		char bBuf[32];
+			// 		str_format(bBuf, sizeof(aBuf), "go");
+			// 		StartVote(aBuf, bBuf, "continue", "continue");
+			// 		pPlayer->m_Vote = 1;
+			// 		pPlayer->m_VotePos = ++m_VotePos;
+			// 		m_VoteUpdate = true;
+			// 	}
+			// }
 
 			if(str_startswith(pMsg->m_pMessage + 1, "stop") && !g_Config.m_SvSaveServer)
 			{
@@ -1886,6 +1931,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						pPlayer->m_Vote = 1;
 						pPlayer->m_VotePos = ++m_VotePos;
 						m_VoteUpdate = true;
+						SendChat(ClientID, Team, pMsg->m_pMessage, ClientID);
 					}
 				}
 				else
@@ -2203,6 +2249,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 			pPlayer->m_LastVoteTry = Now;
 			pPlayer->UpdatePlaytime();
+			
 
 			CNetMsg_Cl_Vote *pMsg = (CNetMsg_Cl_Vote *)pRawMsg;
 			if(!pMsg->m_Vote)

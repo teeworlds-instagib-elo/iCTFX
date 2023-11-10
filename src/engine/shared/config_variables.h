@@ -169,6 +169,8 @@ MACRO_CONFIG_STR(SvGametype, sv_gametype, 32, "ictf", CFGFLAG_SERVER, "Game type
 MACRO_CONFIG_INT(SvSaveServer, sv_save_server, 1, 0, 1, CFGFLAG_SERVER, "Enables save server features")
 MACRO_CONFIG_INT(SvGoTime, sv_go_time, 5, 0, 10, CFGFLAG_SERVER, "The restart time for the go-command")
 MACRO_CONFIG_INT(SvWarTime, sv_war_time, 15, 0, 600, CFGFLAG_SERVER, "Default warmup-time before a war")
+MACRO_CONFIG_INT(SvKillingspreeKills, sv_kspree_kills, 5, 3, 20, CFGFLAG_SERVER, "How many kills are needed to be on a killing-spree")
+
 
 MACRO_CONFIG_STR(SqlDatabase, sql_database, 32, "ddnet", CFGFLAG_SERVER, "Sql database name")
 MACRO_CONFIG_STR(SqlPrefix, sql_prefix, 32, "record", CFGFLAG_SERVER, "Sql prefix")
