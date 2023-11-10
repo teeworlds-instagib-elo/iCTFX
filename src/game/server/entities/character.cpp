@@ -2216,14 +2216,6 @@ void CCharacter::AddSpree()
 		str_format(aBuf, sizeof(aBuf), "%s %s with %d kills!", Server()->ClientName(m_pPlayer->GetCID()), aaSpreeMsg[(No > NumMsg-1) ? NumMsg-1 : No], m_pPlayer->m_Spree);
 		GameServer()->SendChat(-1, CGameContext::CHAT_ALL, aBuf);
 	}
-
-	// if((m_pPlayer->m_Spree >= g_Config.m_SvKillingspreeKills) && g_Config.m_SvKillingspreeAward &&
-	// 		(GameServer()->m_pController->IsIFreeze() || !g_Config.m_SvKillingspreeIFreeze) && !m_pPlayer->m_GotAward)
-	// {
-	// 	m_pPlayer->m_GotAward = true;
-	// 	str_format(aBuf, sizeof(aBuf), "%s got the killingspree award", Server()->ClientName(m_pPlayer->GetCID()));
-	// 	GameServer()->SendChat(-1, CGameContext::CHAT_ALL, aBuf);
-	// }
 }
 
 void CCharacter::EndSpree(int Killer)
@@ -2231,14 +2223,12 @@ void CCharacter::EndSpree(int Killer)
 	if(m_pPlayer->m_Spree >= g_Config.m_SvKillingspreeKills)
 	{
 		GameServer()->CreateSound(m_Pos, SOUND_GRENADE_EXPLODE);
-		// GameServer()->CreateExplosion(m_Pos, m_pPlayer->GetCID(), WEAPON_WORLD, true);
 		GameServer()->CreateExplosion(m_Pos,  m_pPlayer->GetCID(), WEAPON_GRENADE, true, -1, -1);
 
 		char aBuf[128];
 		str_format(aBuf, sizeof(aBuf), "%s %d-kills killing spree was ended by %s", Server()->ClientName(m_pPlayer->GetCID()), m_pPlayer->m_Spree, Server()->ClientName(Killer));
 		GameServer()->SendChat(-1, CGameContext::CHAT_ALL, aBuf);
 	}
-	// m_pPlayer->m_GotAward = false;
 	m_pPlayer->m_Spree = 0;
 }
 
