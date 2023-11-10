@@ -6,7 +6,7 @@ include(CheckLibraryExists)
 
 function(check_working_cxx_atomics varname)
   set(OLD_CMAKE_REQUIRED_FLAGS ${CMAKE_REQUIRED_FLAGS})
-  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++11")
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} -std=c++17")
   check_cxx_source_compiles("
 #include <atomic>
 #include <cstdint>

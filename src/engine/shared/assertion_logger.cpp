@@ -2,6 +2,9 @@
 
 #include <base/system.h>
 #include <mutex>
+#include <array>
+#include <cstddef>
+#include <iostream>
 
 void CAssertionLogger::DbgLogger(const char *pLine, void *pUser)
 {
