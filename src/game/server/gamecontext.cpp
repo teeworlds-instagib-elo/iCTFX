@@ -908,6 +908,9 @@ void CGameContext::OnTick()
 					if((IsKickVote() || IsSpecVote()) && Now < m_apPlayers[i]->m_FirstVoteTick)
 						continue;
 
+					if(m_apPlayers[i]->GetTeam() == TEAM_SPECTATORS)
+						continue;
+
 					// connecting clients with spoofed ips can clog slots without being ingame
 					if(((CServer *)Server())->m_aClients[i].m_State != CServer::CClient::STATE_INGAME)
 						continue;
@@ -1875,7 +1878,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				}
 			}
 			
-			if(pMsg->m_pMessage[0] == '/'|| pMsg->m_pMessage[0] == '!')
+			if((pMsg->m_pMessage[0] == '/'|| pMsg->m_pMessage[0] == '!'))
 			{
 				if(str_startswith(pMsg->m_pMessage + 1, "w "))
 				{
@@ -1905,6 +1908,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				{
 					if(pPlayer->GetTeam() != TEAM_SPECTATORS)
 					{
+						printf("testing if this is seeable or not\n");
 						int Mode = (int)pMsg->m_pMessage[1] - (int)'0';
 						if(Mode < 0 || Mode > 6)
 							return;
@@ -1973,6 +1977,9 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 		else if(MsgID == NETMSGTYPE_CL_CALLVOTE)
 		{
 			if(RateLimitPlayerVote(ClientID) || m_VoteCloseTime)
+				return;
+
+			if(pPlayer->GetTeam() == TEAM_SPECTATORS)
 				return;
 
 			m_apPlayers[ClientID]->UpdatePlaytime();
@@ -2228,6 +2235,9 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				return;
 
 			if(g_Config.m_SvSpamprotection && pPlayer->m_LastVoteTry && pPlayer->m_LastVoteTry + Server()->TickSpeed() * 3 > Server()->Tick())
+				return;
+
+			if(pPlayer->GetTeam() == TEAM_SPECTATORS)
 				return;
 
 			int64_t Now = Server()->Tick();
