@@ -909,7 +909,9 @@ void CGameContext::OnTick()
 						continue;
 
 					if(m_apPlayers[i]->GetTeam() == TEAM_SPECTATORS)
+					{
 						continue;
+					}
 
 					// connecting clients with spoofed ips can clog slots without being ingame
 					if(((CServer *)Server())->m_aClients[i].m_State != CServer::CClient::STATE_INGAME)
@@ -1908,7 +1910,6 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				{
 					if(pPlayer->GetTeam() != TEAM_SPECTATORS)
 					{
-						printf("testing if this is seeable or not\n");
 						int Mode = (int)pMsg->m_pMessage[1] - (int)'0';
 						if(Mode < 0 || Mode > 6)
 							return;
@@ -1980,7 +1981,9 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				return;
 
 			if(pPlayer->GetTeam() == TEAM_SPECTATORS)
+			{
 				return;
+			}
 
 			m_apPlayers[ClientID]->UpdatePlaytime();
 
@@ -2238,7 +2241,9 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				return;
 
 			if(pPlayer->GetTeam() == TEAM_SPECTATORS)
+			{
 				return;
+			}
 
 			int64_t Now = Server()->Tick();
 
