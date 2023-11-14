@@ -1880,7 +1880,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				}
 			}
 			
-			if((pMsg->m_pMessage[0] == '/'|| pMsg->m_pMessage[0] == '!'))
+			if(pMsg->m_pMessage[0] == '/'|| pMsg->m_pMessage[0] == '!')
 			{
 				if(str_startswith(pMsg->m_pMessage + 1, "w "))
 				{
