@@ -434,7 +434,7 @@ void CGameControllerDDRace::Tick()
 					}
 					else
 					{
-						F->m_Vel.y += 0.5f; //GameServer()->m_World.m_Core.m_Tuning.m_Gravity;
+						F->m_Vel.y += 0.5f/pow(SERVER_TICK_SPEED/50.0, 2); //GameServer()->m_World.m_Core.m_Tuning.m_Gravity;
 						GameServer()->Collision()->MoveBox(&F->m_Pos, &F->m_Vel, vec2(F->ms_PhysSize, F->ms_PhysSize), 0.5f);
 					}
 				}
