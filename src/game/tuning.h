@@ -4,22 +4,22 @@
 // This file can be included several times.
 
 // physics tuning
-MACRO_TUNING_PARAM(GroundControlSpeed, ground_control_speed, 10.0f, "Max speed the tee can get on ground")
-MACRO_TUNING_PARAM(GroundControlAccel, ground_control_accel, 100.0f / TicksPerSecond, "Acceleration speed on the ground")
-MACRO_TUNING_PARAM(GroundFriction, ground_friction, 0.5f, "Friction on the ground")
-MACRO_TUNING_PARAM(GroundJumpImpulse, ground_jump_impulse, 13.2f, "Impulse when jumping on ground")
-MACRO_TUNING_PARAM(AirJumpImpulse, air_jump_impulse, 12.0f, "Impulse when jumping in air")
+MACRO_TUNING_PARAM(GroundControlSpeed, ground_control_speed, 10.0f/SpeedFactor, "Max speed the tee can get on ground")
+MACRO_TUNING_PARAM(GroundControlAccel, ground_control_accel,  (100.0f / 50.0f) / AccelFactor, "Acceleration speed on the ground")
+MACRO_TUNING_PARAM(GroundFriction, ground_friction, pow(0.5f, 1/SpeedFactor), "Friction on the ground")
+MACRO_TUNING_PARAM(GroundJumpImpulse, ground_jump_impulse, 13.2f/SpeedFactor, "Impulse when jumping on ground")
+MACRO_TUNING_PARAM(AirJumpImpulse, air_jump_impulse, 12.0f/SpeedFactor, "Impulse when jumping in air")
 MACRO_TUNING_PARAM(AirControlSpeed, air_control_speed, 250.0f / TicksPerSecond, "Max speed the tee can get in the air")
-MACRO_TUNING_PARAM(AirControlAccel, air_control_accel, 1.5f, "Acceleration speed in air")
-MACRO_TUNING_PARAM(AirFriction, air_friction, 0.95f, "Friction in the air")
+MACRO_TUNING_PARAM(AirControlAccel, air_control_accel, 1.5f / AccelFactor, "Acceleration speed in air")
+MACRO_TUNING_PARAM(AirFriction, air_friction, pow(0.95f, 1/SpeedFactor), "Friction in the air")
 MACRO_TUNING_PARAM(HookLength, hook_length, 380.0f, "Length of the hook")
-MACRO_TUNING_PARAM(HookFireSpeed, hook_fire_speed, 80.0f, "How fast the hook is fired")
-MACRO_TUNING_PARAM(HookDragAccel, hook_drag_accel, 3.0f, "Acceleration when hook is stuck")
-MACRO_TUNING_PARAM(HookDragSpeed, hook_drag_speed, 15.0f, "Drag speed of the hook")
-MACRO_TUNING_PARAM(Gravity, gravity, 0.5f, "Gravity of the teeworld")
+MACRO_TUNING_PARAM(HookFireSpeed, hook_fire_speed, 80.0f/SpeedFactor, "How fast the hook is fired")
+MACRO_TUNING_PARAM(HookDragAccel, hook_drag_accel, 3.0f/AccelFactor, "Acceleration when hook is stuck")
+MACRO_TUNING_PARAM(HookDragSpeed, hook_drag_speed, 15.0f/SpeedFactor, "Drag speed of the hook")
+MACRO_TUNING_PARAM(Gravity, gravity, 0.5f/AccelFactor, "Gravity of the teeworld")
 
-MACRO_TUNING_PARAM(VelrampStart, velramp_start, 550, "Velocity ramp start")
-MACRO_TUNING_PARAM(VelrampRange, velramp_range, 2000, "Velocity ramp range")
+MACRO_TUNING_PARAM(VelrampStart, velramp_start, 550/SpeedFactor, "Velocity ramp start")
+MACRO_TUNING_PARAM(VelrampRange, velramp_range, 2000/SpeedFactor, "Velocity ramp range")
 MACRO_TUNING_PARAM(VelrampCurvature, velramp_curvature, 1.4f, "Velocity ramp curvature")
 
 // weapon tuning
@@ -46,10 +46,10 @@ MACRO_TUNING_PARAM(PlayerCollision, player_collision, 1, "Enable player collisio
 MACRO_TUNING_PARAM(PlayerHooking, player_hooking, 1, "Enable player vs player hooking")
 
 //ddnet tuning
-MACRO_TUNING_PARAM(JetpackStrength, jetpack_strength, 400.0f, "Jetpack pistol strength")
-MACRO_TUNING_PARAM(ShotgunStrength, shotgun_strength, 10.0f, "Shotgun pull strength")
-MACRO_TUNING_PARAM(ExplosionStrength, explosion_strength, 6.0f, "Explosion strength (grenade for example)")
-MACRO_TUNING_PARAM(HammerStrength, hammer_strength, 1.0f, "Hammer strength")
+MACRO_TUNING_PARAM(JetpackStrength, jetpack_strength, 400.0f/SpeedFactor, "Jetpack pistol strength")
+MACRO_TUNING_PARAM(ShotgunStrength, shotgun_strength, 10.0f/SpeedFactor, "Shotgun pull strength")
+MACRO_TUNING_PARAM(ExplosionStrength, explosion_strength, 6.0f/SpeedFactor, "Explosion strength (grenade for example)")
+MACRO_TUNING_PARAM(HammerStrength, hammer_strength, 1.0f/SpeedFactor, "Hammer strength")
 MACRO_TUNING_PARAM(HookDuration, hook_duration, 1.25f, "Hook duration")
 
 MACRO_TUNING_PARAM(HammerFireDelay, hammer_fire_delay, 125, "Delay of hammering (when hitting nothing)")
@@ -59,3 +59,6 @@ MACRO_TUNING_PARAM(GrenadeFireDelay, grenade_fire_delay, 500, "Delay of firing g
 MACRO_TUNING_PARAM(LaserFireDelay, laser_fire_delay, 800, "Delay of firing laser laser")
 MACRO_TUNING_PARAM(NinjaFireDelay, ninja_fire_delay, 800, "Delay of firing ninja")
 MACRO_TUNING_PARAM(HammerHitFireDelay, hammer_hit_fire_delay, 320, "Delay of hammering (when hitting another tee)")
+
+MACRO_TUNING_PARAM(GroundElasticityX, ground_elasticity_x, 0, "Wall elasticity")
+MACRO_TUNING_PARAM(GroundElasticityY, ground_elasticity_y, 0, "Ground/ceiling elasticity")

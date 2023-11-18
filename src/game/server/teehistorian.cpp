@@ -165,7 +165,9 @@ void CTeeHistorian::WriteHeader(const CGameInfo *pGameInfo)
 
 	First = true;
 
-	static const float TicksPerSecond = 50.0f;
+	static const float TicksPerSecond = SERVER_TICK_SPEED;
+	const float SpeedFactor = SERVER_TICK_SPEED/50.0;
+	const float AccelFactor = (SERVER_TICK_SPEED/50.0)*(SERVER_TICK_SPEED/50.0);
 #define MACRO_TUNING_PARAM(Name, ScriptName, Value, Description) \
 	if(pGameInfo->m_pTuning->m_##Name.Get() != (int)((Value)*100)) \
 	{ \

@@ -43,7 +43,9 @@ class CTuningParams
 public:
 	CTuningParams()
 	{
-		const float TicksPerSecond = 50.0f;
+		const float TicksPerSecond = SERVER_TICK_SPEED;
+		const float SpeedFactor = SERVER_TICK_SPEED/50.0;
+		const float AccelFactor = (SERVER_TICK_SPEED/50.0)*(SERVER_TICK_SPEED/50.0);
 #define MACRO_TUNING_PARAM(Name, ScriptName, Value, Description) m_##Name.Set((int)(Value * 100.0f));
 #include "tuning.h"
 #undef MACRO_TUNING_PARAM
