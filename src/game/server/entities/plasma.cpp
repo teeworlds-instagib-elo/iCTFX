@@ -113,5 +113,5 @@ void CPlasma::Snap(int SnappingClient)
 	pObj->m_Y = (int)m_Pos.y;
 	pObj->m_FromX = (int)m_Pos.x;
 	pObj->m_FromY = (int)m_Pos.y;
-	pObj->m_StartTick = m_EvalTick;
+	pObj->m_StartTick = m_EvalTick / (Server()->Is50hz(SnappingClient) ? 2 : 1);
 }

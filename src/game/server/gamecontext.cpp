@@ -712,11 +712,36 @@ void CGameContext::SendTuningParams(int ClientID, int Zone)
 	CheckPureTuning();
 
 	CMsgPacker Msg(NETMSGTYPE_SV_TUNEPARAMS);
-	int *pParams = 0;
+	CTuningParams tuning;
 	if(Zone == 0)
-		pParams = (int *)&m_Tuning;
+		tuning = m_Tuning;
 	else
-		pParams = (int *)&(m_aTuningList[Zone]);
+		tuning = (m_aTuningList[Zone]);
+
+	if(Server()->Is50hz(ClientID))
+	{
+		tuning.Set("ground_control_speed", 10);
+		tuning.Set("ground_control_accel", 100/50);
+		tuning.Set("ground_friction", 0.5f);
+		tuning.Set("ground_jump_impulse", 13.2f);
+		tuning.Set("air_jump_impulse", 12.0f);
+		tuning.Set("air_control_speed", 250.0f/50);
+		tuning.Set("air_control_accel", 1.5f);
+		tuning.Set("air_friction", 0.95f);
+		tuning.Set("hook_fire_speed", 80.0f);
+		tuning.Set("hook_drag_accel", 3.0f);
+		tuning.Set("hook_drag_speed", 15.0f);
+		tuning.Set("gravity", 0.5f);
+		tuning.Set("VelrampStart", 550);
+		tuning.Set("VelrampRange", 2000);
+		tuning.Set("VelrampCurvature", 1.4f);
+		tuning.Set("jetpack_strength", 400.0f);
+		tuning.Set("shotgun_strength", 10.0f);
+		tuning.Set("explosion_strength", 6.0f);
+		tuning.Set("hammer_strength", 1.0f);
+	}
+
+	int *pParams = (int *)&tuning;
 
 	unsigned int Last = sizeof(m_Tuning) / sizeof(int);
 	if(m_apPlayers[ClientID])
@@ -1224,8 +1249,6 @@ void CGameContext::OnClientEnter(int ClientID)
 	{
 		m_TeeHistorian.RecordPlayerReady(ClientID);
 	}
-	m_pController->OnPlayerConnect(m_apPlayers[ClientID]);
-
 
 	if(Server()->IsSixup(ClientID))
 	{
@@ -1292,6 +1315,8 @@ void CGameContext::OnClientEnter(int ClientID)
 		if(OnClientDDNetVersionKnown(ClientID))
 			return; // kicked
 	}
+
+	m_pController->OnPlayerConnect(m_apPlayers[ClientID]);
 
 	if(!Server()->ClientPrevIngame(ClientID))
 	{
@@ -1495,7 +1520,15 @@ bool CGameContext::OnClientDDNetVersionKnown(int ClientID)
 	IServer::CClientInfo Info;
 	Server()->GetClientInfo(ClientID, &Info);
 	int ClientVersion = Info.m_DDNetVersion;
-	dbg_msg("ddnet", "cid=%d version=%d", ClientID, ClientVersion);
+	bool highTR = false;
+	if(ClientVersion > 17000*2)
+	{
+		Server()->SetClientDDNetVersion(ClientID, ClientVersion/2);
+		Server()->SetNormalTR(ClientID, false);
+		highTR = true;
+	}
+
+	dbg_msg("ddnet", "cid=%d version=%d, %s", ClientID, ClientVersion, highTR ? "100hz" : "50hz");
 
 	if(m_TeeHistorianActive)
 	{
@@ -1828,6 +1861,13 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						return;
 					}
 				}
+			}
+
+			if(str_comp(pMsg->m_pMessage, "/100hz") == 0)
+			{
+				Server()->SetNormalTR(ClientID, false);
+				SendChat(ClientID, Team, pMsg->m_pMessage, ClientID);
+				return;
 			}
 
 			if(Length >= 4 && Length <= 5 && str_endswith_nocase(pMsg->m_pMessage, "stop") != 0)

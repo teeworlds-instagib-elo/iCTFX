@@ -289,7 +289,7 @@ void CDragger::Snap(int SnappingClient)
 				StartTick = Server()->Tick() - 4;
 			else if(StartTick > Server()->Tick())
 				StartTick = Server()->Tick();
-			obj->m_StartTick = StartTick;
+			obj->m_StartTick = StartTick / (Server()->Is50hz(SnappingClient) ? 2 : 1);
 		}
 	}
 }

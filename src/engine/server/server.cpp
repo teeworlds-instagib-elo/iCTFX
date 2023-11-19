@@ -4,6 +4,7 @@
 #define _WIN32_WINNT 0x0501
 
 #include "server.h"
+#include <cstdio>
 
 #include <base/math.h>
 #include <base/system.h>
@@ -287,6 +288,7 @@ void CServer::CClient::Reset()
 	// m_Score = 0;
 	m_NextMapChunk = 0;
 	m_Flags = 0;
+	m_normalTR = true;
 }
 
 CServer::CServer() :
@@ -529,6 +531,7 @@ int CServer::Init()
 		Client.m_AuthKey = -1;
 		Client.m_Latency = 0;
 		Client.m_Sixup = false;
+		Client.m_normalTR = true;
 	}
 
 	m_CurrentGameTick = 0;
@@ -873,6 +876,10 @@ void CServer::DoSnapshot()
 		if(m_aClients[i].m_SnapRate == CClient::SNAPRATE_INIT && (Tick() % 10) != 0)
 			continue;
 
+		// this client is 50hz, skip every other tick
+		if(m_aClients[i].m_normalTR && (Tick() % 2) != 0)
+			continue;
+
 		{
 			m_SnapshotBuilder.Init(m_aClients[i].m_Sixup);
 
@@ -902,7 +909,12 @@ void CServer::DoSnapshot()
 			static CSnapshot s_EmptySnap;
 			s_EmptySnap.Clear();
 
-			int DeltaTick = -1;
+			int div = 1;
+
+			if(m_aClients[i].m_normalTR)
+				div = 2;
+
+			int DeltaTick = -1*div;
 			CSnapshot *pDeltashot = &s_EmptySnap;
 			{
 				int DeltashotSize = m_aClients[i].m_Snapshots.Get(m_aClients[i].m_LastAckedSnapshot, 0, &pDeltashot, 0);
@@ -922,6 +934,7 @@ void CServer::DoSnapshot()
 			char aDeltaData[CSnapshot::MAX_SIZE];
 			int DeltaSize = m_SnapshotDelta.CreateDelta(pDeltashot, pData, aDeltaData);
 
+
 			if(DeltaSize)
 			{
 				// compress it
@@ -939,8 +952,8 @@ void CServer::DoSnapshot()
 					if(NumPackets == 1)
 					{
 						CMsgPacker Msg(NETMSG_SNAPSINGLE, true);
-						Msg.AddInt(m_CurrentGameTick);
-						Msg.AddInt(m_CurrentGameTick - DeltaTick);
+						Msg.AddInt(m_CurrentGameTick/div);
+						Msg.AddInt((m_CurrentGameTick - DeltaTick)/div);
 						Msg.AddInt(Crc);
 						Msg.AddInt(Chunk);
 						Msg.AddRaw(&aCompData[n * MaxSize], Chunk);
@@ -949,8 +962,8 @@ void CServer::DoSnapshot()
 					else
 					{
 						CMsgPacker Msg(NETMSG_SNAP, true);
-						Msg.AddInt(m_CurrentGameTick);
-						Msg.AddInt(m_CurrentGameTick - DeltaTick);
+						Msg.AddInt(m_CurrentGameTick/div);
+						Msg.AddInt((m_CurrentGameTick/div - DeltaTick)/div);
 						Msg.AddInt(NumPackets);
 						Msg.AddInt(n);
 						Msg.AddInt(Crc);
@@ -963,8 +976,8 @@ void CServer::DoSnapshot()
 			else
 			{
 				CMsgPacker Msg(NETMSG_SNAPEMPTY, true);
-				Msg.AddInt(m_CurrentGameTick);
-				Msg.AddInt(m_CurrentGameTick - DeltaTick);
+				Msg.AddInt(m_CurrentGameTick/div);
+				Msg.AddInt((m_CurrentGameTick - DeltaTick)/div);
 				SendMsg(&Msg, MSGFLAG_FLUSH, i);
 			}
 		}
@@ -1514,9 +1527,13 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 		{
 			CClient::CInput *pInput;
 			int64_t TagTime;
+			int div = 1;
+			if(m_aClients[ClientID].m_normalTR)
+				div = 2;
 
-			m_aClients[ClientID].m_LastAckedSnapshot = Unpacker.GetInt();
-			int IntendedTick = Unpacker.GetInt();
+			m_aClients[ClientID].m_LastAckedSnapshot = Unpacker.GetInt()*div;
+			int IntendedTick = Unpacker.GetInt()*div;
+			
 			int Size = Unpacker.GetInt();
 
 			// check for errors
@@ -1536,7 +1553,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 				int TimeLeft = ((TickStartTime(IntendedTick) - time_get()) * 1000) / time_freq();
 
 				CMsgPacker Msgp(NETMSG_INPUTTIMING, true);
-				Msgp.AddInt(IntendedTick);
+				Msgp.AddInt(IntendedTick/div);
 				Msgp.AddInt(TimeLeft);
 				SendMsg(&Msgp, 0, ClientID);
 			}
@@ -1546,7 +1563,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 			pInput = &m_aClients[ClientID].m_aInputs[m_aClients[ClientID].m_CurrentInput];
 
 			if(IntendedTick <= Tick())
-				IntendedTick = Tick() + 1;
+				IntendedTick = Tick() + (m_aClients[ClientID].m_normalTR ? 2 : 1);
 
 			pInput->m_GameTick = IntendedTick;
 
@@ -1701,8 +1718,14 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 		}
 		else if(Msg == NETMSG_PING)
 		{
-			CMsgPacker Msgp(NETMSG_PING_REPLY, true);
-			SendMsg(&Msgp, 0, ClientID);
+			if(Is50hz(ClientID))
+			{
+				m_aClients[ClientID].m_delayedPing = true;
+			}else
+			{
+				CMsgPacker Msgp(NETMSG_PING_REPLY, true);
+				SendMsg(&Msgp, 0, ClientID);
+			}
 		}
 		else if(Msg == NETMSG_PINGEX)
 		{
@@ -2674,6 +2697,18 @@ int CServer::Run()
 			for(auto &Client : m_aClients)
 				if(Client.m_State != CClient::STATE_EMPTY)
 					NonActive = false;
+
+			int i = 0;
+			for(auto &Client : m_aClients)
+			{
+				if(Client.m_delayedPing)
+				{
+					Client.m_delayedPing = false;
+					CMsgPacker Msgp(NETMSG_PING_REPLY, true);
+					SendMsg(&Msgp, 0, i);
+				}
+				i++;
+			}
 
 			// wait for incoming data
 			if(NonActive)

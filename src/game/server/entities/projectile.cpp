@@ -357,6 +357,7 @@ void CProjectile::Snap(int SnappingClient)
 			return;
 		}
 		FillInfo(pProj);
+		pProj->m_StartTick /= (Server()->Is50hz(SnappingClient) ? 2 : 1);
 	}
 }
 

@@ -154,6 +154,8 @@ public:
 		int m_Latency;
 		int m_SnapRate;
 
+		bool m_delayedPing;
+
 		float m_Traffic;
 		int64_t m_TrafficSince;
 
@@ -183,6 +185,8 @@ public:
 
 		void Reset();
 
+		void SetNormalTR(bool value) {m_normalTR = value;}
+
 		// DDRace
 
 		NETADDR m_Addr;
@@ -197,6 +201,7 @@ public:
 		std::shared_ptr<CHostLookup> m_pDnsblLookup;
 
 		bool m_Sixup;
+		bool m_normalTR;
 	};
 
 	CClient m_aClients[MAX_CLIENTS];
@@ -463,6 +468,8 @@ public:
 	void SetErrorShutdown(const char *pReason);
 
 	bool IsSixup(int ClientID) const { return ClientID != SERVER_DEMO_CLIENT && m_aClients[ClientID].m_Sixup; }
+	bool Is50hz(int ClientID) const { return ClientID == SERVER_DEMO_CLIENT || m_aClients[ClientID].m_normalTR; }
+	void SetNormalTR(int ClientID, bool value) {m_aClients[ClientID].SetNormalTR(value);}
 
 #ifdef CONF_FAMILY_UNIX
 	enum CONN_LOGGING_CMD

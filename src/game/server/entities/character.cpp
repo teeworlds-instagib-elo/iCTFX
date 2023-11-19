@@ -763,7 +763,9 @@ void CCharacter::TickDefered()
 	m_Core.m_Id = m_pPlayer->GetCID();
 	m_Core.Move();
 	bool StuckAfterMove = GameServer()->Collision()->TestBox(m_Core.m_Pos, vec2(28.0f, 28.0f));
-	m_Core.Quantize();
+
+	if(!Server()->Is50hz(m_Core.m_Id) || Server()->Tick() % 2 != 0)
+		m_Core.Quantize(Server()->Is50hz(m_Core.m_Id));
 	bool StuckAfterQuant = GameServer()->Collision()->TestBox(m_Core.m_Pos, vec2(28.0f, 28.0f));
 	m_Pos = m_Core.m_Pos;
 
@@ -1131,13 +1133,16 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 			Emote = EMOTE_BLINK;
 	}
 
+	const float SpeedFactor = SERVER_TICK_SPEED/50.0;
+	const float AccelFactor = (SERVER_TICK_SPEED/50.0)*(SERVER_TICK_SPEED/50.0);
+
 	if(!Server()->IsSixup(SnappingClient))
 	{
 		CNetObj_Character *pCharacter = static_cast<CNetObj_Character *>(Server()->SnapNewItem(NETOBJTYPE_CHARACTER, ID, sizeof(CNetObj_Character)));
 		if(!pCharacter)
 			return;
 
-		pCore->Write(pCharacter);
+		pCore->Write(pCharacter, Server()->Is50hz(SnappingClient));
 
 		pCharacter->m_Tick = Tick;
 		pCharacter->m_Emote = Emote;
@@ -1155,6 +1160,13 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 		pCharacter->m_Health = Health;
 		pCharacter->m_Armor = Armor;
 		pCharacter->m_PlayerFlags = GetPlayer()->m_PlayerFlags;
+
+		if(Server()->Is50hz(SnappingClient))
+		{
+			pCharacter->m_Tick /= SpeedFactor;
+			pCharacter->m_HookTick /= SpeedFactor;
+			pCharacter->m_AttackTick /= SpeedFactor;
+		}
 	}
 	else
 	{
@@ -1162,15 +1174,16 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 		if(!pCharacter)
 			return;
 
-		pCore->Write(reinterpret_cast<CNetObj_CharacterCore *>(static_cast<protocol7::CNetObj_CharacterCore *>(pCharacter)));
+		pCore->Write(reinterpret_cast<CNetObj_CharacterCore *>(static_cast<protocol7::CNetObj_CharacterCore *>(pCharacter)), true);
 		if(pCharacter->m_Angle > (int)(pi * 256.0f))
 		{
 			pCharacter->m_Angle -= (int)(2.0f * pi * 256.0f);
 		}
 
-		pCharacter->m_Tick = Tick;
+		pCharacter->m_HookTick /= SpeedFactor;
+		pCharacter->m_Tick = Tick / SpeedFactor;
 		pCharacter->m_Emote = Emote;
-		pCharacter->m_AttackTick = m_AttackTick;
+		pCharacter->m_AttackTick = m_AttackTick / SpeedFactor;
 		pCharacter->m_Direction = m_Input.m_Direction;
 		pCharacter->m_Weapon = Weapon;
 		pCharacter->m_AmmoCount = AmmoCount;

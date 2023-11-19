@@ -161,5 +161,5 @@ void CGun::Snap(int SnappingClient)
 	if(pEntData)
 		pObj->m_StartTick = 0;
 	else
-		pObj->m_StartTick = m_EvalTick;
+		pObj->m_StartTick = m_EvalTick / (Server()->Is50hz(SnappingClient) ? 2 : 1);
 }

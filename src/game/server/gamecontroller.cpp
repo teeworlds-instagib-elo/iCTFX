@@ -737,7 +737,7 @@ void IGameController::Snap(int SnappingClient)
 		pGameInfoObj->m_GameStateFlags |= GAMESTATEFLAG_SUDDENDEATH;
 	if(GameServer()->m_World.m_Paused)
 		pGameInfoObj->m_GameStateFlags |= GAMESTATEFLAG_PAUSED;
-	pGameInfoObj->m_RoundStartTick = m_RoundStartTick;
+	pGameInfoObj->m_RoundStartTick = m_RoundStartTick / (Server()->Is50hz(SnappingClient) ? 2 : 1);
 	if(m_FakeWarmup)
 		pGameInfoObj->m_WarmupTimer = m_FakeWarmup;
 	else

@@ -87,6 +87,6 @@ void CDoor::Snap(int SnappingClient)
 			pObj->m_FromX = (int)m_Pos.x;
 			pObj->m_FromY = (int)m_Pos.y;
 		}
-		pObj->m_StartTick = Server()->Tick();
+		pObj->m_StartTick = Server()->Tick() / (Server()->Is50hz(SnappingClient) ? 2 : 1);
 	}
 }

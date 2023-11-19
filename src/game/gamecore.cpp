@@ -1,7 +1,7 @@
 /* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include "gamecore.h"
-
+#include <cstdio>
 #include <engine/shared/config.h>
 
 const char *CTuningParams::ms_apNames[] =
@@ -463,11 +463,50 @@ void CCharacterCore::Move()
 	else
 		m_LeftWall = true;
 
+	bool top = false, down = false, left = false, right = false;
+
 	if(m_pCollision->TestBox(vec2(m_Pos.x, m_Pos.y+32), vec2(28.0f, 28.0f)))
-		NewPos.y = round_to_int(NewPos.y);
+		down = true;
+
+	if(m_pCollision->TestBox(vec2(m_Pos.x, m_Pos.y-32), vec2(28.0f, 28.0f)))
+		top = true;
 	
 	if(m_pCollision->TestBox(vec2(m_Pos.x+32, m_Pos.y), vec2(28.0f, 28.0f)))
+		right = true;
+
+	if(m_pCollision->TestBox(vec2(m_Pos.x-32, m_Pos.y), vec2(28.0f, 28.0f)))
+		left = true;
+
+	if(down || top)
+		NewPos.y = round_to_int(NewPos.y);
+
+	if(left || right)
 		NewPos.x = round_to_int(NewPos.x);
+
+	//corner cases
+	if(m_pCollision->TestBox(vec2(m_Pos.x+32, m_Pos.y+32), vec2(28.0f, 28.0f)) && !down && !right)
+	{
+		NewPos.x = round_to_int(NewPos.x);
+		NewPos.y = round_to_int(NewPos.y);
+	}
+	
+	if(m_pCollision->TestBox(vec2(m_Pos.x-32, m_Pos.y+32), vec2(28.0f, 28.0f)) && !down && !left)
+	{
+		NewPos.x = round_to_int(NewPos.x);
+		NewPos.y = round_to_int(NewPos.y);
+	}
+
+	if(m_pCollision->TestBox(vec2(m_Pos.x-32, m_Pos.y-32), vec2(28.0f, 28.0f)) && !top && !left)
+	{
+		NewPos.x = round_to_int(NewPos.x);
+		NewPos.y = round_to_int(NewPos.y);
+	}
+
+	if(m_pCollision->TestBox(vec2(m_Pos.x+32, m_Pos.y-32), vec2(28.0f, 28.0f)) && !top && !right)
+	{
+		NewPos.x = round_to_int(NewPos.x);
+		NewPos.y = round_to_int(NewPos.y);
+	}
 
 	m_Vel.x = m_Vel.x * (1.0f / RampValue);
 
@@ -508,10 +547,10 @@ void CCharacterCore::Move()
 	m_Pos = NewPos;
 }
 
-void CCharacterCore::Write(CNetObj_CharacterCore *pObjCore)
+void CCharacterCore::Write(CNetObj_CharacterCore *pObjCore, bool normalClient)
 {
-	pObjCore->m_X = round_to_int(m_Pos.x * (SERVER_TICK_SPEED > 50 ? 4 : 1));
-	pObjCore->m_Y = round_to_int(m_Pos.y * (SERVER_TICK_SPEED > 50 ? 4 : 1));
+	pObjCore->m_X = round_to_int(m_Pos.x * (SERVER_TICK_SPEED > 50 && !normalClient ? 4 : 1));
+	pObjCore->m_Y = round_to_int(m_Pos.y * (SERVER_TICK_SPEED > 50 && !normalClient ? 4 : 1));
 
 	pObjCore->m_VelX = round_to_int(m_Vel.x * 256.0f);
 	pObjCore->m_VelY = round_to_int(m_Vel.y * 256.0f);
@@ -525,12 +564,23 @@ void CCharacterCore::Write(CNetObj_CharacterCore *pObjCore)
 	pObjCore->m_Jumped = m_Jumped;
 	pObjCore->m_Direction = m_Direction;
 	pObjCore->m_Angle = m_Angle;
+
+	const float SpeedFactor = SERVER_TICK_SPEED/50.0;
+	const float AccelFactor = (SERVER_TICK_SPEED/50.0)*(SERVER_TICK_SPEED/50.0);
+
+	if(normalClient)
+	{
+		pObjCore->m_VelX = round_to_int(m_Vel.x * 256.0f * SpeedFactor);
+		pObjCore->m_VelY = round_to_int(m_Vel.y * 256.0f * SpeedFactor);
+		// printf("mVel %f\n", m_Vel.x/32 * SERVER_TICK_SPEED);
+		// printf("mVel %f\n", m_Vel.x/32 * 50 * SpeedFactor);
+	}
 }
 
-void CCharacterCore::Read(const CNetObj_CharacterCore *pObjCore)
+void CCharacterCore::Read(const CNetObj_CharacterCore *pObjCore, bool normalClient)
 {
-	m_Pos.x = pObjCore->m_X / (SERVER_TICK_SPEED > 50 ? 4.0 : 1);
-	m_Pos.y = pObjCore->m_Y / (SERVER_TICK_SPEED > 50 ? 4.0 : 1);
+	m_Pos.x = pObjCore->m_X / (SERVER_TICK_SPEED > 50 && !normalClient ? 4.0 : 1);
+	m_Pos.y = pObjCore->m_Y / (SERVER_TICK_SPEED > 50 && !normalClient ? 4.0 : 1);
 	m_Vel.x = pObjCore->m_VelX / 256.0f;
 	m_Vel.y = pObjCore->m_VelY / 256.0f;
 	m_HookState = pObjCore->m_HookState;
@@ -543,6 +593,15 @@ void CCharacterCore::Read(const CNetObj_CharacterCore *pObjCore)
 	m_Jumped = pObjCore->m_Jumped;
 	m_Direction = pObjCore->m_Direction;
 	m_Angle = pObjCore->m_Angle;
+
+	const float SpeedFactor = SERVER_TICK_SPEED/50.0;
+	const float AccelFactor = (SERVER_TICK_SPEED/50.0)*(SERVER_TICK_SPEED/50.0);
+
+	if(normalClient)
+	{
+		m_Vel.x /= SpeedFactor;
+		m_Vel.y /= SpeedFactor;
+	}
 }
 
 void CCharacterCore::ReadDDNet(const CNetObj_DDNetCharacter *pObjDDNet)
@@ -578,11 +637,11 @@ void CCharacterCore::ReadDDNet(const CNetObj_DDNetCharacter *pObjDDNet)
 	m_Jumps = pObjDDNet->m_Jumps;
 }
 
-void CCharacterCore::Quantize()
+void CCharacterCore::Quantize(bool normalClient)
 {
 	CNetObj_CharacterCore Core;
-	Write(&Core);
-	Read(&Core);
+	Write(&Core, normalClient);
+	Read(&Core, normalClient);
 }
 
 // DDRace

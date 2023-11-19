@@ -181,7 +181,7 @@ void CLaser::Snap(int SnappingClient)
 	pObj->m_Y = (int)m_Pos.y;
 	pObj->m_FromX = (int)m_From.x;
 	pObj->m_FromY = (int)m_From.y;
-	pObj->m_StartTick = m_EvalTick;
+	pObj->m_StartTick = m_EvalTick / (Server()->Is50hz(SnappingClient) ? 2 : 1);
 }
 
 void CLaser::SwapClients(int Client1, int Client2)

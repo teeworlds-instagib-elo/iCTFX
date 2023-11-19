@@ -259,6 +259,8 @@ public:
 	virtual const char *GetMapName() const = 0;
 
 	virtual bool IsSixup(int ClientID) const = 0;
+	virtual bool Is50hz(int ClientID) const = 0;
+	virtual void SetNormalTR(int ClientID, bool value) = 0;
 };
 
 class IGameServer : public IInterface

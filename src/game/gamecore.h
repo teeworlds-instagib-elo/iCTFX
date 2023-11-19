@@ -242,9 +242,9 @@ public:
 	void Tick(bool UseInput);
 	void Move();
 
-	void Read(const CNetObj_CharacterCore *pObjCore);
-	void Write(CNetObj_CharacterCore *pObjCore);
-	void Quantize();
+	void Read(const CNetObj_CharacterCore *pObjCore, bool normalClient=false);
+	void Write(CNetObj_CharacterCore *pObjCore, bool normalClient=false);
+	void Quantize(bool normalClient=false);
 
 	// DDRace
 

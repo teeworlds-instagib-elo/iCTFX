@@ -135,7 +135,10 @@ void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 	if(!Server()->ClientPrevIngame(ClientID))
 	{
 		char aBuf[512];
-		str_format(aBuf, sizeof(aBuf), "'%s' entered and joined the %s", Server()->ClientName(ClientID), GetTeamName(pPlayer->GetTeam()));
+		if(Server()->Is50hz(ClientID))
+			str_format(aBuf, sizeof(aBuf), "'%s' entered and joined using a normal client", Server()->ClientName(ClientID), GetTeamName(pPlayer->GetTeam()));
+		else
+			str_format(aBuf, sizeof(aBuf), "'%s' entered and joined using a 100hz client", Server()->ClientName(ClientID), GetTeamName(pPlayer->GetTeam()));
 		GameServer()->SendChat(-1, CGameContext::CHAT_ALL, aBuf, -1, CGameContext::CHAT_SIX);
 
 		GameServer()->SendChatTarget(ClientID, "welcome to iCTFX!");
