@@ -79,6 +79,7 @@ void CGameControllerDDRace::OnCharacterSpawn(CCharacter *pChr)
 	IGameController::OnCharacterSpawn(pChr);
 	pChr->SetTeams(&m_Teams);
 	pChr->SetTeleports(&m_TeleOuts, &m_TeleCheckOuts);
+	GameServer()->Collision()->SetTeleport(&m_TeleOuts);
 	m_Teams.OnCharacterSpawn(pChr->GetPlayer()->GetCID());
 }
 

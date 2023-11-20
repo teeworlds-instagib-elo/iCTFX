@@ -26,6 +26,8 @@ CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEner
 	m_TeleportCancelled = false;
 	m_IsBlueTeleport = false;
 
+	m_NextPos = m_Pos;
+
 	m_DidHit = false;
 
 	m_TuneZone = GameServer()->Collision()->IsTune(GameServer()->Collision()->GetMapIndex(m_Pos));
@@ -90,14 +92,17 @@ void CLaser::DoBounce()
 		return;
 	}
 	m_PrevPos = m_Pos;
+	m_Pos = m_NextPos;
 	vec2 Coltile;
 
 	int Res;
 	int z;
 
 	vec2 To = m_Pos + m_Dir * m_Energy;
+	vec2 Tele;
 
-	if(GameServer()->Collision()->IntersectLine(m_Pos, To, 0x0, &To))
+	int teleptr = 0;
+	if(GameServer()->Collision()->IntersectLineTeleWeapon(m_Pos, To, &Tele, &To, &teleptr))
 	{
 		if(!HitCharacter(m_Pos, To))
 		{
@@ -110,16 +115,27 @@ void CLaser::DoBounce()
 
 			GameServer()->Collision()->MovePoint(&TempPos, &TempDir, 1.0f, 0);
 			m_Pos = TempPos;
-			m_Dir = normalize(TempDir);
+			
+			if(!teleptr)
+				m_Dir = normalize(TempDir);
 
 			m_Energy -= distance(m_From, m_Pos) + GameServer()->Tuning()->m_LaserBounceCost;
-			m_Bounces++;
+			
+			if(!teleptr)
+				m_Bounces++;
 			
 
-			if(m_Bounces > GameServer()->Tuning()->m_LaserBounceNum)
+			if(m_Bounces > GameServer()->Tuning()->m_LaserBounceNum && !teleptr)
 				m_Energy = -1;
 
 			GameServer()->CreateSound(m_Pos, SOUND_LASER_BOUNCE, m_TeamMask);
+			m_NextPos = m_Pos;
+
+			if(teleptr)
+			{
+				m_NextPos = Tele;
+				GameServer()->CreateSound(m_Pos, SOUND_LASER_BOUNCE, m_TeamMask);
+			}
 
 		}
 	}
@@ -129,6 +145,7 @@ void CLaser::DoBounce()
 		{
 			m_From = m_Pos;
 			m_Pos = To;
+			m_NextPos = To;
 			m_Energy = -1;
 		}
 	}

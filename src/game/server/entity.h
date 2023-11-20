@@ -44,6 +44,7 @@ public: // TODO: Maybe make protected
 			Contains the current posititon of the entity.
 	*/
 	vec2 m_Pos;
+	vec2 m_NextPos;
 	float m_ProximityRadius;
 
 	/* Getters */

@@ -3,6 +3,9 @@
 #ifndef GAME_COLLISION_H
 #define GAME_COLLISION_H
 
+#include <map>
+#include <vector>
+
 #include <base/vmath.h>
 #include <engine/shared/protocol.h>
 
@@ -95,6 +98,7 @@ public:
 	int GetSwitchType(int Index) const;
 	int GetSwitchNumber(int Index) const;
 	int GetSwitchDelay(int Index) const;
+	void SetTeleport(std::map<int, std::vector<vec2>> *pTeleOuts) {m_pTeleOuts = pTeleOuts;};
 
 	int IsSolid(int x, int y) const;
 	bool IsThrough(int x, int y, int xoff, int yoff, vec2 pos0, vec2 pos1) const;
@@ -109,6 +113,8 @@ public:
 	int IsMover(int x, int y, int *pFlags) const;
 
 	vec2 CpSpeed(int index, int Flags = 0) const;
+
+	std::map<int, std::vector<vec2>> *m_pTeleOuts;
 
 	class CTeleTile *TeleLayer() { return m_pTele; }
 	class CSwitchTile *SwitchLayer() { return m_pSwitch; }

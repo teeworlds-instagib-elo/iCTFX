@@ -3,6 +3,7 @@
 #include <base/math.h>
 #include <base/system.h>
 #include <base/vmath.h>
+#include <cstdio>
 
 #include <antibot/antibot_data.h>
 
@@ -410,14 +411,32 @@ int CCollision::IntersectLineTeleWeapon(vec2 Pos0, vec2 Pos1, vec2 *pOutCollisio
 		iy = round_to_int(Pos.y);
 
 		int Index = GetPureMapIndex(Pos);
-		if(g_Config.m_SvOldTeleportWeapons)
-			*pTeleNr = IsTeleport(Index);
-		else
-			*pTeleNr = IsTeleportWeapon(Index);
+		// if(g_Config.m_SvOldTeleportWeapons)
+		*pTeleNr = IsTeleport(Index);
+
+		if(!*pTeleNr)
+			*pTeleNr = IsEvilTeleport(Index);
+
+		if(!*pTeleNr)
+			*pTeleNr = IsCheckTeleport(Index);
+
+		if(!*pTeleNr)
+			*pTeleNr = IsCheckEvilTeleport(Index);
+		// else
+		// 	*pTeleNr = IsTeleportWeapon(Index);
 		if(*pTeleNr)
 		{
 			if(pOutCollision)
+			{
 				*pOutCollision = Pos;
+				int size = (*m_pTeleOuts)[*pTeleNr - 1].size();
+				if(size)
+				{
+					int RandomOut = rand() % size;
+					
+					*pOutCollision = (*m_pTeleOuts)[*pTeleNr - 1][RandomOut];
+				}
+			}
 			if(pOutBeforeCollision)
 				*pOutBeforeCollision = Last;
 			return TILE_TELEINWEAPON;
