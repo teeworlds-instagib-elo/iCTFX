@@ -3,7 +3,6 @@
 #include <base/math.h>
 #include <base/system.h>
 #include <base/vmath.h>
-#include <cstdio>
 
 #include <antibot/antibot_data.h>
 
