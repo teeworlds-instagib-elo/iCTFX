@@ -219,79 +219,79 @@ bool IGameController::OnEntity(int Index, vec2 Pos, int Layer, int Flags, int Nu
 		m_aNumSpawnPoints[Type] = minimum(m_aNumSpawnPoints[Type] + 1, (int)std::size(m_aaSpawnPoints[0]));
 	}
 
-	// else if(Index == ENTITY_DOOR)
-	// {
-	// 	for(int i = 0; i < 8; i++)
-	// 	{
-	// 		if(sides[i] >= ENTITY_LASER_SHORT && sides[i] <= ENTITY_LASER_LONG)
-	// 		{
-	// 			new CDoor(
-	// 				&GameServer()->m_World, //GameWorld
-	// 				Pos, //Pos
-	// 				pi / 4 * i, //Rotation
-	// 				32 * 3 + 32 * (sides[i] - ENTITY_LASER_SHORT) * 3, //Length
-	// 				Number //Number
-	// 			);
-	// 		}
-	// 	}
-	// }
-	// else if(Index == ENTITY_CRAZY_SHOTGUN_EX)
-	// {
-	// 	int Dir;
-	// 	if(!Flags)
-	// 		Dir = 0;
-	// 	else if(Flags == ROTATION_90)
-	// 		Dir = 1;
-	// 	else if(Flags == ROTATION_180)
-	// 		Dir = 2;
-	// 	else
-	// 		Dir = 3;
-	// 	float Deg = Dir * (pi / 2);
-	// 	CProjectile *bullet = new CProjectile(
-	// 		&GameServer()->m_World,
-	// 		WEAPON_SHOTGUN, //Type
-	// 		-1, //Owner
-	// 		Pos, //Pos
-	// 		vec2(sin(Deg), cos(Deg)), //Dir
-	// 		-2, //Span
-	// 		true, //Freeze
-	// 		true, //Explosive
-	// 		0, //Force
-	// 		(g_Config.m_SvShotgunBulletSound) ? SOUND_GRENADE_EXPLODE : -1, //SoundImpact
-	// 		Layer,
-	// 		Number);
-	// 	bullet->SetBouncing(2 - (Dir % 2));
-	// }
-	// else if(Index == ENTITY_CRAZY_SHOTGUN)
-	// {
-	// 	int Dir;
-	// 	if(!Flags)
-	// 		Dir = 0;
-	// 	else if(Flags == (TILEFLAG_ROTATE))
-	// 		Dir = 1;
-	// 	else if(Flags == (TILEFLAG_VFLIP | TILEFLAG_HFLIP))
-	// 		Dir = 2;
-	// 	else
-	// 		Dir = 3;
-	// 	float Deg = Dir * (pi / 2);
-	// 	CProjectile *bullet = new CProjectile(
-	// 		&GameServer()->m_World,
-	// 		WEAPON_SHOTGUN, //Type
-	// 		-1, //Owner
-	// 		Pos, //Pos
-	// 		vec2(sin(Deg), cos(Deg)), //Dir
-	// 		-2, //Span
-	// 		true, //Freeze
-	// 		false, //Explosive
-	// 		0,
-	// 		SOUND_GRENADE_EXPLODE,
-	// 		Layer,
-	// 		Number);
-	// 	bullet->SetBouncing(2 - (Dir % 2));
-	// }
+	else if(Index == ENTITY_DOOR)
+	{
+		for(int i = 0; i < 8; i++)
+		{
+			if(sides[i] >= ENTITY_LASER_SHORT && sides[i] <= ENTITY_LASER_LONG)
+			{
+				new CDoor(
+					&GameServer()->m_World, //GameWorld
+					Pos, //Pos
+					pi / 4 * i, //Rotation
+					32 * 3 + 32 * (sides[i] - ENTITY_LASER_SHORT) * 3, //Length
+					Number //Number
+				);
+			}
+		}
+	}
+	else if(Index == ENTITY_CRAZY_SHOTGUN_EX)
+	{
+		int Dir;
+		if(!Flags)
+			Dir = 0;
+		else if(Flags == ROTATION_90)
+			Dir = 1;
+		else if(Flags == ROTATION_180)
+			Dir = 2;
+		else
+			Dir = 3;
+		float Deg = Dir * (pi / 2);
+		CProjectile *bullet = new CProjectile(
+			&GameServer()->m_World,
+			WEAPON_SHOTGUN, //Type
+			-1, //Owner
+			Pos, //Pos
+			vec2(sin(Deg), cos(Deg)), //Dir
+			-2, //Span
+			true, //Freeze
+			true, //Explosive
+			0, //Force
+			(g_Config.m_SvShotgunBulletSound) ? SOUND_GRENADE_EXPLODE : -1, //SoundImpact
+			Layer,
+			Number);
+		bullet->SetBouncing(2 - (Dir % 2));
+	}
+	else if(Index == ENTITY_CRAZY_SHOTGUN)
+	{
+		int Dir;
+		if(!Flags)
+			Dir = 0;
+		else if(Flags == (TILEFLAG_ROTATE))
+			Dir = 1;
+		else if(Flags == (TILEFLAG_VFLIP | TILEFLAG_HFLIP))
+			Dir = 2;
+		else
+			Dir = 3;
+		float Deg = Dir * (pi / 2);
+		CProjectile *bullet = new CProjectile(
+			&GameServer()->m_World,
+			WEAPON_SHOTGUN, //Type
+			-1, //Owner
+			Pos, //Pos
+			vec2(sin(Deg), cos(Deg)), //Dir
+			-2, //Span
+			true, //Freeze
+			false, //Explosive
+			0,
+			SOUND_GRENADE_EXPLODE,
+			Layer,
+			Number);
+		bullet->SetBouncing(2 - (Dir % 2));
+	}
 
-	// int Type = -1;
-	// int SubType = 0;
+	int Type = -1;
+	int SubType = 0;
 
 	// if(Index == ENTITY_ARMOR_1)
 	// 	Type = POWERUP_ARMOR;
@@ -317,86 +317,87 @@ bool IGameController::OnEntity(int Index, vec2 Pos, int Layer, int Flags, int Nu
 	// 	Type = POWERUP_NINJA;
 	// 	SubType = WEAPON_NINJA;
 	// }
-	// else if(Index >= ENTITY_LASER_FAST_CCW && Index <= ENTITY_LASER_FAST_CW)
-	// {
-	// 	int sides2[8];
-	// 	sides2[0] = GameServer()->Collision()->Entity(x, y + 2, Layer);
-	// 	sides2[1] = GameServer()->Collision()->Entity(x + 2, y + 2, Layer);
-	// 	sides2[2] = GameServer()->Collision()->Entity(x + 2, y, Layer);
-	// 	sides2[3] = GameServer()->Collision()->Entity(x + 2, y - 2, Layer);
-	// 	sides2[4] = GameServer()->Collision()->Entity(x, y - 2, Layer);
-	// 	sides2[5] = GameServer()->Collision()->Entity(x - 2, y - 2, Layer);
-	// 	sides2[6] = GameServer()->Collision()->Entity(x - 2, y, Layer);
-	// 	sides2[7] = GameServer()->Collision()->Entity(x - 2, y + 2, Layer);
+	// else 
+	if(Index >= ENTITY_LASER_FAST_CCW && Index <= ENTITY_LASER_FAST_CW)
+	{
+		int sides2[8];
+		sides2[0] = GameServer()->Collision()->Entity(x, y + 2, Layer);
+		sides2[1] = GameServer()->Collision()->Entity(x + 2, y + 2, Layer);
+		sides2[2] = GameServer()->Collision()->Entity(x + 2, y, Layer);
+		sides2[3] = GameServer()->Collision()->Entity(x + 2, y - 2, Layer);
+		sides2[4] = GameServer()->Collision()->Entity(x, y - 2, Layer);
+		sides2[5] = GameServer()->Collision()->Entity(x - 2, y - 2, Layer);
+		sides2[6] = GameServer()->Collision()->Entity(x - 2, y, Layer);
+		sides2[7] = GameServer()->Collision()->Entity(x - 2, y + 2, Layer);
 
-	// 	float AngularSpeed = 0.0f;
-	// 	int Ind = Index - ENTITY_LASER_STOP;
-	// 	int M;
-	// 	if(Ind < 0)
-	// 	{
-	// 		Ind = -Ind;
-	// 		M = 1;
-	// 	}
-	// 	else if(Ind == 0)
-	// 		M = 0;
-	// 	else
-	// 		M = -1;
+		float AngularSpeed = 0.0f;
+		int Ind = Index - ENTITY_LASER_STOP;
+		int M;
+		if(Ind < 0)
+		{
+			Ind = -Ind;
+			M = 1;
+		}
+		else if(Ind == 0)
+			M = 0;
+		else
+			M = -1;
 
-	// 	if(Ind == 0)
-	// 		AngularSpeed = 0.0f;
-	// 	else if(Ind == 1)
-	// 		AngularSpeed = pi / 360;
-	// 	else if(Ind == 2)
-	// 		AngularSpeed = pi / 180;
-	// 	else if(Ind == 3)
-	// 		AngularSpeed = pi / 90;
-	// 	AngularSpeed *= M;
+		if(Ind == 0)
+			AngularSpeed = 0.0f;
+		else if(Ind == 1)
+			AngularSpeed = pi / 360;
+		else if(Ind == 2)
+			AngularSpeed = pi / 180;
+		else if(Ind == 3)
+			AngularSpeed = pi / 90;
+		AngularSpeed *= M;
 
-	// 	for(int i = 0; i < 8; i++)
-	// 	{
-	// 		if(sides[i] >= ENTITY_LASER_SHORT && sides[i] <= ENTITY_LASER_LONG)
-	// 		{
-	// 			CLight *Lgt = new CLight(&GameServer()->m_World, Pos, pi / 4 * i, 32 * 3 + 32 * (sides[i] - ENTITY_LASER_SHORT) * 3, Layer, Number);
-	// 			Lgt->m_AngularSpeed = AngularSpeed;
-	// 			if(sides2[i] >= ENTITY_LASER_C_SLOW && sides2[i] <= ENTITY_LASER_C_FAST)
-	// 			{
-	// 				Lgt->m_Speed = 1 + (sides2[i] - ENTITY_LASER_C_SLOW) * 2;
-	// 				Lgt->m_CurveLength = Lgt->m_Length;
-	// 			}
-	// 			else if(sides2[i] >= ENTITY_LASER_O_SLOW && sides2[i] <= ENTITY_LASER_O_FAST)
-	// 			{
-	// 				Lgt->m_Speed = 1 + (sides2[i] - ENTITY_LASER_O_SLOW) * 2;
-	// 				Lgt->m_CurveLength = 0;
-	// 			}
-	// 			else
-	// 				Lgt->m_CurveLength = Lgt->m_Length;
-	// 		}
-	// 	}
-	// }
-	// else if(Index >= ENTITY_DRAGGER_WEAK && Index <= ENTITY_DRAGGER_STRONG)
-	// {
-	// 	CDraggerTeam(&GameServer()->m_World, Pos, Index - ENTITY_DRAGGER_WEAK + 1, false, Layer, Number);
-	// }
-	// else if(Index >= ENTITY_DRAGGER_WEAK_NW && Index <= ENTITY_DRAGGER_STRONG_NW)
-	// {
-	// 	CDraggerTeam(&GameServer()->m_World, Pos, Index - ENTITY_DRAGGER_WEAK_NW + 1, true, Layer, Number);
-	// }
-	// else if(Index == ENTITY_PLASMAE)
-	// {
-	// 	new CGun(&GameServer()->m_World, Pos, false, true, Layer, Number);
-	// }
-	// else if(Index == ENTITY_PLASMAF)
-	// {
-	// 	new CGun(&GameServer()->m_World, Pos, true, false, Layer, Number);
-	// }
-	// else if(Index == ENTITY_PLASMA)
-	// {
-	// 	new CGun(&GameServer()->m_World, Pos, true, true, Layer, Number);
-	// }
-	// else if(Index == ENTITY_PLASMAU)
-	// {
-	// 	new CGun(&GameServer()->m_World, Pos, false, false, Layer, Number);
-	// }
+		for(int i = 0; i < 8; i++)
+		{
+			if(sides[i] >= ENTITY_LASER_SHORT && sides[i] <= ENTITY_LASER_LONG)
+			{
+				CLight *Lgt = new CLight(&GameServer()->m_World, Pos, pi / 4 * i, 32 * 3 + 32 * (sides[i] - ENTITY_LASER_SHORT) * 3, Layer, Number);
+				Lgt->m_AngularSpeed = AngularSpeed;
+				if(sides2[i] >= ENTITY_LASER_C_SLOW && sides2[i] <= ENTITY_LASER_C_FAST)
+				{
+					Lgt->m_Speed = 1 + (sides2[i] - ENTITY_LASER_C_SLOW) * 2;
+					Lgt->m_CurveLength = Lgt->m_Length;
+				}
+				else if(sides2[i] >= ENTITY_LASER_O_SLOW && sides2[i] <= ENTITY_LASER_O_FAST)
+				{
+					Lgt->m_Speed = 1 + (sides2[i] - ENTITY_LASER_O_SLOW) * 2;
+					Lgt->m_CurveLength = 0;
+				}
+				else
+					Lgt->m_CurveLength = Lgt->m_Length;
+			}
+		}
+	}
+	else if(Index >= ENTITY_DRAGGER_WEAK && Index <= ENTITY_DRAGGER_STRONG)
+	{
+		CDraggerTeam(&GameServer()->m_World, Pos, Index - ENTITY_DRAGGER_WEAK + 1, false, Layer, Number);
+	}
+	else if(Index >= ENTITY_DRAGGER_WEAK_NW && Index <= ENTITY_DRAGGER_STRONG_NW)
+	{
+		CDraggerTeam(&GameServer()->m_World, Pos, Index - ENTITY_DRAGGER_WEAK_NW + 1, true, Layer, Number);
+	}
+	else if(Index == ENTITY_PLASMAE)
+	{
+		new CGun(&GameServer()->m_World, Pos, false, true, Layer, Number);
+	}
+	else if(Index == ENTITY_PLASMAF)
+	{
+		new CGun(&GameServer()->m_World, Pos, true, false, Layer, Number);
+	}
+	else if(Index == ENTITY_PLASMA)
+	{
+		new CGun(&GameServer()->m_World, Pos, true, true, Layer, Number);
+	}
+	else if(Index == ENTITY_PLASMAU)
+	{
+		new CGun(&GameServer()->m_World, Pos, false, false, Layer, Number);
+	}
 
 	// if(Type != -1)
 	// {
