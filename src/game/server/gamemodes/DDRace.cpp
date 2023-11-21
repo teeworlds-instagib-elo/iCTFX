@@ -516,6 +516,29 @@ void CGameControllerDDRace::Tick()
 					{
 						F->m_Vel.y += 0.5f; //GameServer()->m_World.m_Core.m_Tuning.m_Gravity;
 						GameServer()->Collision()->MoveBox(&F->m_Pos, &F->m_Vel, vec2(F->ms_PhysSize, F->ms_PhysSize), 0.5f);
+						
+						int index = GameServer()->Collision()->GetMapIndex(F->m_Pos);
+						CCollision * col = GameServer()->Collision();
+						int tele = col->IsTeleport(index);
+						if(!tele)
+							tele = col->IsEvilTeleport(index);
+						
+						if(!tele)
+							tele = col->IsCheckTeleport(index);
+
+						if(!tele)
+							tele = col->IsCheckEvilTeleport(index);
+
+						if(tele)
+						{
+							int size = (*col->m_pTeleOuts)[tele - 1].size();
+							if(size)
+							{
+								int RandomOut = rand() % size;
+								
+								F->m_Pos = (*col->m_pTeleOuts)[tele - 1][RandomOut];
+							}
+						}
 					}
 				}
 			}
