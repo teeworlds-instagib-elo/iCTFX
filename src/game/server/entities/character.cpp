@@ -63,6 +63,13 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_WeaponChangeTick = Server()->Tick();
 	Antibot()->OnSpawn(m_pPlayer->GetCID());
 
+	for(int i = 0; i < WEAPON_NINJA; i++)
+	{
+		SetWeaponGot(i, false);
+	}
+
+	SetWeaponGot(WEAPON_LASER, false);
+
 	m_Core.Reset();
 	m_Core.Init(&GameServer()->m_World.m_Core, GameServer()->Collision());
 	m_Core.m_ActiveWeapon = WEAPON_LASER;
@@ -1252,18 +1259,18 @@ void CCharacter::Snap(int SnappingClient)
 		pDDNetCharacter->m_Flags |= CHARACTERFLAG_TELEGUN_GRENADE;
 	if(m_Core.m_HasTelegunLaser)
 		pDDNetCharacter->m_Flags |= CHARACTERFLAG_TELEGUN_LASER;
-	if(m_aWeapons[WEAPON_HAMMER].m_Got)
-		pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_HAMMER;
-	if(m_aWeapons[WEAPON_GUN].m_Got)
-		pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_GUN;
-	if(m_aWeapons[WEAPON_SHOTGUN].m_Got)
-		pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_SHOTGUN;
-	if(m_aWeapons[WEAPON_GRENADE].m_Got)
-		pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_GRENADE;
+	// if(m_aWeapons[WEAPON_HAMMER].m_Got)
+	// 	pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_HAMMER;
+	// if(m_aWeapons[WEAPON_GUN].m_Got)
+	// 	pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_GUN;
+	// if(m_aWeapons[WEAPON_SHOTGUN].m_Got)
+	// 	pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_SHOTGUN;
+	// if(m_aWeapons[WEAPON_GRENADE].m_Got)
+	// 	pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_GRENADE;
 	if(m_aWeapons[WEAPON_LASER].m_Got)
 		pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_LASER;
 	if(m_Core.m_ActiveWeapon == WEAPON_NINJA)
-		pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_NINJA;
+		// pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_NINJA;
 	if(m_Core.m_LiveFrozen)
 	{
 		pDDNetCharacter->m_Flags |= CHARACTERFLAG_NO_MOVEMENTS;
