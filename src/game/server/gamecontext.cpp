@@ -810,6 +810,11 @@ void CGameContext::SwapTeams()
 	(void)m_pController->CheckTeamBalance();
 }
 
+void CGameContext::SetPlayer_LastAckedSnapshot(int ClientID, int tick)
+{
+	m_apPlayers[ClientID]->m_LastAckedSnapshot = tick;
+}
+
 void CGameContext::OnTick()
 {
 	// check tuning
@@ -1114,10 +1119,13 @@ void CGameContext::OnClientDirectInput(int ClientID, void *pInput)
 	}
 }
 
-void CGameContext::OnClientPredictedInput(int ClientID, void *pInput)
+void CGameContext::OnClientPredictedInput(int ClientID, void *pInput, int tick)
 {
-	if(!m_World.m_Paused)
-		m_apPlayers[ClientID]->OnPredictedInput((CNetObj_PlayerInput *)pInput);
+	if(m_World.m_Paused)
+		return;
+	
+	m_apPlayers[ClientID]->m_LastAckedSnapshot = tick;
+	m_apPlayers[ClientID]->OnPredictedInput((CNetObj_PlayerInput *)pInput);
 }
 
 void CGameContext::OnClientPredictedEarlyInput(int ClientID, void *pInput)
@@ -1923,6 +1931,18 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						m_VoteUpdate = true;
 						SendChat(ClientID, Team, pMsg->m_pMessage, ClientID);
 					}
+				}
+				else if(str_startswith(pMsg->m_pMessage + 1, "rollback") && !g_Config.m_SvSaveServer)
+				{
+					pPlayer->m_Rollback = !pPlayer->m_Rollback;
+					if(pPlayer->m_Rollback)
+						SendChatTarget(ClientID, "Rollback enabled");
+					
+					if(!pPlayer->m_Rollback)
+						SendChatTarget(ClientID, "Rollback disabled");
+					
+					if(!g_Config.m_SvRollback)
+						SendChatTarget(ClientID, "Rollback disabled by server vote");
 				}
 				else
 				{

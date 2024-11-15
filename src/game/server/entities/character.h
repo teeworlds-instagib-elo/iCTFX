@@ -26,6 +26,8 @@ class CCharacter : public CEntity
 	MACRO_ALLOC_POOL_ID()
 
 public:
+	#define POSITION_HISTORY 50
+	vec2 m_Positions[POSITION_HISTORY];
 	//character's size
 	static const int ms_PhysSize = 28;
 
@@ -60,8 +62,11 @@ public:
 	void AddSpree();
 	void EndSpree(int killer);
 
-	void Die(int Killer, int Weapon);
-	bool TakeDamage(vec2 Force, int Dmg, int From, int Weapon);
+	void Die(int Killer, int Weapon, int tick=-1);
+	int m_Killer, m_KillerWeapon, m_DeathTick = 0, m_KillTick;
+	vec2 m_DeathPos;
+	void Death();
+	bool TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int tick=-1);
 
 	bool Spawn(class CPlayer *pPlayer, vec2 Pos);
 	bool Remove();
@@ -84,9 +89,10 @@ public:
 	class CPlayer *GetPlayer() { return m_pPlayer; }
 	int64_t TeamMask();
 
-private:
 	// player controlling this character
 	class CPlayer *m_pPlayer;
+
+private:
 
 	bool m_Alive;
 	bool m_Paused;
@@ -146,8 +152,6 @@ private:
 		int m_OldVelAmount;
 	} m_Ninja;
 
-	// the player core for the physics
-	CCharacterCore m_Core;
 	CGameTeams *m_pTeams = nullptr;
 
 	std::map<int, std::vector<vec2>> *m_pTeleOuts = nullptr;
@@ -180,6 +184,9 @@ public:
 	CGameTeams *Teams() { return m_pTeams; }
 	void SetTeams(CGameTeams *pTeams);
 	void SetTeleports(std::map<int, std::vector<vec2>> *pTeleOuts, std::map<int, std::vector<vec2>> *pTeleCheckOuts);
+
+	// the player core for the physics
+	CCharacterCore m_Core;
 
 	void FillAntibot(CAntibotCharacterData *pData);
 	void Pause(bool Pause);

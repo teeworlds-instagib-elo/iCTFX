@@ -33,7 +33,6 @@ private:
 	void RemoveEntities();
 
 	CEntity *m_pNextTraverseEntity = nullptr;
-	CEntity *m_apFirstEntityTypes[NUM_ENTTYPES];
 
 	class CGameContext *m_pGameServer;
 	class CConfig *m_pConfig;
@@ -45,6 +44,8 @@ public:
 	class CGameContext *GameServer() { return m_pGameServer; }
 	class CConfig *Config() { return m_pConfig; }
 	class IServer *Server() { return m_pServer; }
+
+	CEntity *m_apFirstEntityTypes[NUM_ENTTYPES];
 
 	bool m_ResetRequested;
 	bool m_Paused;
@@ -89,7 +90,7 @@ public:
 			Returns a pointer to the closest hit or NULL of there is no intersection.
 	*/
 	//class CCharacter *IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, class CEntity *pNotThis = 0);
-	class CCharacter *IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, class CCharacter *pNotThis = 0, int CollideWith = -1, class CCharacter *pThisOnly = 0);
+	class CCharacter *IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, class CCharacter *pNotThis = 0, int CollideWith = -1, class CCharacter *pThisOnly = 0, int tick = -1);
 	/*
 		Function: ClosestCharacter
 			Finds the closest CCharacter to a specific point.

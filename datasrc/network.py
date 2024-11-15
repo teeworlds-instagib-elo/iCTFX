@@ -264,6 +264,19 @@ Objects = [
 		NetIntRange("m_Type", 0, 'NUM_WEAPONS-1'),
 		NetTick("m_StartTick"),
 	]),
+    
+	NetObjectEx("DDNetLaser", "laser@netobj.ddnet.tw", [
+		NetIntAny("m_ToX"),
+		NetIntAny("m_ToY"),
+		NetIntAny("m_FromX"),
+		NetIntAny("m_FromY"),
+		NetTick("m_StartTick"),
+		NetIntRange("m_Owner", -1, 'MAX_CLIENTS-1'),
+		NetIntAny("m_Type"),
+		NetIntAny("m_SwitchNumber"),
+		NetIntAny("m_Subtype"),
+		NetIntAny("m_Flags"),
+	]),
 
 	## Events
 

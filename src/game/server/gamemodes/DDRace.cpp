@@ -12,6 +12,8 @@
 #include <game/version.h>
 #include <game/server/entities/flag.h>
 
+#include <algorithm>
+
 #include <limits>
 
 #define GAME_TYPE_NAME "iCTFX"
@@ -184,6 +186,11 @@ int CGameControllerDDRace::OnCharacterDeath(class CCharacter *pVictim, class CPl
 			F->m_DropTick = Server()->Tick();
 			F->m_pCarryingCharacter = 0;
 			F->m_Vel = vec2(0,0);
+			F->m_Pos = pVictim->m_Pos;
+			for(int i = 0; i < POSITION_HISTORY; i++)
+			{
+				F->m_Positions[i] = F->m_Pos;
+			}
 			// pVictim->GetPlayer()->m_Stats.m_LostFlags++;
 
 			if(pKiller && pKiller->GetTeam() != pVictim->GetPlayer()->GetTeam())
@@ -353,6 +360,8 @@ void CGameControllerDDRace::Tick()
 				continue;
 			}
 
+			F->m_Positions[Server()->Tick() % POSITION_HISTORY] = F->m_Pos;
+
 			//
 			if(F->m_pCarryingCharacter)
 			{
@@ -416,7 +425,27 @@ void CGameControllerDDRace::Tick()
 			else
 			{
 				CCharacter *apCloseCCharacters[MAX_CLIENTS];
-				int Num = GameServer()->m_World.FindEntities(F->m_Pos, CFlag::ms_PhysSize, (CEntity**)apCloseCCharacters, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
+				int Num = 0;
+				for(CEntity *pEnt = GameServer()->m_World.m_apFirstEntityTypes[CGameWorld::ENTTYPE_CHARACTER]; pEnt; pEnt = pEnt->m_pNextTypeEntity)
+				{
+					vec2 Pos = F->m_Pos;
+					int tick = ((CCharacter*)pEnt)->m_pPlayer->m_LastAckedSnapshot % POSITION_HISTORY;
+					if(tick > 0 && ((CCharacter*)pEnt)->m_pPlayer->m_Rollback && g_Config.m_SvRollback)
+						Pos = F->m_Positions[tick];
+					
+					if(distance(pEnt->m_Pos, Pos) < CFlag::ms_PhysSize + pEnt->m_ProximityRadius)
+					{
+						if(apCloseCCharacters)
+							apCloseCCharacters[Num] = (CCharacter * )pEnt;
+						Num++;
+						if(Num == MAX_CLIENTS)
+							break;
+					}
+				}
+
+				if(false)
+					int Num = GameServer()->m_World.FindEntities(F->m_Pos, CFlag::ms_PhysSize, (CEntity**)apCloseCCharacters, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
+				
 				for(int i = 0; i < Num; i++)
 				{
 					if(!apCloseCCharacters[i]->IsAlive() || apCloseCCharacters[i]->GetPlayer()->GetTeam() == TEAM_SPECTATORS || GameServer()->Collision()->IntersectLine(F->m_Pos, apCloseCCharacters[i]->m_Pos, NULL, NULL))

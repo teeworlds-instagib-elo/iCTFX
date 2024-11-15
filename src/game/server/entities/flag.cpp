@@ -22,6 +22,8 @@ void CFlag::Reset()
 	m_Pos = m_StandPos;
 	m_Vel = vec2(0,0);
 	m_GrabTick = 0;
+	for(int i = 0; i < 50; i++)
+		m_Positions[i] = m_Pos;
 }
 
 void CFlag::TickPaused()

@@ -279,6 +279,7 @@ public:
 	virtual void OnPostSnap() = 0;
 
 	virtual void OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID) = 0;
+	virtual void SetPlayer_LastAckedSnapshot(int ClientID, int tick) = 0;
 
 	// Called before map reload, for any data that the game wants to
 	// persist to the next map.
@@ -299,7 +300,7 @@ public:
 	virtual void OnClientEnter(int ClientID) = 0;
 	virtual void OnClientDrop(int ClientID, const char *pReason) = 0;
 	virtual void OnClientDirectInput(int ClientID, void *pInput) = 0;
-	virtual void OnClientPredictedInput(int ClientID, void *pInput) = 0;
+	virtual void OnClientPredictedInput(int ClientID, void *pInput, int tick) = 0;
 	virtual void OnClientPredictedEarlyInput(int ClientID, void *pInput) = 0;
 
 	virtual bool IsClientReady(int ClientID) const = 0;

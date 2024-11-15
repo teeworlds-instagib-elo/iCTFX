@@ -40,6 +40,7 @@ void CCharacter::Reset()
 
 bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 {
+	m_DeathTick = -1;
 	m_EmoteStop = -1;
 	m_LastAction = -1;
 	m_LastNoAmmoSound = -1;
@@ -56,6 +57,11 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_pPlayer = pPlayer;
 	m_Pos = Pos;
 
+	for(int i = 0; i < POSITION_HISTORY; i++)
+	{
+		m_Positions[i] = Pos;
+	}
+
 	mem_zero(&m_LatestPrevPrevInput, sizeof(m_LatestPrevPrevInput));
 	m_LatestPrevPrevInput.m_TargetY = -1;
 	m_NumInputs = 0;
@@ -71,7 +77,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	SetWeaponGot(WEAPON_LASER, false);
 
 	m_Core.Reset();
-	m_Core.Init(&GameServer()->m_World.m_Core, GameServer()->Collision());
+	m_Core.Init(&GameServer()->m_World.m_Core, GameServer()->Collision(), nullptr, nullptr, this);
 	m_Core.m_ActiveWeapon = WEAPON_LASER;
 	m_Core.m_Pos = m_Pos;
 	GameServer()->m_World.m_Core.m_apCharacters[m_pPlayer->GetCID()] = &m_Core;
@@ -709,6 +715,8 @@ void CCharacter::Tick()
 		m_pPlayer->m_ForceBalanced = false;
 	}*/
 
+	
+
 	if(m_Paused)
 		return;
 
@@ -718,6 +726,9 @@ void CCharacter::Tick()
 		m_EmoteType = m_pPlayer->GetDefaultEmote();
 		m_EmoteStop = -1;
 	}
+
+	if(m_DeathTick != -1 && m_DeathTick < Server()->Tick())
+		Death();
 
 	DDRaceTick();
 
@@ -767,12 +778,17 @@ void CCharacter::TickDefered()
 	vec2 StartVel = m_Core.m_Vel;
 	bool StuckBefore = GameServer()->Collision()->TestBox(m_Core.m_Pos, vec2(28.0f, 28.0f));
 
+	int position_index = Server()->Tick() % POSITION_HISTORY;
+	m_Positions[position_index] = m_Pos;
+	
 	m_Core.m_Id = m_pPlayer->GetCID();
 	m_Core.Move();
 	bool StuckAfterMove = GameServer()->Collision()->TestBox(m_Core.m_Pos, vec2(28.0f, 28.0f));
 	m_Core.Quantize();
 	bool StuckAfterQuant = GameServer()->Collision()->TestBox(m_Core.m_Pos, vec2(28.0f, 28.0f));
 	m_Pos = m_Core.m_Pos;
+
+	
 
 	if(!StuckBefore && (StuckAfterMove || StuckAfterQuant))
 	{
@@ -880,8 +896,62 @@ bool CCharacter::IncreaseArmor(int Amount)
 	return true;
 }
 
-void CCharacter::Die(int Killer, int Weapon)
+void CCharacter::Die(int Killer, int Weapon, int tick)
 {
+	m_DeathTick = Server()->Tick() + (m_pPlayer->m_Latency.m_Avg * Server()->TickSpeed())/1000;
+	
+	m_KillTick = tick;
+	m_Killer = Killer;
+	m_KillerWeapon = Weapon;
+	m_DeathPos = m_Pos;
+	if(m_Killer > 0)
+	{
+		m_DeathPos = m_Positions[(GameServer()->m_apPlayers[m_Killer]->m_LastAckedSnapshot-1) % POSITION_HISTORY];
+	}
+
+	if(m_Killer >= 0 && m_Killer != m_pPlayer->GetCID() && GameServer()->m_apPlayers[m_Killer])
+	{
+		int Mask = CmaskOne(m_Killer);
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetTeam() == TEAM_SPECTATORS && GameServer()->m_apPlayers[i]->m_SpectatorID == m_Killer)
+				Mask |= CmaskOne(i);
+		}
+		GameServer()->CreateSound(GameServer()->m_apPlayers[m_Killer]->m_ViewPos, SOUND_HIT, Mask);
+	}
+	if(m_Killer < 0 || m_Core.m_Id == Killer || (m_pPlayer && !m_pPlayer->m_Rollback) || !g_Config.m_SvRollback)
+		Death();
+}
+
+void CCharacter::Death()
+{
+	m_DeathTick = -1;
+	m_Pos = m_DeathPos;
+
+	// if(m_Killer >= 0 && (GameServer()->m_apPlayers[m_Killer]->m_lastDeath < m_KillTick && !GameServer()->GetPlayerChar(m_Killer)))
+	if(m_Killer >= 0 && !GameServer()->m_apPlayers[m_Killer]->GetCharacter())
+	{
+		return;	//death canceled
+	}
+
+	// set attacker's face to happy (taunt!)
+	if (m_Killer >= 0 && m_Killer != m_pPlayer->GetCID() && GameServer()->m_apPlayers[m_Killer])
+	{
+		CCharacter *pChr = GameServer()->m_apPlayers[m_Killer]->GetCharacter();
+		if (pChr)
+		{
+			pChr->m_EmoteType = EMOTE_HAPPY;
+			pChr->m_EmoteStop = Server()->Tick() + Server()->TickSpeed();
+		}
+	}
+
+	m_Core.m_Pos = m_DeathPos;
+	m_pPlayer->m_lastDeath = Server()->Tick();
+	if(m_Killer >= 0)
+		m_pPlayer->m_lastDeath = GameServer()->m_apPlayers[m_Killer]->m_LastAckedSnapshot;
+	int Killer = m_Killer;
+	int Weapon = m_KillerWeapon;
+
 	if(Server()->IsRecording(m_pPlayer->GetCID()))
 		Server()->StopRecord(m_pPlayer->GetCID());
 
@@ -921,7 +991,7 @@ void CCharacter::Die(int Killer, int Weapon)
 	Teams()->OnCharacterDeath(GetPlayer()->GetCID(), Weapon);
 }
 
-bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
+bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int tick)
 {
 	/*m_Core.m_Vel += Force;
 
@@ -1020,16 +1090,6 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 	
 
 	// do damage Hit sound
-	if(From >= 0 && From != m_pPlayer->GetCID() && GameServer()->m_apPlayers[From])
-	{
-		int Mask = CmaskOne(From);
-		for(int i = 0; i < MAX_CLIENTS; i++)
-		{
-			if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetTeam() == TEAM_SPECTATORS && GameServer()->m_apPlayers[i]->m_SpectatorID == From)
-				Mask |= CmaskOne(i);
-		}
-		GameServer()->CreateSound(GameServer()->m_apPlayers[From]->m_ViewPos, SOUND_HIT, Mask);
-	}
 
 
 	vec2 Temp = m_Core.m_Vel + Force;
@@ -1038,18 +1098,7 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon)
 	// check for death
 	if(m_Health <= 0)
 	{
-		Die(From, Weapon);
-
-		// set attacker's face to happy (taunt!)
-		if (From >= 0 && From != m_pPlayer->GetCID() && GameServer()->m_apPlayers[From])
-		{
-			CCharacter *pChr = GameServer()->m_apPlayers[From]->GetCharacter();
-			if (pChr)
-			{
-				pChr->m_EmoteType = EMOTE_HAPPY;
-				pChr->m_EmoteStop = Server()->Tick() + Server()->TickSpeed();
-			}
-		}
+		Die(From, Weapon, tick);
 
 		return false;
 	}
@@ -1145,6 +1194,14 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 			return;
 
 		pCore->Write(pCharacter);
+
+		if(SnappingClient == m_Killer && m_DeathTick != -1)
+		{
+			pCharacter->m_X = m_DeathPos.x;
+			pCharacter->m_X = m_DeathPos.x;
+			pCharacter->m_VelX = 0;
+			pCharacter->m_VelY = 0;
+		}
 
 		pCharacter->m_Tick = Tick;
 		pCharacter->m_Emote = Emote;
