@@ -25,6 +25,7 @@ CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEner
 	m_Type = Type;
 	m_TeleportCancelled = false;
 	m_IsBlueTeleport = false;
+	m_StartTick = Server()->Tick();
 
 	m_NextPos = m_Pos;
 
@@ -64,12 +65,16 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 	CCharacter *pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
 	CCharacter *pHit;
 	bool pDontHitSelf = g_Config.m_SvOldLaser || (m_Bounces == 0 && !m_WasTele);
-	
+
+	int tick = -1;
+
+	if(GameServer()->m_apPlayers[m_Owner]->m_Rollback && g_Config.m_SvRollback)
+		tick = GameServer()->m_apPlayers[m_Owner]->m_LastAckedSnapshot;
 
 	if(pOwnerChar ? (!(pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_LASER) && m_Type == WEAPON_LASER) || (!(pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_SHOTGUN) && m_Type == WEAPON_SHOTGUN) : g_Config.m_SvHit)
-		pHit = GameServer()->m_World.IntersectCharacter(m_Pos, To, 0.f, At, pOwnerChar, m_Owner);
+		pHit = GameServer()->m_World.IntersectCharacter(m_Pos, To, 0.f, At, pOwnerChar, m_Owner, nullptr, tick);
 	else
-		pHit = GameServer()->m_World.IntersectCharacter(m_Pos, To, 0.f, At, pOwnerChar, m_Owner, pOwnerChar);
+		pHit = GameServer()->m_World.IntersectCharacter(m_Pos, To, 0.f, At, pOwnerChar, m_Owner, pOwnerChar, tick);
 
 	if(!pHit || (pHit == pOwnerChar && g_Config.m_SvOldLaser) || (pHit != pOwnerChar && pOwnerChar ? (pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_LASER && m_Type == WEAPON_LASER) || (pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_SHOTGUN && m_Type == WEAPON_SHOTGUN) : !g_Config.m_SvHit))
 		return false;
@@ -78,7 +83,7 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 	m_Pos = At;
 	m_Energy = -1;
 	m_DidHit = true;
-	pHit->TakeDamage(vec2(0.f, 0.f), GameServer()->Tuning()->m_LaserDamage, m_Owner, WEAPON_LASER);
+	pHit->TakeDamage(vec2(0.f, 0.f), GameServer()->Tuning()->m_LaserDamage, m_Owner, WEAPON_LASER, m_StartTick);
 	return true;
 }
 
@@ -179,17 +184,36 @@ void CLaser::Snap(int SnappingClient)
 	// if(!OwnerChar)
 	// 	return;
 
-	// CCharacter *pOwnerChar = 0;
+	CCharacter *pOwnerChar = 0;
 	// int64_t TeamMask = -1LL;
 
-	// if(m_Owner >= 0)
-	// 	pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
+	//skip sending lasers when local prediction already shows it
+	// if(m_Owner >= 0 && GameServer()->m_apPlayers[SnappingClient]->m_Latency.m_Avg > 80 && m_Owner == SnappingClient && m_Bounces == 0)
+	// 	return;
+
+	
 
 	// //if(pOwnerChar && pOwnerChar->IsAlive())
 	// TeamMask = pOwnerChar->Teams()->TeamMask(pOwnerChar->Team(), -1, m_Owner);
 
 	// if(SnappingClient != SERVER_DEMO_CLIENT && !CmaskIsSet(TeamMask, SnappingClient))
 	// 	return;
+
+	// CNetObj_DDNetLaser *pObj = static_cast<CNetObj_DDNetLaser *>(Server()->SnapNewItem(NETOBJTYPE_DDNETLASER, GetID(), sizeof(CNetObj_DDNetLaser)));
+	// if(!pObj)
+	// 	return;
+
+	// pObj->m_ToX = (int)m_Pos.x;
+	// pObj->m_ToY = (int)m_Pos.y;
+	// pObj->m_FromX = (int)m_From.x;
+	// pObj->m_FromY = (int)m_From.y;
+	// pObj->m_StartTick = m_EvalTick;
+	// pObj->m_Owner = m_Owner;
+	// pObj->m_Type = 0;
+	// pObj->m_Subtype = 0;
+	// pObj->m_SwitchNumber = m_Number;
+	// pObj->m_Flags = 0;
+
 	CNetObj_Laser *pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(NETOBJTYPE_LASER, GetID(), sizeof(CNetObj_Laser)));
 	if(!pObj)
 		return;

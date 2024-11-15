@@ -20,7 +20,6 @@ class CEntity
 private:
 	friend class CGameWorld; // entity list handling
 	CEntity *m_pPrevTypeEntity;
-	CEntity *m_pNextTypeEntity;
 
 	/* Identity */
 	class CGameWorld *m_pGameWorld;
@@ -43,6 +42,7 @@ public: // TODO: Maybe make protected
 		Variable: m_Pos
 			Contains the current posititon of the entity.
 	*/
+	CEntity *m_pNextTypeEntity;
 	vec2 m_Pos;
 	vec2 m_NextPos;
 	float m_ProximityRadius;

@@ -3,6 +3,8 @@
 #include "gamecore.h"
 
 #include <engine/shared/config.h>
+#include <game/server/entities/character.h>
+#include <game/server/player.h>
 
 const char *CTuningParams::ms_apNames[] =
 	{
@@ -56,7 +58,7 @@ float VelocityRamp(float Value, float Start, float Range, float Curvature)
 	return 1.0f / powf(Curvature, (Value - Start) / Range);
 }
 
-void CCharacterCore::Init(CWorldCore *pWorld, CCollision *pCollision, CTeamsCore *pTeams, std::map<int, std::vector<vec2>> *pTeleOuts)
+void CCharacterCore::Init(CWorldCore *pWorld, CCollision *pCollision, CTeamsCore *pTeams, std::map<int, std::vector<vec2>> *pTeleOuts, CCharacter * character)
 {
 	m_pWorld = pWorld;
 	m_pCollision = pCollision;
@@ -64,6 +66,7 @@ void CCharacterCore::Init(CWorldCore *pWorld, CCollision *pCollision, CTeamsCore
 
 	m_pTeams = pTeams;
 	m_Id = -1;
+	m_pCharacter = character;
 
 	// fail safe, if core's tuning didn't get updated at all, just fallback to world tuning.
 	m_Tuning = m_pWorld->m_Tuning[g_Config.m_ClDummy];
@@ -110,6 +113,8 @@ void CCharacterCore::Reset()
 	m_Input.m_TargetX = 0;
 	m_Input.m_TargetY = -1;
 }
+
+#include <stdio.h>
 
 void CCharacterCore::Tick(bool UseInput)
 {
@@ -267,17 +272,26 @@ void CCharacterCore::Tick(bool UseInput)
 				if(!pCharCore || pCharCore == this || (!(m_Super || pCharCore->m_Super) && ((m_Id != -1 && !m_pTeams->CanCollide(i, m_Id)) || pCharCore->m_Solo || m_Solo)))
 					continue;
 
-				vec2 ClosestPoint;
-				if(closest_point_on_line(m_HookPos, NewPos, pCharCore->m_Pos, ClosestPoint))
+				vec2 pos = pCharCore->m_Pos;
+
+				if(m_pCharacter && m_pCharacter->GameServer()->m_apPlayers[m_Id]->m_Rollback && g_Config.m_SvRollback)
 				{
-					if(distance(pCharCore->m_Pos, ClosestPoint) < PhysSize + 2.0f)
+					int tick = m_pCharacter->GameServer()->m_apPlayers[m_Id]->m_LastAckedSnapshot;
+					tick = tick % POSITION_HISTORY;
+					pos = pCharCore->m_pCharacter->m_Positions[tick];
+				} 
+
+				vec2 ClosestPoint;
+				if(closest_point_on_line(m_HookPos, NewPos, pos, ClosestPoint))
+				{
+					if(distance(pos, ClosestPoint) < PhysSize + 2.0f)
 					{
-						if(m_HookedPlayer == -1 || distance(m_HookPos, pCharCore->m_Pos) < Distance)
+						if(m_HookedPlayer == -1 || distance(m_HookPos, pos) < Distance)
 						{
 							m_TriggeredEvents |= COREEVENT_HOOK_ATTACH_PLAYER;
 							m_HookState = HOOK_GRABBED;
 							m_HookedPlayer = i;
-							Distance = distance(m_HookPos, pCharCore->m_Pos);
+							Distance = distance(m_HookPos, pos);
 						}
 					}
 				}
@@ -394,6 +408,9 @@ void CCharacterCore::Tick(bool UseInput)
 
 				bool CanCollide = (m_Super || pCharCore->m_Super) || (pCharCore->m_Collision && m_Collision && !m_NoCollision && !pCharCore->m_NoCollision && m_Tuning.m_PlayerCollision);
 
+				if(pCharCore->m_pCharacter->m_DeathTick > 0)
+					CanCollide = false;
+
 				if(CanCollide && Distance < PhysSize * 1.25f && Distance > 0.0f)
 				{
 					float a = (PhysSize * 1.45f - Distance);
@@ -483,6 +500,8 @@ void CCharacterCore::Move()
 					if(!pCharCore || pCharCore == this)
 						continue;
 					if((!(pCharCore->m_Super || m_Super) && (m_Solo || pCharCore->m_Solo || !pCharCore->m_Collision || pCharCore->m_NoCollision || (m_Id != -1 && !m_pTeams->CanCollide(m_Id, p)))))
+						continue;
+					if(pCharCore->m_pCharacter->m_DeathTick > 0)
 						continue;
 					float D = distance(Pos, pCharCore->m_Pos);
 					if(D < 28.0f && D >= 0.0f)

@@ -209,6 +209,8 @@ class CCharacterCore
 	CCollision *m_pCollision;
 	std::map<int, std::vector<vec2>> *m_pTeleOuts;
 
+	class CCharacter * m_pCharacter;
+
 public:
 	vec2 m_Pos;
 	vec2 m_Vel;
@@ -235,7 +237,7 @@ public:
 
 	int m_TriggeredEvents;
 
-	void Init(CWorldCore *pWorld, CCollision *pCollision, CTeamsCore *pTeams = nullptr, std::map<int, std::vector<vec2>> *pTeleOuts = nullptr);
+	void Init(CWorldCore *pWorld, CCollision *pCollision, CTeamsCore *pTeams = nullptr, std::map<int, std::vector<vec2>> *pTeleOuts = nullptr, CCharacter * character = nullptr);
 	void Reset();
 	void Tick(bool UseInput);
 	void Move();

@@ -241,6 +241,8 @@ public:
 	//
 	void LoadMapSettings();
 
+	virtual void SetPlayer_LastAckedSnapshot(int ClientID, int tick);
+
 	// engine events
 	virtual void OnInit();
 	virtual void OnConsoleInit();
@@ -261,7 +263,7 @@ public:
 	virtual void OnClientEnter(int ClientID);
 	virtual void OnClientDrop(int ClientID, const char *pReason);
 	virtual void OnClientDirectInput(int ClientID, void *pInput);
-	virtual void OnClientPredictedInput(int ClientID, void *pInput);
+	virtual void OnClientPredictedInput(int ClientID, void *pInput, int tick);
 	virtual void OnClientPredictedEarlyInput(int ClientID, void *pInput);
 
 	virtual void OnClientEngineJoin(int ClientID, bool Sixup);

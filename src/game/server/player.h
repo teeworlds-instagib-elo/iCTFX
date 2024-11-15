@@ -69,11 +69,13 @@ public:
 
 	// used for snapping to just update latency if the scoreboard is active
 	int m_aCurLatency[MAX_CLIENTS];
+	int m_LastAckedSnapshot;
 
 	// used for spectator mode
 	int m_SpectatorID;
 
 	bool m_IsReady;
+	int m_lastDeath;
 
 	//
 	int m_Vote;
@@ -93,6 +95,8 @@ public:
 	int m_LastInvited;
 	int m_RespawnTick;
 	int m_Spree;
+
+	bool m_Rollback;
 
 	int m_SendVoteIndex;
 

@@ -1515,7 +1515,9 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 			CClient::CInput *pInput;
 			int64_t TagTime;
 
-			m_aClients[ClientID].m_LastAckedSnapshot = Unpacker.GetInt();
+			int Acked = Unpacker.GetInt();
+			m_aClients[ClientID].m_LastAckedSnapshot = Acked;
+			// GameServer()->
 			int IntendedTick = Unpacker.GetInt();
 			int Size = Unpacker.GetInt();
 
@@ -1525,6 +1527,9 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 
 			if(m_aClients[ClientID].m_LastAckedSnapshot > 0)
 				m_aClients[ClientID].m_SnapRate = CClient::SNAPRATE_FULL;
+			
+			// GameServer()->SetPlayer_LastAckedSnapshot(ClientID, m_aClients[ClientID].m_LastAckedSnapshot);
+			
 
 			if(m_aClients[ClientID].m_Snapshots.Get(m_aClients[ClientID].m_LastAckedSnapshot, &TagTime, 0, 0) >= 0)
 				m_aClients[ClientID].m_Latency = (int)(((time_get() - TagTime) * 1000) / time_freq());
@@ -1549,6 +1554,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 				IntendedTick = Tick() + 1;
 
 			pInput->m_GameTick = IntendedTick;
+			pInput->m_AckedTick = Acked;
 
 			for(int i = 0; i < Size / 4; i++)
 				pInput->m_aData[i] = Unpacker.GetInt();
@@ -2630,7 +2636,7 @@ int CServer::Run()
 					{
 						if(Input.m_GameTick == Tick())
 						{
-							GameServer()->OnClientPredictedInput(c, Input.m_aData);
+							GameServer()->OnClientPredictedInput(c, Input.m_aData, Input.m_AckedTick);
 							break;
 						}
 					}

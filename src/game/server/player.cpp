@@ -52,6 +52,8 @@ void CPlayer::Reset()
 	}
 	pIdMap[0] = m_ClientID;
 
+	m_Rollback = false;
+
 	// DDRace
 
 	m_LastCommandPos = 0;

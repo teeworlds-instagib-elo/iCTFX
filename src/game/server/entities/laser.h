@@ -41,6 +41,7 @@ private:
 	int m_TuneZone;
 	bool m_TeleportCancelled;
 	bool m_IsBlueTeleport;
+	int m_StartTick;
 	bool m_BelongsToPracticeTeam;
 };
 
