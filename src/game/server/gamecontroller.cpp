@@ -1046,7 +1046,7 @@ void IGameController::DoTeamChange(CPlayer *pPlayer, int Team, bool DoChatMsg)
 	int ClientID = pPlayer->GetCID();
 
 	char aBuf[128];
-	DoChatMsg = false;
+	// DoChatMsg = false;
 	if(DoChatMsg)
 	{
 		str_format(aBuf, sizeof(aBuf), "'%s' joined the %s", Server()->ClientName(ClientID), GameServer()->m_pController->GetTeamName(Team));
