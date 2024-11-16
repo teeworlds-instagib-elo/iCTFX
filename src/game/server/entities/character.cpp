@@ -925,7 +925,7 @@ void CCharacter::Die(int Killer, int Weapon, int tick)
 		}
 		GameServer()->CreateSound(GameServer()->m_apPlayers[m_Killer]->m_ViewPos, SOUND_HIT, Mask);
 	}
-	if(m_Killer < 0 || m_Core.m_Id == Killer || (m_pPlayer && !m_pPlayer->m_Rollback) || !g_Config.m_SvRollback)
+	if(m_Killer < 0 || m_Core.m_Id == Killer || !m_pPlayer || !m_pPlayer->m_Rollback || !g_Config.m_SvRollback)
 		Death();
 }
 
@@ -937,7 +937,7 @@ void CCharacter::Death()
 		m_Pos = m_DeathPos;
 
 	// if(m_Killer >= 0 && (GameServer()->m_apPlayers[m_Killer]->m_lastDeath < m_KillTick && !GameServer()->GetPlayerChar(m_Killer)))
-	if(m_Killer >= 0 && !GameServer()->m_apPlayers[m_Killer]->GetCharacter())
+	if(m_Killer >= 0 && !GameServer()->m_apPlayers[m_Killer]->GetCharacter() && (m_pPlayer && m_pPlayer->m_Rollback) && g_Config.m_SvRollback)
 	{
 		return;	//death canceled
 	}
