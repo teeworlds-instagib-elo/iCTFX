@@ -213,7 +213,6 @@ int CGameControllerDDRace::OnCharacterDeath(class CCharacter *pVictim, class CPl
 #include <string>
 using namespace std;
 
-bool teamP;
 void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 {
 	IGameController::OnPlayerConnect(pPlayer);
