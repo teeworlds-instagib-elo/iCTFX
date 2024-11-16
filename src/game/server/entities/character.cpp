@@ -1262,6 +1262,9 @@ bool CCharacter::CanSnapCharacter(int SnappingClient)
 {
 	if(SnappingClient == SERVER_DEMO_CLIENT)
 		return true;
+	
+	if(!g_Config.m_SvAntiZoom)
+		return true;
 
 	CCharacter *pSnapChar = GameServer()->GetPlayerChar(SnappingClient);
 	CPlayer *pSnapPlayer = GameServer()->m_apPlayers[SnappingClient];
@@ -1286,7 +1289,7 @@ void CCharacter::Snap(int SnappingClient)
 	if(!Server()->Translate(ID, SnappingClient))
 		return;
 
-	if(NetworkClipped(SnappingClient) || !CanSnapCharacter(SnappingClient))
+	if((NetworkClipped(SnappingClient) || !CanSnapCharacter(SnappingClient)) && g_Config.m_SvAntiZoom)
 		return;
 
 	SnapCharacter(SnappingClient, ID);
