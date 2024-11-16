@@ -174,7 +174,7 @@ void CLaser::TickPaused()
 
 void CLaser::Snap(int SnappingClient)
 {
-	if(NetworkClipped(SnappingClient) && NetworkClipped(SnappingClient, m_From))
+	if(NetworkClipped(SnappingClient) && NetworkClipped(SnappingClient, m_From) && g_Config.m_SvAntiZoom)
 		return;
 
 		//todo probably reactivate this for ddrace teams support
