@@ -460,7 +460,9 @@ void IGameController::ResetGame()
 const char *IGameController::GetTeamName(int Team)
 {
 	if(Team == 0)
-		return "game";
+		return "red team";
+	if(Team == 1)
+		return "blue team";
 	return "spectators";
 }
 
