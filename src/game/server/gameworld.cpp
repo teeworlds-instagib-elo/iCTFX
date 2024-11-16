@@ -327,8 +327,6 @@ CCharacter *CGameWorld::IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, v
 	float ClosestLen = distance(Pos0, Pos1) * 100.0f;
 	CCharacter *pClosest = 0;
 
-	// printf("tick %i\n", tick);
-
 	CCharacter *p = (CCharacter *)FindFirst(ENTTYPE_CHARACTER);
 	for(; p; p = (CCharacter *)p->TypeNext())
 	{
