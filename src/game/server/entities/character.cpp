@@ -715,8 +715,6 @@ void CCharacter::Tick()
 		m_pPlayer->m_ForceBalanced = false;
 	}*/
 
-	
-
 	if(m_Paused)
 		return;
 
@@ -778,8 +776,6 @@ void CCharacter::TickDefered()
 	vec2 StartVel = m_Core.m_Vel;
 	bool StuckBefore = GameServer()->Collision()->TestBox(m_Core.m_Pos, vec2(28.0f, 28.0f));
 
-	
-
 	m_Core.m_Id = m_pPlayer->GetCID();
 	m_Core.Move();
 	bool StuckAfterMove = GameServer()->Collision()->TestBox(m_Core.m_Pos, vec2(28.0f, 28.0f));
@@ -793,8 +789,6 @@ void CCharacter::TickDefered()
 	{
 		m_pPlayer->m_LastAckedSnapshot++;
 	}
-
-	
 
 	if(!StuckBefore && (StuckAfterMove || StuckAfterQuant))
 	{
@@ -936,7 +930,6 @@ void CCharacter::Death()
 	if(m_pPlayer && m_pPlayer->m_Rollback && g_Config.m_SvRollback)
 		m_Pos = m_DeathPos;
 
-	// if(m_Killer >= 0 && (GameServer()->m_apPlayers[m_Killer]->m_lastDeath < m_KillTick && !GameServer()->GetPlayerChar(m_Killer)))
 	if(m_Killer >= 0 && !GameServer()->m_apPlayers[m_Killer]->GetCharacter() && (m_pPlayer && m_pPlayer->m_Rollback) && g_Config.m_SvRollback)
 	{
 		return;	//death canceled
@@ -954,9 +947,6 @@ void CCharacter::Death()
 	}
 
 	m_Core.m_Pos = m_DeathPos;
-	m_pPlayer->m_lastDeath = Server()->Tick();
-	if(m_Killer >= 0)
-		m_pPlayer->m_lastDeath = GameServer()->m_apPlayers[m_Killer]->m_LastAckedSnapshot;
 	int Killer = m_Killer;
 	int Weapon = m_KillerWeapon;
 
