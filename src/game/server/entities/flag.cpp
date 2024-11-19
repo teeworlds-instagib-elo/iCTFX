@@ -3,6 +3,7 @@
 
 #include "flag.h"
 #include <game/server/gamecontext.h>
+#include <game/server/entities/character.h>
 
 CFlag::CFlag(CGameWorld *pGameWorld, int Team)
 : CEntity(pGameWorld, CGameWorld::ENTTYPE_FLAG)
@@ -22,7 +23,7 @@ void CFlag::Reset()
 	m_Pos = m_StandPos;
 	m_Vel = vec2(0,0);
 	m_GrabTick = 0;
-	for(int i = 0; i < 50; i++)
+	for(int i = 0; i < POSITION_HISTORY; i++)
 		m_Positions[i] = m_Pos;
 }
 

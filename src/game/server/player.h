@@ -75,7 +75,6 @@ public:
 	int m_SpectatorID;
 
 	bool m_IsReady;
-	int m_lastDeath;
 
 	//
 	int m_Vote;

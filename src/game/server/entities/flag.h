@@ -5,6 +5,7 @@
 #define GAME_SERVER_ENTITIES_FLAG_H
 
 #include <game/server/entity.h>
+#include <game/server/entities/character.h>
 
 class CFlag : public CEntity
 {
@@ -14,7 +15,7 @@ public:
 	vec2 m_Vel;
 	vec2 m_StandPos;
 
-	vec2 m_Positions[50];
+	vec2 m_Positions[POSITION_HISTORY];
 
 	int m_Team;
 	int m_AtStand;

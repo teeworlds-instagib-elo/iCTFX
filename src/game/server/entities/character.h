@@ -21,12 +21,13 @@ enum
 	FAKETUNE_NOHAMMER = 64,
 };
 
+#define POSITION_HISTORY 50
+
 class CCharacter : public CEntity
 {
 	MACRO_ALLOC_POOL_ID()
 
 public:
-	#define POSITION_HISTORY 50
 	vec2 m_Positions[POSITION_HISTORY];
 	//character's size
 	static const int ms_PhysSize = 28;
