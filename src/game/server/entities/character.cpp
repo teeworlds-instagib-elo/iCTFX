@@ -930,9 +930,26 @@ void CCharacter::Death()
 	if(m_pPlayer && m_pPlayer->m_Rollback && g_Config.m_SvRollback)
 		m_Pos = m_DeathPos;
 
-	if(m_Killer >= 0 && !GameServer()->m_apPlayers[m_Killer]->GetCharacter() && (m_pPlayer && m_pPlayer->m_Rollback) && g_Config.m_SvRollback)
+	// if(m_Killer >= 0 && !GameServer()->m_apPlayers[m_Killer]->GetCharacter() && (m_pPlayer && m_pPlayer->m_Rollback) && g_Config.m_SvRollback)
+	// {
+	// 	return;	//death canceled
+	// }
+
+	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
-		return;	//death canceled
+		if(!GameServer()->m_apPlayers[i])
+			continue;
+		
+		CCharacter * pChar = GameServer()->m_apPlayers[i]->GetCharacter();
+
+		if(!pChar)
+			continue;
+		
+		if(pChar->m_Killer == m_Core.m_Id && pChar->m_DeathTick != -1 && m_Killer == i)
+		{
+			//cancel death since killer has been killed
+			pChar->m_DeathTick = -1;
+		}
 	}
 
 	// set attacker's face to happy (taunt!)
@@ -946,7 +963,9 @@ void CCharacter::Death()
 		}
 	}
 
-	m_Core.m_Pos = m_DeathPos;
+	if(m_pPlayer && m_pPlayer->m_Rollback && g_Config.m_SvRollback)
+		m_Core.m_Pos = m_DeathPos;
+	
 	int Killer = m_Killer;
 	int Weapon = m_KillerWeapon;
 
