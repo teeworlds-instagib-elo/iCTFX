@@ -725,7 +725,7 @@ void CCharacter::Tick()
 		m_EmoteStop = -1;
 	}
 
-	if(m_DeathTick != -1 && m_DeathTick < Server()->Tick())
+	if(m_DeathTick != -1 && m_DeathTick <= m_pPlayer->m_LastAckedSnapshot)
 		Death();
 
 	DDRaceTick();
@@ -898,7 +898,7 @@ bool CCharacter::IncreaseArmor(int Amount)
 
 void CCharacter::Die(int Killer, int Weapon, int tick)
 {
-	m_DeathTick = Server()->Tick() + (m_pPlayer->m_Latency.m_Avg * Server()->TickSpeed())/1000;
+	m_DeathTick = Server()->Tick();
 	
 	m_KillTick = tick;
 	m_Killer = Killer;
