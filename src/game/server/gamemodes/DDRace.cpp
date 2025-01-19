@@ -432,7 +432,7 @@ void CGameControllerDDRace::Tick()
 					if(tick > 0 && ((CCharacter*)pEnt)->m_pPlayer->m_Rollback && g_Config.m_SvRollback)
 						Pos = F->m_Positions[tick];
 					
-					if(distance(pEnt->m_Pos, Pos) < CFlag::ms_PhysSize + pEnt->m_ProximityRadius)
+					if(distance(pEnt->m_Pos, Pos) < CFlag::ms_PhysSize + pEnt->m_ProximityRadius && ((CCharacter*)pEnt)->m_DeathTick == -1)
 					{
 						if(apCloseCCharacters)
 							apCloseCCharacters[Num] = (CCharacter * )pEnt;
