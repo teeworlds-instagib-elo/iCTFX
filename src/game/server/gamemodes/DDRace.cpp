@@ -362,7 +362,7 @@ void CGameControllerDDRace::Tick()
 			F->m_Positions[Server()->Tick() % POSITION_HISTORY] = F->m_Pos;
 
 			//
-			if(F->m_pCarryingCharacter)
+			if(F->m_pCarryingCharacter && F->m_pCarryingCharacter->m_DeathTick == -1)
 			{
 				// update flag position
 				F->m_Pos = F->m_pCarryingCharacter->m_Pos;
@@ -432,7 +432,7 @@ void CGameControllerDDRace::Tick()
 					if(tick > 0 && ((CCharacter*)pEnt)->m_pPlayer->m_Rollback && g_Config.m_SvRollback)
 						Pos = F->m_Positions[tick];
 					
-					if(distance(pEnt->m_Pos, Pos) < CFlag::ms_PhysSize + pEnt->m_ProximityRadius)
+					if(distance(pEnt->m_Pos, Pos) < CFlag::ms_PhysSize + pEnt->m_ProximityRadius && ((CCharacter*)pEnt)->m_DeathTick == -1)
 					{
 						if(apCloseCCharacters)
 							apCloseCCharacters[Num] = (CCharacter * )pEnt;
@@ -449,7 +449,7 @@ void CGameControllerDDRace::Tick()
 					if(!apCloseCCharacters[i]->IsAlive() || apCloseCCharacters[i]->GetPlayer()->GetTeam() == TEAM_SPECTATORS || GameServer()->Collision()->IntersectLine(F->m_Pos, apCloseCCharacters[i]->m_Pos, NULL, NULL))
 						continue;
 
-					if(apCloseCCharacters[i]->GetPlayer()->GetTeam() == F->m_Team)
+					if(apCloseCCharacters[i]->GetPlayer()->GetTeam() == F->m_Team && apCloseCCharacters[i]->m_DeathTick == -1)
 					{
 						// return the flag
 						if(!F->m_AtStand)
