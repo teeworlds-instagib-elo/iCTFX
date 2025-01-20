@@ -749,6 +749,9 @@ void IGameController::Snap(int SnappingClient)
 	pGameInfoObj->m_RoundNum = 0;
 	pGameInfoObj->m_RoundCurrent = m_RoundCount + 1;
 
+	pGameInfoObj->m_ScoreLimit = g_Config.m_SvScorelimit;
+	pGameInfoObj->m_TimeLimit = g_Config.m_SvTimelimit;
+
 	CCharacter *pChr;
 	CPlayer *pPlayer = SnappingClient != SERVER_DEMO_CLIENT ? GameServer()->m_apPlayers[SnappingClient] : 0;
 	CPlayer *pPlayer2;
@@ -785,7 +788,7 @@ void IGameController::Snap(int SnappingClient)
 		GAMEINFOFLAG_ALLOW_HOOK_COLL |
 		!GAMEINFOFLAG_ALLOW_ZOOM |
 		!GAMEINFOFLAG_BUG_DDRACE_GHOST |
-		GAMEINFOFLAG_BUG_DDRACE_INPUT |
+		!GAMEINFOFLAG_BUG_DDRACE_INPUT |
 		!GAMEINFOFLAG_PREDICT_DDRACE |
 		GAMEINFOFLAG_PREDICT_DDRACE_TILES |
 		GAMEINFOFLAG_ENTITIES_DDNET |
@@ -793,7 +796,8 @@ void IGameController::Snap(int SnappingClient)
 		!GAMEINFOFLAG_ENTITIES_RACE |
 		!GAMEINFOFLAG_RACE|
 		GAMEINFOFLAG_GAMETYPE_VANILLA |
-		GAMEINFOFLAG_PREDICT_VANILLA;
+		GAMEINFOFLAG_PREDICT_VANILLA |
+		GAMEINFOFLAG_BUG_VANILLA_BOUNCE;
 	// pGameInfoEx->m_Flags =
 	// 	GAMEINFOFLAG_TIMESCORE |
 	// 	GAMEINFOFLAG_GAMETYPE_RACE |
