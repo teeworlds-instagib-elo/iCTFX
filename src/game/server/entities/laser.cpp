@@ -177,52 +177,34 @@ void CLaser::Snap(int SnappingClient)
 	if(NetworkClipped(SnappingClient) && NetworkClipped(SnappingClient, m_From) && g_Config.m_SvAntiZoom)
 		return;
 
-		//todo probably reactivate this for ddrace teams support
-	// CCharacter *OwnerChar = 0;
-	// if(m_Owner >= 0)
-	// 	OwnerChar = GameServer()->GetPlayerChar(m_Owner);
-	// if(!OwnerChar)
-	// 	return;
+	if(Server()->GetClientVersion(SnappingClient) >= VERSION_DDNET_MULTI_LASER)
+	{
+		CNetObj_DDNetLaser *pObj = static_cast<CNetObj_DDNetLaser *>(Server()->SnapNewItem(NETOBJTYPE_DDNETLASER, GetID(), sizeof(CNetObj_DDNetLaser)));
+		if(!pObj)
+			return;
 
-	CCharacter *pOwnerChar = 0;
-	// int64_t TeamMask = -1LL;
+		pObj->m_ToX = (int)m_Pos.x;
+		pObj->m_ToY = (int)m_Pos.y;
+		pObj->m_FromX = (int)m_From.x;
+		pObj->m_FromY = (int)m_From.y;
+		pObj->m_StartTick = m_EvalTick;
+		pObj->m_Owner = m_Owner;
+		pObj->m_Type = 0;
+		pObj->m_Subtype = 0;
+		pObj->m_SwitchNumber = m_Number;
+		pObj->m_Flags = 0;
+	}else
+	{
+		CNetObj_Laser *pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(NETOBJTYPE_LASER, GetID(), sizeof(CNetObj_Laser)));
+		if(!pObj)
+			return;
 
-	//skip sending lasers when local prediction already shows it
-	// if(m_Owner >= 0 && GameServer()->m_apPlayers[SnappingClient]->m_Latency.m_Avg > 80 && m_Owner == SnappingClient && m_Bounces == 0)
-	// 	return;
-
-	
-
-	// //if(pOwnerChar && pOwnerChar->IsAlive())
-	// TeamMask = pOwnerChar->Teams()->TeamMask(pOwnerChar->Team(), -1, m_Owner);
-
-	// if(SnappingClient != SERVER_DEMO_CLIENT && !CmaskIsSet(TeamMask, SnappingClient))
-	// 	return;
-
-	// CNetObj_DDNetLaser *pObj = static_cast<CNetObj_DDNetLaser *>(Server()->SnapNewItem(NETOBJTYPE_DDNETLASER, GetID(), sizeof(CNetObj_DDNetLaser)));
-	// if(!pObj)
-	// 	return;
-
-	// pObj->m_ToX = (int)m_Pos.x;
-	// pObj->m_ToY = (int)m_Pos.y;
-	// pObj->m_FromX = (int)m_From.x;
-	// pObj->m_FromY = (int)m_From.y;
-	// pObj->m_StartTick = m_EvalTick;
-	// pObj->m_Owner = m_Owner;
-	// pObj->m_Type = 0;
-	// pObj->m_Subtype = 0;
-	// pObj->m_SwitchNumber = m_Number;
-	// pObj->m_Flags = 0;
-
-	CNetObj_Laser *pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(NETOBJTYPE_LASER, GetID(), sizeof(CNetObj_Laser)));
-	if(!pObj)
-		return;
-
-	pObj->m_X = (int)m_Pos.x;
-	pObj->m_Y = (int)m_Pos.y;
-	pObj->m_FromX = (int)m_From.x;
-	pObj->m_FromY = (int)m_From.y;
-	pObj->m_StartTick = m_EvalTick;
+		pObj->m_X = (int)m_Pos.x;
+		pObj->m_Y = (int)m_Pos.y;
+		pObj->m_FromX = (int)m_From.x;
+		pObj->m_FromY = (int)m_From.y;
+		pObj->m_StartTick = m_EvalTick;
+	}
 }
 
 void CLaser::SwapClients(int Client1, int Client2)
