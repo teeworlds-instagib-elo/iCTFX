@@ -362,12 +362,12 @@ void CGameControllerDDRace::Tick()
 			F->m_Positions[Server()->Tick() % POSITION_HISTORY] = F->m_Pos;
 
 			//
-			if(F->m_pCarryingCharacter && F->m_pCarryingCharacter->m_DeathTick == -1)
+			if(F->m_pCarryingCharacter)
 			{
 				// update flag position
 				F->m_Pos = F->m_pCarryingCharacter->m_Pos;
 
-				if(m_apFlags[fi^1] && m_apFlags[fi^1]->m_AtStand)
+				if(m_apFlags[fi^1] && m_apFlags[fi^1]->m_AtStand && F->m_pCarryingCharacter->m_DeathTick == -1)
 				{
 					if(distance(F->m_Pos, m_apFlags[fi^1]->m_Pos) < CFlag::ms_PhysSize + CCharacter::ms_PhysSize)
 					{
