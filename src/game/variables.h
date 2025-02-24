@@ -164,7 +164,7 @@ MACRO_CONFIG_INT(SvRollbackShadow, sv_rollback_shadow, 0, 0, 1, CFGFLAG_SERVER, 
 MACRO_CONFIG_INT(SvAntiZoom, sv_antizoom, 0, 0, 1, CFGFLAG_SERVER, "Limits visability range of players, disabled by default for high ping players")
 MACRO_CONFIG_INT(SvLatestTarget, sv_latest_target, 0, 0, 1, CFGFLAG_SERVER, "Shows the latest direction player is looking vs correct timing")
 
-MACRO_CONFIG_INT(SvRunAheadSmoothing, sv_runahead_smoothing, 30, 0, 50, CFGFLAG_SERVER, "sets amount of smoothing for runahead")
+MACRO_CONFIG_INT(SvRunAheadSmoothing, sv_runahead_smoothing, 30, 0, 100, CFGFLAG_SERVER, "sets amount of smoothing for runahead")
 
 
 MACRO_CONFIG_INT(SvStrictSpectateMode, sv_strict_spectate_mode, 0, 0, 1, CFGFLAG_SERVER, "Restricts information in spectator mode")

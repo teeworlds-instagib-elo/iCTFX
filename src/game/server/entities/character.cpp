@@ -1204,9 +1204,29 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 
 		pCore->Write(pCharacter);
 
-		if(SnappingClient >= 0 && m_pPlayer->m_Rollback && m_pPlayer->GetCID() != SnappingClient) // && GameServer()->m_apPlayers[SnappingClient]->m_RunAhead != 0)
+		int seePrediction = 0;
+
+		if(SnappingClient >= 0 && m_pPlayer->m_Rollback && m_pPlayer->GetCID() != SnappingClient)
 		{
-			*pCharacter = m_pPlayer->m_CoreAheads[m_pPlayer->m_LastAckedSnapshot % POSITION_HISTORY];
+			if(!seePrediction)
+				seePrediction = Server()->Tick();
+			
+			seePrediction -= (Server()->Tick() - m_pPlayer->m_LastAckedSnapshot)*GameServer()->m_apPlayers[SnappingClient]->m_RunAhead;
+		}
+
+		if(SnappingClient >= 0 && m_pPlayer->GetCID() != SnappingClient &&
+			GameServer()->m_apPlayers[SnappingClient]->m_RollbackPrediction && GameServer()->m_apPlayers[SnappingClient]->m_Rollback)
+		{
+			if(!seePrediction)
+				seePrediction = Server()->Tick();
+			
+			// seePrediction -= (Server()->Tick() - GameServer()->m_apPlayers[SnappingClient]->m_LastAckedSnapshot);
+			seePrediction -= GameServer()->m_apPlayers[SnappingClient]->m_LAS_leftover;
+		}
+
+		if(seePrediction)
+		{
+			*pCharacter = m_pPlayer->m_CoreAheads[seePrediction % POSITION_HISTORY];
 		}
 
 		if(SnappingClient == m_Killer && m_DeathTick != -1)
