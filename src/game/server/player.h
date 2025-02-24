@@ -96,6 +96,7 @@ public:
 	int m_Spree;
 
 	bool m_Rollback;
+	bool m_ShowRollbackShadow;
 	float m_Rollback_partial;
 
 	int m_SendVoteIndex;
