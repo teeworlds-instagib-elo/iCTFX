@@ -43,11 +43,13 @@ private:
 		int tick;
 		int rollbackTick;
 		vec2 from;
-		vec2 to;	
+		vec2 to;
+		bool clientsTested [MAX_CLIENTS];
 	};
 
 	int shot_index;
 	ShotHistory shots [SHOTS_HISTORY];
+
 
 	// DDRace
 
