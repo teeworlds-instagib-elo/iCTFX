@@ -160,6 +160,7 @@ MACRO_CONFIG_INT(SvTeambalanceTime, sv_teambalance_time, 1, 0, 1000, CFGFLAG_SER
 MACRO_CONFIG_INT(SvInactiveKickTime, sv_inactivekick_time, 0, 0, 1000, CFGFLAG_SERVER, "How many minutes to wait before taking care of inactive players")
 MACRO_CONFIG_INT(SvInactiveKick, sv_inactivekick, 0, 0, 2, CFGFLAG_SERVER, "How to deal with inactive players (0=move to spectator, 1=move to free spectator slot/kick, 2=kick)")
 MACRO_CONFIG_INT(SvRollback, sv_rollback, 1, 0, 1, CFGFLAG_SERVER, "Enables / disables rollback support")
+MACRO_CONFIG_INT(SvRollbackShadow, sv_rollback_shadow, 0, 0, 1, CFGFLAG_SERVER, "Shows rollback's shadow for other players by default")
 MACRO_CONFIG_INT(SvAntiZoom, sv_antizoom, 0, 0, 1, CFGFLAG_SERVER, "Limits visability range of players, disabled by default for high ping players")
 
 

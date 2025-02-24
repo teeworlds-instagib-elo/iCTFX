@@ -1933,6 +1933,15 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						SendChat(ClientID, Team, pMsg->m_pMessage, ClientID);
 					}
 				}
+				else if(str_startswith(pMsg->m_pMessage + 1, "rollbackshadow") && !g_Config.m_SvSaveServer)
+				{
+					pPlayer->m_ShowRollbackShadow = !pPlayer->m_ShowRollbackShadow;
+					if(pPlayer->m_ShowRollbackShadow)
+						SendChatTarget(ClientID, "Rollback Shadow enabled");
+					
+					if(!pPlayer->m_ShowRollbackShadow)
+						SendChatTarget(ClientID, "Rollback Shadow disabled");
+				}
 				else if(str_startswith(pMsg->m_pMessage + 1, "rollback") && !g_Config.m_SvSaveServer)
 				{
 					pPlayer->m_Rollback = !pPlayer->m_Rollback;

@@ -1339,6 +1339,17 @@ void CCharacter::Snap(int SnappingClient)
 	pDDNetCharacter->m_Jumps = m_Core.m_Jumps;
 	pDDNetCharacter->m_TeleCheckpoint = m_TeleCheckpoint;
 	pDDNetCharacter->m_StrongWeakID = m_StrongWeakID;
+
+	if(SnappingClient != ID && SnappingClient >= 0 && m_pPlayer && m_pPlayer->m_Rollback && GameServer()->m_apPlayers[SnappingClient]->m_ShowRollbackShadow && GameServer()->m_apPlayers[SnappingClient]->GetCharacter())
+	{
+		CNetObj_Pickup *pShadow = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, ID+64, sizeof(CNetObj_Pickup)));
+
+		vec2 pos = GameServer()->m_apPlayers[SnappingClient]->GetCharacter()->m_Positions[m_pPlayer->m_LastAckedSnapshot % POSITION_HISTORY];
+		pShadow->m_X = (int)pos.x;
+		pShadow->m_Y = (int)pos.y;
+		pShadow->m_Subtype = 0;
+		pShadow->m_Type = ID % NUM_POWERUPS;
+	}
 }
 
 // DDRace
