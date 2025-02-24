@@ -1228,6 +1228,19 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 		pCharacter->m_Health = Health;
 		pCharacter->m_Armor = Armor;
 		pCharacter->m_PlayerFlags = GetPlayer()->m_PlayerFlags;
+
+		if(g_Config.m_SvLatestTarget)
+		{
+			float tmp_angle = atan2f(m_pPlayer->m_LatestTargetY, m_pPlayer->m_LatestTargetX);
+			if(tmp_angle < -(pi / 2.0f))
+			{
+				pCharacter->m_Angle = (int)((tmp_angle + (2.0f * pi)) * 256.0f);
+			}
+			else
+			{
+				pCharacter->m_Angle = (int)(tmp_angle * 256.0f);
+			}
+		}
 	}
 	else
 	{

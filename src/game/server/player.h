@@ -99,6 +99,9 @@ public:
 	bool m_ShowRollbackShadow;
 	float m_Rollback_partial;
 
+	int m_LatestTargetX;
+	int m_LatestTargetY;
+
 	int m_SendVoteIndex;
 
 	CTeeInfo m_TeeInfos;
