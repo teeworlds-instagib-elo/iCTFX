@@ -1124,7 +1124,8 @@ void CGameContext::OnClientPredictedInput(int ClientID, void *pInput, int tick)
 	if(m_World.m_Paused)
 		return;
 	
-	m_apPlayers[ClientID]->m_LastAckedSnapshot = tick;
+	float amount = m_apPlayers[ClientID]->m_Rollback_partial;
+	m_apPlayers[ClientID]->m_LastAckedSnapshot = Server()->Tick() - (Server()->Tick() - tick)*amount;
 	m_apPlayers[ClientID]->OnPredictedInput((CNetObj_PlayerInput *)pInput);
 }
 
@@ -1943,6 +1944,15 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					
 					if(!g_Config.m_SvRollback)
 						SendChatTarget(ClientID, "Rollback disabled by server vote");
+					
+					if(str_startswith(pMsg->m_pMessage + 1, "rollback ") && str_length(pMsg->m_pMessage+1) >= 10)
+					{
+						pPlayer->m_Rollback_partial = str_toint(pMsg->m_pMessage + 10) / 100.0;
+						pPlayer->m_Rollback_partial = clamp(pPlayer->m_Rollback_partial, 0.0f, 1.0f);
+					}else
+					{
+						pPlayer->m_Rollback_partial = 1;
+					}
 				}
 				else
 				{
