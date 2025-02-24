@@ -18,6 +18,10 @@ enum
 	WEAPON_WORLD = -1, // death tiles etc
 };
 
+#ifndef POSITION_HISTORY
+	#define POSITION_HISTORY 50
+#endif
+
 // player object
 class CPlayer
 {
@@ -98,6 +102,10 @@ public:
 	bool m_Rollback;
 	bool m_ShowRollbackShadow;
 	float m_Rollback_partial;
+
+	float m_RunAhead;
+
+	CNetObj_Character m_CoreAheads[POSITION_HISTORY];
 
 	int m_LatestTargetX;
 	int m_LatestTargetY;

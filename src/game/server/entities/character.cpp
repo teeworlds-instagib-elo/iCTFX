@@ -1204,6 +1204,11 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 
 		pCore->Write(pCharacter);
 
+		if(SnappingClient >= 0 && m_pPlayer->m_Rollback && m_pPlayer->GetCID() != SnappingClient) // && GameServer()->m_apPlayers[SnappingClient]->m_RunAhead != 0)
+		{
+			*pCharacter = m_pPlayer->m_CoreAheads[m_pPlayer->m_LastAckedSnapshot % POSITION_HISTORY];
+		}
+
 		if(SnappingClient == m_Killer && m_DeathTick != -1)
 		{
 			pCharacter->m_X = m_DeathPos.x;

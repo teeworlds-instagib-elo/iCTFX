@@ -192,7 +192,6 @@ void CPlayer::Tick()
 		m_ChatScore--;
 
 	Server()->SetClientScore(m_ClientID, m_Score);
-	// printf("%i\n", m_Score);
 
 	if(m_Moderating && m_Afk)
 	{
@@ -232,6 +231,32 @@ void CPlayer::Tick()
 		str_format(aBuf, sizeof(aBuf), "'%s' would have timed out, but can use timeout protection now", Server()->ClientName(m_ClientID));
 		GameServer()->SendChat(-1, CGameContext::CHAT_ALL, aBuf);
 		Server()->ResetNetErrorString(m_ClientID);
+	}
+
+	//do prediction
+	if(GetCharacter())
+	{
+		CCharacterCore pred_core = GetCharacter()->GetCore();
+		pred_core.m_pWorld = nullptr;
+		for(int i = 0; i < POSITION_HISTORY; i++)
+		{
+			pred_core.Tick(false);
+			pred_core.Move();
+			pred_core.Quantize();
+			CNetObj_CharacterCore tmpCore;
+			pred_core.Write(&tmpCore);
+			CNetObj_CharacterCore * pCore = &(m_CoreAheads[(Server()->Tick()-i) % POSITION_HISTORY]);
+			int oldX = pCore->m_X;
+			int oldY = pCore->m_Y;
+			*pCore = tmpCore;
+
+			if(i > 1 && g_Config.m_SvRunAheadSmoothing)
+			{
+				float smoothing = g_Config.m_SvRunAheadSmoothing/100.0;
+				pCore->m_X = oldX*smoothing+ tmpCore.m_X*(1-smoothing);
+				pCore->m_Y = oldY*smoothing+ tmpCore.m_Y*(1-smoothing);
+			}
+		}
 	}
 
 	if(!GameServer()->m_World.m_Paused)
