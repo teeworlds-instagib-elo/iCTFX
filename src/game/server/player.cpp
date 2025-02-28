@@ -238,6 +238,7 @@ void CPlayer::Tick()
 	if(GetCharacter())
 	{
 		CCharacterCore pred_core = GetCharacter()->GetCore();
+		int deathTick = GetCharacter()->m_DeathTick;
 		pred_core.m_pWorld = nullptr;
 		for(int i = 0; i < POSITION_HISTORY; i++)
 		{
@@ -250,6 +251,8 @@ void CPlayer::Tick()
 			int oldX = pCore->m_X;
 			int oldY = pCore->m_Y;
 			*pCore = tmpCore;
+
+			m_DeadAheads[(Server()->Tick()-i) % POSITION_HISTORY] = (deathTick < Server()->Tick()+i && deathTick > 0);
 
 			if(i > 1 && g_Config.m_SvRunAheadSmoothing)
 			{

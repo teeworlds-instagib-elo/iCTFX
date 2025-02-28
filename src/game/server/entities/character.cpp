@@ -1198,12 +1198,6 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 
 	if(!Server()->IsSixup(SnappingClient))
 	{
-		CNetObj_Character *pCharacter = static_cast<CNetObj_Character *>(Server()->SnapNewItem(NETOBJTYPE_CHARACTER, ID, sizeof(CNetObj_Character)));
-		if(!pCharacter)
-			return;
-
-		pCore->Write(pCharacter);
-
 		int seePrediction = 0;
 
 		if(SnappingClient >= 0 && m_pPlayer->m_Rollback && m_pPlayer->GetCID() != SnappingClient)
@@ -1223,6 +1217,23 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 			// seePrediction -= (Server()->Tick() - GameServer()->m_apPlayers[SnappingClient]->m_LastAckedSnapshot);
 			seePrediction -= GameServer()->m_apPlayers[SnappingClient]->m_LAS_leftover;
 		}
+
+		if(SnappingClient >= 0 && GameServer()->m_apPlayers[SnappingClient]->GetCharacter() &&
+			GameServer()->m_apPlayers[SnappingClient]->GetCharacter()->m_Core.m_HookedPlayer == m_pPlayer->GetCID())
+		{
+			seePrediction = 0;
+		}
+
+		if(m_pPlayer->m_DeadAheads[seePrediction % POSITION_HISTORY])
+			return;
+
+		CNetObj_Character *pCharacter = static_cast<CNetObj_Character *>(Server()->SnapNewItem(NETOBJTYPE_CHARACTER, ID, sizeof(CNetObj_Character)));
+		if(!pCharacter)
+			return;
+
+		pCore->Write(pCharacter);
+
+		
 
 		if(seePrediction)
 		{
