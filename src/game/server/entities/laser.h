@@ -50,6 +50,7 @@ private:
 	int shot_index;
 	ShotHistory shots [SHOTS_HISTORY];
 
+	vec2 m_PredHitPos;
 
 	// DDRace
 
