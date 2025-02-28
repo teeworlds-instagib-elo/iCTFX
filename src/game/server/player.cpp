@@ -247,12 +247,12 @@ void CPlayer::Tick()
 			pred_core.Quantize();
 			CNetObj_CharacterCore tmpCore;
 			pred_core.Write(&tmpCore);
-			CNetObj_CharacterCore * pCore = &(m_CoreAheads[(Server()->Tick()-i) % POSITION_HISTORY]);
+			CNetObj_CharacterCore * pCore = &(m_CoreAheads[(POSITION_HISTORY+Server()->Tick()-i) % POSITION_HISTORY]);
 			int oldX = pCore->m_X;
 			int oldY = pCore->m_Y;
 			*pCore = tmpCore;
 
-			m_DeadAheads[(Server()->Tick()-i) % POSITION_HISTORY] = (deathTick < Server()->Tick()+i && deathTick > 0);
+			m_DeadAheads[(POSITION_HISTORY+Server()->Tick()-i) % POSITION_HISTORY] = (deathTick < Server()->Tick()+i && deathTick > 0);
 
 			if(i > 1 && g_Config.m_SvRunAheadSmoothing)
 			{
