@@ -108,6 +108,7 @@ public:
 	float m_RunAhead;
 
 	CNetObj_Character m_CoreAheads[POSITION_HISTORY];
+	bool m_DeadAheads[POSITION_HISTORY];
 
 	int m_LatestTargetX;
 	int m_LatestTargetY;
