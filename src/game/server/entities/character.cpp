@@ -1224,7 +1224,10 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 			seePrediction = 0;
 		}
 
-		if(m_pPlayer->m_DeadAheads[seePrediction % POSITION_HISTORY])
+		if(seePrediction < 0)
+			seePrediction = 0;
+
+		if(seePrediction && m_pPlayer->m_DeadAheads[seePrediction % POSITION_HISTORY])
 			return;
 
 		CNetObj_Character *pCharacter = static_cast<CNetObj_Character *>(Server()->SnapNewItem(NETOBJTYPE_CHARACTER, ID, sizeof(CNetObj_Character)));
