@@ -68,8 +68,6 @@ CLaser::~CLaser() {
 
 bool CLaser::HitCharacter(vec2 From, vec2 To)
 {
-	
-
 	vec2 At;
 	CCharacter *pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
 	CCharacter *pHit;
@@ -91,53 +89,63 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 	else
 		pHit = GameServer()->m_World.IntersectCharacter(m_Pos, To, 0.f, At, pOwnerChar, m_Owner, pOwnerChar, tick);
 
+	m_PredHitPos = vec2(0,0);
+	bool dont = false;
 	if(!pHit || (pHit == pOwnerChar && g_Config.m_SvOldLaser) || (pHit != pOwnerChar && pOwnerChar ? (pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_LASER && m_Type == WEAPON_LASER) || (pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_SHOTGUN && m_Type == WEAPON_SHOTGUN) : !g_Config.m_SvHit))
+		dont = true;
+	
+	if(pHit && pHit->m_pPlayer->m_Rollback && GameServer()->m_apPlayers[m_Owner] && GameServer()->m_apPlayers[m_Owner]->m_RunAhead)
+		dont = true; //check when rollback is in proper position
+	
+	if(dont)
 	{
 		//try and find a prediction to potentially hit
-		// for(int player = 0; player < MAX_CLIENTS; player++)
-		// {
-		// 	if(!GameServer()->m_apPlayers[player])
-		// 		continue;
-			
-		// 	if(!GameServer()->m_apPlayers[player]->m_Rollback)
-		// 		continue;
-			
-		// 	if(!GameServer()->m_apPlayers[player]->GetCharacter())
-		// 		continue;
-			
-			
-		// 	int AckedTick = GameServer()->m_apPlayers[player]->m_LastAckedSnapshot;
+		if(GameServer()->m_apPlayers[m_Owner] && GameServer()->m_apPlayers[m_Owner]->m_RunAhead)
+		{
+			for(int player = 0; player < MAX_CLIENTS; player++)
+			{
+				if(player == m_Owner)
+					continue;
+				
+				if(!GameServer()->m_apPlayers[player])
+					continue;
+				
+				if(!GameServer()->m_apPlayers[player]->m_Rollback)
+					continue;
+				
+				if(!GameServer()->m_apPlayers[player]->GetCharacter())
+					continue;
+				
+				
+				int AckedTick = GameServer()->m_apPlayers[player]->m_LastAckedSnapshot;
 
-		// 	AckedTick = Server()->Tick() - (Server()->Tick()-AckedTick)*GameServer()->m_apPlayers[m_Owner]->m_RunAhead;
+				if(AckedTick < 0) //safety check
+					continue;
 
-		// 	vec2 pos;
-		// 	pos.x = GameServer()->m_apPlayers[player]->m_CoreAheads[AckedTick % POSITION_HISTORY].m_X;
-		// 	pos.y = GameServer()->m_apPlayers[player]->m_CoreAheads[AckedTick % POSITION_HISTORY].m_Y;
-			
-		// 	vec2 IntersectPos;
+				AckedTick = Server()->Tick() - (Server()->Tick()-AckedTick)*GameServer()->m_apPlayers[m_Owner]->m_RunAhead;
 
-		// 	CCharacter * p = GameServer()->m_apPlayers[player]->GetCharacter();
+				vec2 pos;
+				pos.x = GameServer()->m_apPlayers[player]->m_CoreAheads[AckedTick % POSITION_HISTORY].m_X;
+				pos.y = GameServer()->m_apPlayers[player]->m_CoreAheads[AckedTick % POSITION_HISTORY].m_Y;
+				
+				vec2 IntersectPos;
 
-		// 	if(closest_point_on_line(m_Pos, To, pos, IntersectPos))
-		// 	{
-		// 		float Len = distance(pos, IntersectPos);
-		// 		if(Len < p->m_ProximityRadius)
-		// 		{
-		// 			m_From = From;
-		// 			m_Pos = At;
-		// 			m_Energy = -1;
-		// 			m_DidHit = true;
-		// 			pHit->TakeDamage(vec2(0.f, 0.f), GameServer()->Tuning()->m_LaserDamage, m_Owner, WEAPON_LASER, m_StartTick);
-		// 			return true;
-		// 		}
-		// 	}
-		// }
+				CCharacter * p = GameServer()->m_apPlayers[player]->GetCharacter();
+
+				if(closest_point_on_line(From, To, pos, IntersectPos))
+				{
+					float Len = distance(pos, IntersectPos);
+					if(Len < p->m_ProximityRadius)
+					{
+						m_PredHitPos = IntersectPos;
+						return false;
+					}
+				}
+			}
+		}
 		
 		return false;
 	}
-	
-	if(pHit->m_pPlayer->m_Rollback && GameServer()->m_apPlayers[m_Owner] && GameServer()->m_apPlayers[m_Owner]->m_RunAhead)
-		return false; //check when rollback is in proper position
 	
 	m_From = From;
 	m_Pos = At;
@@ -311,6 +319,12 @@ void CLaser::Snap(int SnappingClient)
 		pObj->m_Subtype = 0;
 		pObj->m_SwitchNumber = m_Number;
 		pObj->m_Flags = 0;
+
+		if(m_PredHitPos != vec2(0,0))
+		{
+			pObj->m_ToX = (int)m_PredHitPos.x;
+			pObj->m_ToY = (int)m_PredHitPos.y;
+		}
 	}else
 	{
 		CNetObj_Laser *pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(NETOBJTYPE_LASER, GetID(), sizeof(CNetObj_Laser)));
@@ -322,6 +336,12 @@ void CLaser::Snap(int SnappingClient)
 		pObj->m_FromX = (int)m_From.x;
 		pObj->m_FromY = (int)m_From.y;
 		pObj->m_StartTick = m_EvalTick;
+
+		if(m_PredHitPos != vec2(0,0))
+		{
+			pObj->m_X = (int)m_PredHitPos.x;
+			pObj->m_Y = (int)m_PredHitPos.y;
+		}
 	}
 }
 
