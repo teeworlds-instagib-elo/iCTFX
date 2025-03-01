@@ -1958,22 +1958,28 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				}
 				else if(str_startswith(pMsg->m_pMessage + 1, "rollback") && !g_Config.m_SvSaveServer)
 				{
-					pPlayer->m_Rollback = !pPlayer->m_Rollback;
+					bool disabled = pPlayer->m_Rollback;
+
+					if(!g_Config.m_SvRollback)
+						pPlayer->m_Rollback = false;
 					
-					if(!pPlayer->m_Rollback)
+					if(str_startswith(pMsg->m_pMessage + 1, "rollback ") && str_length(pMsg->m_pMessage+1) >= 10)
+					{
+						disabled = false;
+						pPlayer->m_Rollback_partial = str_toint(pMsg->m_pMessage + 10) / 100.0;
+						pPlayer->m_Rollback_partial = clamp(pPlayer->m_Rollback_partial, 0.0f, 1.0f);
+					}else if(!pPlayer->m_Rollback)
+					{
+						pPlayer->m_Rollback_partial = 1;
+					}
+
+					pPlayer->m_Rollback = !disabled;
+
+					if(disabled)
 						SendChatTarget(ClientID, "Rollback disabled");
 					
 					if(!g_Config.m_SvRollback)
 						SendChatTarget(ClientID, "Rollback disabled by server vote");
-					
-					if(str_startswith(pMsg->m_pMessage + 1, "rollback ") && str_length(pMsg->m_pMessage+1) >= 10)
-					{
-						pPlayer->m_Rollback_partial = str_toint(pMsg->m_pMessage + 10) / 100.0;
-						pPlayer->m_Rollback_partial = clamp(pPlayer->m_Rollback_partial, 0.0f, 1.0f);
-					}else
-					{
-						pPlayer->m_Rollback_partial = 1;
-					}
 
 					char str[256];
 					str_format(str, sizeof(str), "Rollback enabled (%i%)", (int)(pPlayer->m_Rollback_partial*100));
