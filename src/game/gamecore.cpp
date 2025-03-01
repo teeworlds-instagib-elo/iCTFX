@@ -265,6 +265,9 @@ void CCharacterCore::Tick(bool UseInput)
 		// Check against other players first
 		if(this->m_Hook && m_pWorld && m_Tuning.m_PlayerHooking)
 		{
+			
+			if(m_pCharacter)
+				m_OldHookPositions[m_pCharacter->Server()->Tick() % POSITION_HISTORY] = m_HookPos;
 			float Distance = 0.0f;
 			for(int i = 0; i < MAX_CLIENTS; i++)
 			{
@@ -273,16 +276,26 @@ void CCharacterCore::Tick(bool UseInput)
 					continue;
 
 				vec2 pos = pCharCore->m_Pos;
+				vec2 hookpos = m_HookPos;
 
 				if(m_pCharacter && m_pCharacter->GameServer()->m_apPlayers[m_Id]->m_Rollback && g_Config.m_SvRollback)
 				{
 					int tick = m_pCharacter->GameServer()->m_apPlayers[m_Id]->m_LastAckedSnapshot;
 					tick = tick % POSITION_HISTORY;
 					pos = pCharCore->m_pCharacter->m_Positions[tick];
-				} 
+				}
+
+				if(m_pCharacter && m_pCharacter->GameServer()->m_apPlayers[m_Id]->m_RunAhead &&
+					g_Config.m_SvRollback && pCharCore->m_pCharacter->m_pPlayer->m_Rollback)
+				{
+					int tick = m_pCharacter->GameServer()->m_apPlayers[pCharCore->m_pCharacter->m_pPlayer->GetCID()]->m_LastAckedSnapshot;
+					tick = tick % POSITION_HISTORY;
+					pos.x = pCharCore->m_pCharacter->m_pPlayer->m_CoreAheads[tick].m_X;
+					pos.y = pCharCore->m_pCharacter->m_pPlayer->m_CoreAheads[tick].m_Y;
+				}
 
 				vec2 ClosestPoint;
-				if(closest_point_on_line(m_HookPos, NewPos, pos, ClosestPoint))
+				if(closest_point_on_line(hookpos, NewPos, pos, ClosestPoint))
 				{
 					if(distance(pos, ClosestPoint) < PhysSize + 2.0f)
 					{

@@ -18,6 +18,10 @@ enum
 	WEAPON_WORLD = -1, // death tiles etc
 };
 
+#ifndef POSITION_HISTORY
+	#define POSITION_HISTORY 50
+#endif
+
 // player object
 class CPlayer
 {
@@ -70,6 +74,7 @@ public:
 	// used for snapping to just update latency if the scoreboard is active
 	int m_aCurLatency[MAX_CLIENTS];
 	int m_LastAckedSnapshot;
+	int m_LAS_leftover;
 
 	// used for spectator mode
 	int m_SpectatorID;
@@ -96,6 +101,17 @@ public:
 	int m_Spree;
 
 	bool m_Rollback;
+	bool m_RollbackPrediction;
+	bool m_ShowRollbackShadow;
+	float m_Rollback_partial;
+
+	float m_RunAhead;
+
+	CNetObj_Character m_CoreAheads[POSITION_HISTORY];
+	bool m_DeadAheads[POSITION_HISTORY];
+
+	int m_LatestTargetX;
+	int m_LatestTargetY;
 
 	int m_SendVoteIndex;
 

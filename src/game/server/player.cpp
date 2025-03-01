@@ -53,6 +53,11 @@ void CPlayer::Reset()
 	pIdMap[0] = m_ClientID;
 
 	m_Rollback = false;
+	m_Rollback_partial = 1;
+	m_ShowRollbackShadow = g_Config.m_SvRollbackShadow;
+	m_RollbackPrediction = true;
+
+	m_RunAhead = g_Config.m_SvRunAheadDefault / 100.0;
 
 	// DDRace
 
@@ -190,7 +195,6 @@ void CPlayer::Tick()
 		m_ChatScore--;
 
 	Server()->SetClientScore(m_ClientID, m_Score);
-	// printf("%i\n", m_Score);
 
 	if(m_Moderating && m_Afk)
 	{
@@ -230,6 +234,44 @@ void CPlayer::Tick()
 		str_format(aBuf, sizeof(aBuf), "'%s' would have timed out, but can use timeout protection now", Server()->ClientName(m_ClientID));
 		GameServer()->SendChat(-1, CGameContext::CHAT_ALL, aBuf);
 		Server()->ResetNetErrorString(m_ClientID);
+	}
+
+	//do prediction
+	if(GetCharacter())
+	{
+		CCharacterCore pred_core = GetCharacter()->GetCore();
+		int deathTick = GetCharacter()->m_DeathTick;
+		pred_core.m_pWorld = nullptr;
+		for(int i = 0; i < POSITION_HISTORY-1; i++)
+		{
+			CNetObj_CharacterCore tmpCore;
+			pred_core.Write(&tmpCore);
+			CNetObj_CharacterCore * pCore = &(m_CoreAheads[(POSITION_HISTORY+Server()->Tick()-i) % POSITION_HISTORY]);
+			int oldX = pCore->m_X;
+			int oldY = pCore->m_Y;
+			*pCore = tmpCore;
+
+			m_DeadAheads[(POSITION_HISTORY+Server()->Tick()-i) % POSITION_HISTORY] = (deathTick < Server()->Tick()+i && deathTick > 0);
+
+			if(i > 1 && g_Config.m_SvRunAheadSmoothing)
+			{
+				float smoothing = g_Config.m_SvRunAheadSmoothing/100.0;
+				pCore->m_X = oldX*smoothing+ tmpCore.m_X*(1-smoothing);
+				pCore->m_Y = oldY*smoothing+ tmpCore.m_Y*(1-smoothing);
+			}
+
+			bool haveInput = false;
+			CNetObj_PlayerInput input;
+			if(Server()->GetClientInput(GetCID(), Server()->Tick()+i, &input) && g_Config.m_SvPredictionUseInput)
+			{
+				haveInput = true;
+				pred_core.m_Input = input;
+			}
+
+			pred_core.Tick(haveInput);
+			pred_core.Move();
+			pred_core.Quantize();
+		}
 	}
 
 	if(!GameServer()->m_World.m_Paused)
@@ -524,6 +566,9 @@ void CPlayer::OnDirectInput(CNetObj_PlayerInput *NewInput)
 	if(AfkTimer(NewInput))
 		return; // we must return if kicked, as player struct is already deleted
 	AfkVoteTimer(NewInput);
+
+	m_LatestTargetX = NewInput->m_TargetX;
+	m_LatestTargetY = NewInput->m_TargetY;
 
 	if(((!m_pCharacter && m_Team == TEAM_SPECTATORS) || m_Paused) && m_SpectatorID == SPEC_FREEVIEW)
 		m_ViewPos = vec2(NewInput->m_TargetX, NewInput->m_TargetY);

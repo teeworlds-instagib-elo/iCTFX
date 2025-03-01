@@ -274,6 +274,8 @@ public:
 	virtual void SetClientScore(int ClientID, int Score);
 	virtual void SetClientFlags(int ClientID, int Flags);
 
+	virtual bool GetClientInput(int ClientID, int Tick, CNetObj_PlayerInput * pInput);
+
 	void Kick(int ClientID, const char *pReason);
 	void Ban(int ClientID, int Seconds, const char *pReason);
 

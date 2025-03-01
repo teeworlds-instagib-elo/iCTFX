@@ -28,6 +28,7 @@ CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEner
 	m_StartTick = Server()->Tick();
 
 	m_NextPos = m_Pos;
+	shot_index = 0;
 
 	m_DidHit = false;
 
@@ -39,6 +40,12 @@ CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEner
 	if (pPlayer) {
 		pPlayer->m_Shots++;
 	}
+
+	m_DeathTick = 0;
+
+	for(int j = 0; j < SHOTS_HISTORY; j++)
+		for(int i = 0; i < MAX_CLIENTS; i++)
+			shots[j].clientsTested[i] = false;
 
 	GameWorld()->InsertEntity(this);
 	DoBounce();
@@ -70,14 +77,77 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 
 	if(GameServer()->m_apPlayers[m_Owner]->m_Rollback && g_Config.m_SvRollback)
 		tick = GameServer()->m_apPlayers[m_Owner]->m_LastAckedSnapshot;
+	
+	shots[shot_index].tick = Server()->Tick();
+	shots[shot_index].rollbackTick = tick;
+	shots[shot_index].from = From;
+	shots[shot_index].to = To;
+	shot_index++;
 
 	if(pOwnerChar ? (!(pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_LASER) && m_Type == WEAPON_LASER) || (!(pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_SHOTGUN) && m_Type == WEAPON_SHOTGUN) : g_Config.m_SvHit)
 		pHit = GameServer()->m_World.IntersectCharacter(m_Pos, To, 0.f, At, pOwnerChar, m_Owner, nullptr, tick);
 	else
 		pHit = GameServer()->m_World.IntersectCharacter(m_Pos, To, 0.f, At, pOwnerChar, m_Owner, pOwnerChar, tick);
 
+	m_PredHitPos = vec2(0,0);
+	bool dont = false;
 	if(!pHit || (pHit == pOwnerChar && g_Config.m_SvOldLaser) || (pHit != pOwnerChar && pOwnerChar ? (pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_LASER && m_Type == WEAPON_LASER) || (pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_SHOTGUN && m_Type == WEAPON_SHOTGUN) : !g_Config.m_SvHit))
+		dont = true;
+	
+	if(pHit && pHit->m_pPlayer->m_Rollback && GameServer()->m_apPlayers[m_Owner] && GameServer()->m_apPlayers[m_Owner]->m_RunAhead)
+		dont = true; //check when rollback is in proper position
+	
+	if(dont)
+	{
+		//try and find a prediction to potentially hit
+		if(GameServer()->m_apPlayers[m_Owner] && GameServer()->m_apPlayers[m_Owner]->m_RunAhead)
+		{
+			for(int player = 0; player < MAX_CLIENTS; player++)
+			{
+				if(player == m_Owner)
+					continue;
+				
+				if(!GameServer()->m_apPlayers[player])
+					continue;
+				
+				if(!GameServer()->m_apPlayers[player]->m_Rollback)
+					continue;
+				
+				int AckedTick = GameServer()->m_apPlayers[player]->m_LastAckedSnapshot;
+				
+				shots[shot_index-1].clientDelays[player] = Server()->Tick()-AckedTick;
+				
+				if(!GameServer()->m_apPlayers[player]->GetCharacter())
+					continue;
+				
+				
+				if(AckedTick < 0) //safety check
+					continue;
+
+				AckedTick = Server()->Tick() - (Server()->Tick()-AckedTick)*GameServer()->m_apPlayers[m_Owner]->m_RunAhead;
+
+				vec2 pos;
+				pos.x = GameServer()->m_apPlayers[player]->m_CoreAheads[AckedTick % POSITION_HISTORY].m_X;
+				pos.y = GameServer()->m_apPlayers[player]->m_CoreAheads[AckedTick % POSITION_HISTORY].m_Y;
+				
+				vec2 IntersectPos;
+
+				CCharacter * p = GameServer()->m_apPlayers[player]->GetCharacter();
+
+				if(closest_point_on_line(From, To, pos, IntersectPos))
+				{
+					float Len = distance(pos, IntersectPos);
+					if(Len < p->m_ProximityRadius)
+					{
+						m_PredHitPos = IntersectPos;
+						return false;
+					}
+				}
+			}
+		}
+		
 		return false;
+	}
 	
 	m_From = From;
 	m_Pos = At;
@@ -91,11 +161,12 @@ void CLaser::DoBounce()
 {
 	m_EvalTick = Server()->Tick();
 
-	if(m_Energy < 0)
+	if(m_Energy < 0 && m_DeathTick == 0)
 	{
-		m_MarkedForDestroy = true;
+		m_DeathTick = Server()->Tick();
 		return;
 	}
+
 	m_PrevPos = m_Pos;
 	m_Pos = m_NextPos;
 	vec2 Coltile;
@@ -107,7 +178,7 @@ void CLaser::DoBounce()
 	vec2 Tele;
 
 	int teleptr = 0;
-	if(GameServer()->Collision()->IntersectLineTeleWeapon(m_Pos, To, &Tele, &To, &teleptr))
+	if(m_Energy > 0 && GameServer()->Collision()->IntersectLineTeleWeapon(m_Pos, To, &Tele, &To, &teleptr))
 	{
 		if(!HitCharacter(m_Pos, To))
 		{
@@ -163,8 +234,66 @@ void CLaser::Reset()
 
 void CLaser::Tick()
 {
-	if(Server()->Tick() > m_EvalTick+(Server()->TickSpeed()*GameServer()->Tuning()->m_LaserBounceDelay)/1000.0f)
+	if(m_DeathTick == 0 && Server()->Tick() > m_EvalTick+(Server()->TickSpeed()*GameServer()->Tuning()->m_LaserBounceDelay)/1000.0f)
 		DoBounce();
+	
+	if(m_DeathTick)
+		m_MarkedForDestroy = true;
+	
+	if(!GameServer()->m_apPlayers[m_Owner] || GameServer()->m_apPlayers[m_Owner]->m_RunAhead == 0.0f)
+		return;
+	
+	for(int shot = 0; shot < shot_index; shot++)
+	{
+		for(int player = 0; player < MAX_CLIENTS; player++)\
+		{
+			if(!GameServer()->m_apPlayers[player])
+				continue;
+			
+			if(!GameServer()->m_apPlayers[player]->m_Rollback)
+				continue;
+			
+			shots[shot].clientDelays[player]--;
+			
+			if(!GameServer()->m_apPlayers[player]->GetCharacter())
+				continue;			
+			
+			int AckedTick = GameServer()->m_apPlayers[player]->m_LastAckedSnapshot;
+
+			AckedTick = Server()->Tick() - (Server()->Tick()-AckedTick)*GameServer()->m_apPlayers[m_Owner]->m_RunAhead;
+
+			if(shots[shot].clientDelays[player] >= g_Config.m_SvRunAheadLaserOffset)
+				m_MarkedForDestroy = false;
+			
+			if(shots[shot].clientDelays[player] >= g_Config.m_SvRunAheadLaserOffset || shots[shot].clientsTested[player])
+				continue;
+			
+			shots[shot].clientsTested[player] = true;
+			
+			//check hit
+			vec2 At;
+
+			int tick = -1;
+
+			if(GameServer()->m_apPlayers[m_Owner]->m_Rollback)
+			{
+				tick = GameServer()->m_apPlayers[m_Owner]->m_LastAckedSnapshot;
+			}
+
+			CCharacter *pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
+
+			CCharacter *pHit = GameServer()->m_World.IntersectCharacter(shots[shot].from, shots[shot].to, 0.f, At, pOwnerChar, -1, GameServer()->m_apPlayers[player]->GetCharacter(), tick);
+			if(pHit)
+			{
+				pHit->TakeDamage(vec2(0.f, 0.f), GameServer()->Tuning()->m_LaserDamage, m_Owner, WEAPON_LASER, m_StartTick);
+				pHit->m_DeathTick = Server()->Tick() + (pHit->m_DeathTick-Server()->Tick())*GameServer()->m_apPlayers[m_Owner]->m_RunAhead;
+				m_Energy = -1;
+				m_DidHit = true;
+				m_MarkedForDestroy = true;
+				return;
+			}
+		}
+	}
 }
 
 void CLaser::TickPaused()
@@ -193,6 +322,12 @@ void CLaser::Snap(int SnappingClient)
 		pObj->m_Subtype = 0;
 		pObj->m_SwitchNumber = m_Number;
 		pObj->m_Flags = 0;
+
+		if(m_PredHitPos != vec2(0,0))
+		{
+			pObj->m_ToX = (int)m_PredHitPos.x;
+			pObj->m_ToY = (int)m_PredHitPos.y;
+		}
 	}else
 	{
 		CNetObj_Laser *pObj = static_cast<CNetObj_Laser *>(Server()->SnapNewItem(NETOBJTYPE_LASER, GetID(), sizeof(CNetObj_Laser)));
@@ -204,6 +339,12 @@ void CLaser::Snap(int SnappingClient)
 		pObj->m_FromX = (int)m_From.x;
 		pObj->m_FromY = (int)m_From.y;
 		pObj->m_StartTick = m_EvalTick;
+
+		if(m_PredHitPos != vec2(0,0))
+		{
+			pObj->m_X = (int)m_PredHitPos.x;
+			pObj->m_Y = (int)m_PredHitPos.y;
+		}
 	}
 }
 

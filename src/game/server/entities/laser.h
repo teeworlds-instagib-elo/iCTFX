@@ -5,6 +5,7 @@
 
 #include <game/server/entity.h>
 
+#define SHOTS_HISTORY 3
 class CLaser : public CEntity
 {
 public:
@@ -33,6 +34,24 @@ private:
 	int m_TeamMask;
 
 	bool m_DidHit;
+
+	//iCTFX
+	int m_DeathTick;
+
+	struct ShotHistory
+	{
+		int tick;
+		int rollbackTick;
+		vec2 from;
+		vec2 to;
+		bool clientsTested [MAX_CLIENTS];
+		int clientDelays[MAX_CLIENTS];
+	};
+
+	int shot_index;
+	ShotHistory shots [SHOTS_HISTORY];
+
+	vec2 m_PredHitPos;
 
 	// DDRace
 

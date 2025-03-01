@@ -1124,7 +1124,9 @@ void CGameContext::OnClientPredictedInput(int ClientID, void *pInput, int tick)
 	if(m_World.m_Paused)
 		return;
 	
-	m_apPlayers[ClientID]->m_LastAckedSnapshot = tick;
+	float amount = m_apPlayers[ClientID]->m_Rollback_partial;
+	m_apPlayers[ClientID]->m_LastAckedSnapshot = Server()->Tick() - (Server()->Tick() - tick)*amount;
+	m_apPlayers[ClientID]->m_LAS_leftover = (Server()->Tick() - tick)*(1-amount);
 	m_apPlayers[ClientID]->OnPredictedInput((CNetObj_PlayerInput *)pInput);
 }
 
@@ -1932,17 +1934,72 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						SendChat(ClientID, Team, pMsg->m_pMessage, ClientID);
 					}
 				}
+				else if(str_startswith(pMsg->m_pMessage + 1, "rollbackshadow") && !g_Config.m_SvSaveServer)
+				{
+					pPlayer->m_ShowRollbackShadow = !pPlayer->m_ShowRollbackShadow;
+					if(pPlayer->m_ShowRollbackShadow)
+						SendChatTarget(ClientID, "Rollback Shadow enabled");
+					
+					if(!pPlayer->m_ShowRollbackShadow)
+						SendChatTarget(ClientID, "Rollback Shadow disabled");
+				}
+				else if(str_startswith(pMsg->m_pMessage + 1, "rollback_prediction") && !g_Config.m_SvSaveServer)
+				{
+					pPlayer->m_RollbackPrediction = !pPlayer->m_RollbackPrediction;
+
+					if(pPlayer->m_RollbackPrediction)
+						SendChatTarget(ClientID, "Rollback Prediction enabled");
+					
+					if(!pPlayer->m_RollbackPrediction)
+						SendChatTarget(ClientID, "Rollback Prediction disabled");
+					
+					if(!g_Config.m_SvRollback)
+						SendChatTarget(ClientID, "Rollback disabled by server vote");
+				}
 				else if(str_startswith(pMsg->m_pMessage + 1, "rollback") && !g_Config.m_SvSaveServer)
 				{
-					pPlayer->m_Rollback = !pPlayer->m_Rollback;
-					if(pPlayer->m_Rollback)
-						SendChatTarget(ClientID, "Rollback enabled");
+					bool disabled = pPlayer->m_Rollback;
+
+					if(!g_Config.m_SvRollback)
+						pPlayer->m_Rollback = false;
 					
-					if(!pPlayer->m_Rollback)
+					if(str_startswith(pMsg->m_pMessage + 1, "rollback ") && str_length(pMsg->m_pMessage+1) >= 10)
+					{
+						disabled = false;
+						pPlayer->m_Rollback_partial = str_toint(pMsg->m_pMessage + 10) / 100.0;
+						pPlayer->m_Rollback_partial = clamp(pPlayer->m_Rollback_partial, 0.0f, 1.0f);
+					}else if(!pPlayer->m_Rollback)
+					{
+						pPlayer->m_Rollback_partial = 1;
+					}
+
+					pPlayer->m_Rollback = !disabled;
+
+					if(disabled)
 						SendChatTarget(ClientID, "Rollback disabled");
 					
 					if(!g_Config.m_SvRollback)
 						SendChatTarget(ClientID, "Rollback disabled by server vote");
+
+					char str[256];
+					str_format(str, sizeof(str), "Rollback enabled (%i%)", (int)(pPlayer->m_Rollback_partial*100));
+					if(pPlayer->m_Rollback)
+						SendChatTarget(ClientID, str);
+				}
+				else if(str_startswith(pMsg->m_pMessage + 1, "runahead") && !g_Config.m_SvSaveServer)
+				{
+					if(str_startswith(pMsg->m_pMessage + 1, "runahead ") && str_length(pMsg->m_pMessage+1) >= 10)
+					{
+						pPlayer->m_RunAhead = str_toint(pMsg->m_pMessage + 10) / 100.0;
+						pPlayer->m_RunAhead = clamp(pPlayer->m_RunAhead, 0.0f, 1.0f);
+					}else
+					{
+						pPlayer->m_RunAhead = 0;
+					}
+
+					char str[256];
+					str_format(str, sizeof(str), "runahead set to %i%\n", (int)(pPlayer->m_RunAhead*100));
+					SendChatTarget(ClientID, str);
 				}
 				else
 				{

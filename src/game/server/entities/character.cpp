@@ -1198,11 +1198,50 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 
 	if(!Server()->IsSixup(SnappingClient))
 	{
+		int seePrediction = 0;
+
+		if(SnappingClient >= 0 && m_pPlayer->m_Rollback && m_pPlayer->GetCID() != SnappingClient)
+		{
+			if(!seePrediction)
+				seePrediction = Server()->Tick();
+			
+			seePrediction -= (Server()->Tick() - m_pPlayer->m_LastAckedSnapshot)*GameServer()->m_apPlayers[SnappingClient]->m_RunAhead;
+		}
+
+		if(SnappingClient >= 0 && m_pPlayer->GetCID() != SnappingClient &&
+			GameServer()->m_apPlayers[SnappingClient]->m_RollbackPrediction && GameServer()->m_apPlayers[SnappingClient]->m_Rollback)
+		{
+			if(!seePrediction)
+				seePrediction = Server()->Tick();
+			
+			// seePrediction -= (Server()->Tick() - GameServer()->m_apPlayers[SnappingClient]->m_LastAckedSnapshot);
+			seePrediction -= GameServer()->m_apPlayers[SnappingClient]->m_LAS_leftover;
+		}
+
+		if(SnappingClient >= 0 && GameServer()->m_apPlayers[SnappingClient]->GetCharacter() &&
+			GameServer()->m_apPlayers[SnappingClient]->GetCharacter()->m_Core.m_HookedPlayer == m_pPlayer->GetCID())
+		{
+			seePrediction = 0;
+		}
+
+		if(seePrediction < 0)
+			seePrediction = 0;
+
+		if(seePrediction && m_pPlayer->m_DeadAheads[seePrediction % POSITION_HISTORY])
+			return;
+
 		CNetObj_Character *pCharacter = static_cast<CNetObj_Character *>(Server()->SnapNewItem(NETOBJTYPE_CHARACTER, ID, sizeof(CNetObj_Character)));
 		if(!pCharacter)
 			return;
 
 		pCore->Write(pCharacter);
+
+		
+
+		if(seePrediction)
+		{
+			*pCharacter = m_pPlayer->m_CoreAheads[seePrediction % POSITION_HISTORY];
+		}
 
 		if(SnappingClient == m_Killer && m_DeathTick != -1)
 		{
@@ -1228,6 +1267,19 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 		pCharacter->m_Health = Health;
 		pCharacter->m_Armor = Armor;
 		pCharacter->m_PlayerFlags = GetPlayer()->m_PlayerFlags;
+
+		if(g_Config.m_SvLatestTarget)
+		{
+			float tmp_angle = atan2f(m_pPlayer->m_LatestTargetY, m_pPlayer->m_LatestTargetX);
+			if(tmp_angle < -(pi / 2.0f))
+			{
+				pCharacter->m_Angle = (int)((tmp_angle + (2.0f * pi)) * 256.0f);
+			}
+			else
+			{
+				pCharacter->m_Angle = (int)(tmp_angle * 256.0f);
+			}
+		}
 	}
 	else
 	{
@@ -1339,6 +1391,17 @@ void CCharacter::Snap(int SnappingClient)
 	pDDNetCharacter->m_Jumps = m_Core.m_Jumps;
 	pDDNetCharacter->m_TeleCheckpoint = m_TeleCheckpoint;
 	pDDNetCharacter->m_StrongWeakID = m_StrongWeakID;
+
+	if(SnappingClient != ID && SnappingClient >= 0 && m_pPlayer && m_pPlayer->m_Rollback && GameServer()->m_apPlayers[SnappingClient]->m_ShowRollbackShadow && GameServer()->m_apPlayers[SnappingClient]->GetCharacter())
+	{
+		CNetObj_Pickup *pShadow = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, ID+64, sizeof(CNetObj_Pickup)));
+
+		vec2 pos = GameServer()->m_apPlayers[SnappingClient]->GetCharacter()->m_Positions[m_pPlayer->m_LastAckedSnapshot % POSITION_HISTORY];
+		pShadow->m_X = (int)pos.x;
+		pShadow->m_Y = (int)pos.y;
+		pShadow->m_Subtype = 0;
+		pShadow->m_Type = ID % NUM_POWERUPS;
+	}
 }
 
 // DDRace
