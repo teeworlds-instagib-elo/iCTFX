@@ -57,6 +57,8 @@ void CPlayer::Reset()
 	m_ShowRollbackShadow = g_Config.m_SvRollbackShadow;
 	m_RollbackPrediction = true;
 
+	m_RunAhead = g_Config.m_SvRunAheadDefault / 100.0;
+
 	// DDRace
 
 	m_LastCommandPos = 0;
