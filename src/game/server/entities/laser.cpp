@@ -256,10 +256,7 @@ void CLaser::Tick()
 			shots[shot].clientDelays[player]--;
 			
 			if(!GameServer()->m_apPlayers[player]->GetCharacter())
-				continue;
-			
-			printf("shots[shot].clientDelays[player] %i\n", shots[shot].clientDelays[player]);
-			
+				continue;			
 			
 			int AckedTick = GameServer()->m_apPlayers[player]->m_LastAckedSnapshot;
 
@@ -284,12 +281,6 @@ void CLaser::Tick()
 			}
 
 			CCharacter *pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
-
-			vec2 outpos;
-			if(closest_point_on_line(shots[shot].from, shots[shot].to, GameServer()->m_apPlayers[player]->GetCharacter()->GetPos(), outpos))
-			{
-				printf("%f\n", GameServer()->m_apPlayers[player]->GetCharacter()->GetPos().y-outpos.y);
-			}
 
 			CCharacter *pHit = GameServer()->m_World.IntersectCharacter(shots[shot].from, shots[shot].to, 0.f, At, pOwnerChar, -1, GameServer()->m_apPlayers[player]->GetCharacter(), tick);
 			if(pHit)
