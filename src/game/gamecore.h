@@ -235,6 +235,7 @@ public:
 	int m_Direction;
 	int m_Angle;
 	CNetObj_PlayerInput m_Input;
+	vec2 m_OldHookPositions[200];
 
 	int m_TriggeredEvents;
 
