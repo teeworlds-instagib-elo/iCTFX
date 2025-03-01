@@ -240,11 +240,8 @@ void CPlayer::Tick()
 		CCharacterCore pred_core = GetCharacter()->GetCore();
 		int deathTick = GetCharacter()->m_DeathTick;
 		pred_core.m_pWorld = nullptr;
-		for(int i = 0; i < POSITION_HISTORY; i++)
+		for(int i = 0; i < POSITION_HISTORY-1; i++)
 		{
-			pred_core.Tick(false);
-			pred_core.Move();
-			pred_core.Quantize();
 			CNetObj_CharacterCore tmpCore;
 			pred_core.Write(&tmpCore);
 			CNetObj_CharacterCore * pCore = &(m_CoreAheads[(POSITION_HISTORY+Server()->Tick()-i) % POSITION_HISTORY]);
@@ -260,6 +257,18 @@ void CPlayer::Tick()
 				pCore->m_X = oldX*smoothing+ tmpCore.m_X*(1-smoothing);
 				pCore->m_Y = oldY*smoothing+ tmpCore.m_Y*(1-smoothing);
 			}
+
+			bool haveInput = false;
+			CNetObj_PlayerInput input;
+			if(Server()->GetClientInput(GetCID(), Server()->Tick()+i, &input) && g_Config.m_SvPredictionUseInput)
+			{
+				haveInput = true;
+				pred_core.m_Input = input;
+			}
+
+			pred_core.Tick(haveInput);
+			pred_core.Move();
+			pred_core.Quantize();
 		}
 	}
 

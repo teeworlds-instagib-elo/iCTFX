@@ -1548,7 +1548,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 
 			m_aClients[ClientID].m_LastInputTick = IntendedTick;
 
-			pInput = &m_aClients[ClientID].m_aInputs[m_aClients[ClientID].m_CurrentInput];
+			pInput = &m_aClients[ClientID].m_aInputs[IntendedTick % 200];
 
 			if(IntendedTick <= Tick())
 				IntendedTick = Tick() + 1;
@@ -1560,9 +1560,6 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 				pInput->m_aData[i] = Unpacker.GetInt();
 
 			mem_copy(m_aClients[ClientID].m_LatestInput.m_aData, pInput->m_aData, MAX_INPUT_SIZE * sizeof(int));
-
-			m_aClients[ClientID].m_CurrentInput++;
-			m_aClients[ClientID].m_CurrentInput %= 200;
 
 			// call the mod with the fresh input data
 			if(m_aClients[ClientID].m_State == CClient::STATE_INGAME)
@@ -2620,9 +2617,8 @@ int CServer::Run()
 
 				for(int c = 0; c < MAX_CLIENTS; c++)
 					if(m_aClients[c].m_State == CClient::STATE_INGAME)
-						for(auto &Input : m_aClients[c].m_aInputs)
-							if(Input.m_GameTick == Tick() + 1)
-								GameServer()->OnClientPredictedEarlyInput(c, Input.m_aData);
+						if(m_aClients[c].m_aInputs[(Tick() + 1) % 200].m_GameTick == Tick() + 1)
+							GameServer()->OnClientPredictedEarlyInput(c, m_aClients[c].m_aInputs[(Tick() + 1) % 200].m_aData);
 
 				m_CurrentGameTick++;
 				NewTicks++;
@@ -2756,6 +2752,23 @@ int CServer::Run()
 	m_NetServer.Close();
 
 	return ErrorShutdown();
+}
+
+bool CServer::GetClientInput(int ClientID, int Tick, CNetObj_PlayerInput * pInput)
+{
+	if(ClientID < 0 || ClientID > MAX_CLIENTS)
+		return false;
+	
+	if(Tick < 0)
+		return false;
+	
+	if(m_aClients[ClientID].m_aInputs[Tick % 200].m_GameTick == Tick)
+	{
+		mem_copy(pInput, m_aClients[ClientID].m_aInputs[Tick % 200].m_aData, sizeof(CNetObj_PlayerInput));
+		return true;
+	}
+
+	return false;
 }
 
 void CServer::ConTestingCommands(CConsole::IResult *pResult, void *pUser)

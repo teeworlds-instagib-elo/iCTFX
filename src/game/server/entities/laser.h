@@ -45,6 +45,7 @@ private:
 		vec2 from;
 		vec2 to;
 		bool clientsTested [MAX_CLIENTS];
+		int clientDelays[MAX_CLIENTS];
 	};
 
 	int shot_index;

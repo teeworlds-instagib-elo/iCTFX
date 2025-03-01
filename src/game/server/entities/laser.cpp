@@ -113,12 +113,14 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 				if(!GameServer()->m_apPlayers[player]->m_Rollback)
 					continue;
 				
+				int AckedTick = GameServer()->m_apPlayers[player]->m_LastAckedSnapshot;
+				
+				shots[shot_index-1].clientDelays[player] = Server()->Tick()-AckedTick;
+				
 				if(!GameServer()->m_apPlayers[player]->GetCharacter())
 					continue;
 				
 				
-				int AckedTick = GameServer()->m_apPlayers[player]->m_LastAckedSnapshot;
-
 				if(AckedTick < 0) //safety check
 					continue;
 
@@ -251,18 +253,22 @@ void CLaser::Tick()
 			if(!GameServer()->m_apPlayers[player]->m_Rollback)
 				continue;
 			
+			shots[shot].clientDelays[player]--;
+			
 			if(!GameServer()->m_apPlayers[player]->GetCharacter())
 				continue;
+			
+			printf("shots[shot].clientDelays[player] %i\n", shots[shot].clientDelays[player]);
 			
 			
 			int AckedTick = GameServer()->m_apPlayers[player]->m_LastAckedSnapshot;
 
 			AckedTick = Server()->Tick() - (Server()->Tick()-AckedTick)*GameServer()->m_apPlayers[m_Owner]->m_RunAhead;
 
-			if(AckedTick < m_DeathTick)
+			if(shots[shot].clientDelays[player] >= g_Config.m_SvRunAheadLaserOffset)
 				m_MarkedForDestroy = false;
 			
-			if(AckedTick+1 <= shots[shot].tick || shots[shot].clientsTested[player])
+			if(shots[shot].clientDelays[player] >= g_Config.m_SvRunAheadLaserOffset || shots[shot].clientsTested[player])
 				continue;
 			
 			shots[shot].clientsTested[player] = true;
@@ -278,6 +284,12 @@ void CLaser::Tick()
 			}
 
 			CCharacter *pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
+
+			vec2 outpos;
+			if(closest_point_on_line(shots[shot].from, shots[shot].to, GameServer()->m_apPlayers[player]->GetCharacter()->GetPos(), outpos))
+			{
+				printf("%f\n", GameServer()->m_apPlayers[player]->GetCharacter()->GetPos().y-outpos.y);
+			}
 
 			CCharacter *pHit = GameServer()->m_World.IntersectCharacter(shots[shot].from, shots[shot].to, 0.f, At, pOwnerChar, -1, GameServer()->m_apPlayers[player]->GetCharacter(), tick);
 			if(pHit)
