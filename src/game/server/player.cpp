@@ -56,6 +56,7 @@ void CPlayer::Reset()
 	m_Rollback_partial = 1;
 	m_ShowRollbackShadow = g_Config.m_SvRollbackShadow;
 	m_RollbackPrediction = true;
+	m_HitPoints = 1;
 
 	m_RunAhead = g_Config.m_SvRunAheadDefault / 100.0;
 

@@ -118,6 +118,7 @@ class CGameContext : public IGameServer
 	static void ConchainSpecialMotdupdate(IConsole::IResult *pResult, void *pUserData, IConsole::FCommandCallback pfnCallback, void *pCallbackUserData);
 
 	static void ConSwapTeams(IConsole::IResult *pResult, void *pUserData);
+	static void ConSetHitPoints(IConsole::IResult *pResult, void *pUserData);
 	static void ConShuffleTeams(IConsole::IResult *pResult, void *pUserData);
 	void Construct(int Resetting);
 	void Destruct(int Resetting);

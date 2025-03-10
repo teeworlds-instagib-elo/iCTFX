@@ -101,6 +101,9 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 
 	Server()->StartRecord(m_pPlayer->GetCID());
 
+	m_Health = pPlayer->m_HitPoints;
+	printf("m_Health %i\n", m_Health);
+	
 	return true;
 }
 
@@ -1094,7 +1097,7 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int tick)
 		m_EmoteType = EMOTE_PAIN;
 		m_EmoteStop = Server()->Tick() + 500 * Server()->TickSpeed() / 1000;
 	}
-	m_Health = 0;
+	m_Health--;
 
 	
 
