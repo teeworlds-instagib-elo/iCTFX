@@ -172,6 +172,11 @@ MACRO_CONFIG_INT(SvPredictionUseInput, sv_prediction_use_input, 1, 0, 1, CFGFLAG
 MACRO_CONFIG_INT(SvAllowDummy, sv_allow_dummy, 1, 0, 1, CFGFLAG_SERVER, "Allow the use of dummies")
 MACRO_CONFIG_INT(SvAllowZoom, sv_allow_zoom, 0, 0, 1, CFGFLAG_SERVER, "Allow the use of zoom")
 
+MACRO_CONFIG_INT(sv_laser, sv_laser, 1, 0, 1, CFGFLAG_SERVER, "give all players laser")
+MACRO_CONFIG_INT(sv_grenade, sv_grenade, 0, 0, 1, CFGFLAG_SERVER, "give all players grenade")
+MACRO_CONFIG_INT(sv_hammer, sv_hammer, 0, 0, 1, CFGFLAG_SERVER, "give all players hammer")
+
+
 MACRO_CONFIG_INT(SvStrictSpectateMode, sv_strict_spectate_mode, 0, 0, 1, CFGFLAG_SERVER, "Restricts information in spectator mode")
 MACRO_CONFIG_INT(SvVoteSpectate, sv_vote_spectate, 1, 0, 1, CFGFLAG_SERVER, "Allow voting to move players to spectators")
 MACRO_CONFIG_INT(SvVoteSpectateRejoindelay, sv_vote_spectate_rejoindelay, 3, 0, 1000, CFGFLAG_SERVER, "How many minutes to wait before a player can rejoin after being moved to spectators by vote")

@@ -69,13 +69,6 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_WeaponChangeTick = Server()->Tick();
 	Antibot()->OnSpawn(m_pPlayer->GetCID());
 
-	for(int i = 0; i < WEAPON_NINJA; i++)
-	{
-		SetWeaponGot(i, false);
-	}
-
-	SetWeaponGot(WEAPON_LASER, false);
-
 	m_Core.Reset();
 	m_Core.Init(&GameServer()->m_World.m_Core, GameServer()->Collision(), nullptr, nullptr, this);
 	m_Core.m_ActiveWeapon = WEAPON_LASER;
@@ -102,8 +95,8 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	Server()->StartRecord(m_pPlayer->GetCID());
 
 	m_Health = pPlayer->m_HitPoints;
-	printf("m_Health %i\n", m_Health);
-	
+	ResetPickups();
+
 	return true;
 }
 
@@ -116,9 +109,11 @@ void CCharacter::Destroy()
 
 void CCharacter::SetWeapon(int W)
 {
-	return; //ictf
 	if(W == m_Core.m_ActiveWeapon)
 		return;
+	
+	if(m_pPlayer)
+		m_pPlayer->m_LastWeapon = W;
 
 	m_LastWeapon = m_Core.m_ActiveWeapon;
 	m_QueuedWeapon = -1;
@@ -1092,20 +1087,24 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int tick)
 		GameServer()->CreateSound(m_Pos, SOUND_PLAYER_PAIN_SHORT);*/
 	if(GameServer()->m_pController->IsFriendlyFire(m_pPlayer->GetCID(), From))
 		return false;
+
+	// do damage Hit sound
 	if(Dmg)
 	{
 		m_EmoteType = EMOTE_PAIN;
 		m_EmoteStop = Server()->Tick() + 500 * Server()->TickSpeed() / 1000;
 	}
-	m_Health--;
-
-	
-
-	// do damage Hit sound
-
 
 	vec2 Temp = m_Core.m_Vel + Force;
 	m_Core.m_Vel = ClampVel(m_MoveRestrictions, Temp);
+
+	if(WEAPON_GRENADE == Weapon && Dmg < 4)
+		return false;
+	
+	if(m_pPlayer->GetCID() == From)
+		return false;
+	
+	m_Health--;
 	
 	// check for death
 	if(m_Health <= 0)
@@ -2398,11 +2397,27 @@ void CCharacter::GiveAllWeapons()
 
 void CCharacter::ResetPickups()
 {
-	for(int i = WEAPON_SHOTGUN; i < NUM_WEAPONS - 1; i++)
+	for(int i = WEAPON_HAMMER; i < NUM_WEAPONS - 1; i++)
 	{
 		m_aWeapons[i].m_Got = false;
-		if(m_Core.m_ActiveWeapon == i)
-			m_Core.m_ActiveWeapon = WEAPON_GUN;
+	}
+
+	if(g_Config.m_sv_hammer)
+	{
+		m_aWeapons[WEAPON_HAMMER].m_Got = true;
+		m_Core.m_ActiveWeapon = WEAPON_HAMMER;
+	}
+
+	if(g_Config.m_sv_grenade)
+	{
+		m_aWeapons[WEAPON_GRENADE].m_Got = true;
+		m_Core.m_ActiveWeapon = WEAPON_GRENADE;
+	}
+
+	if(g_Config.m_sv_laser)
+	{
+		m_aWeapons[WEAPON_LASER].m_Got = true;
+		m_Core.m_ActiveWeapon = WEAPON_LASER;
 	}
 }
 

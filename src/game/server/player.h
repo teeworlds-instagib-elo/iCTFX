@@ -108,6 +108,7 @@ public:
 	float m_RunAhead;
 
 	int m_HitPoints;
+	int m_LastWeapon = WEAPON_LASER;
 
 	CNetObj_Character m_CoreAheads[POSITION_HISTORY];
 	bool m_DeadAheads[POSITION_HISTORY];

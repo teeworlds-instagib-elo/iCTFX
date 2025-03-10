@@ -3223,6 +3223,13 @@ void CServer::ConStopRecord(IConsole::IResult *pResult, void *pUser)
 void CServer::ConMapReload(IConsole::IResult *pResult, void *pUser)
 {
 	((CServer *)pUser)->m_MapReload = true;
+	g_Config.m_sv_grenade = 0;
+	g_Config.m_sv_laser = 1;
+	g_Config.m_sv_hammer = 0;
+
+	g_Config.m_SvRollback = 1;
+	g_Config.m_SvRollbackShadow = 0;
+	g_Config.m_SvRunAheadDefault = 0;
 }
 
 void CServer::ConLogout(IConsole::IResult *pResult, void *pUser)
