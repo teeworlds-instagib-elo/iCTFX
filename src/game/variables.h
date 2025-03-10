@@ -162,6 +162,7 @@ MACRO_CONFIG_INT(SvInactiveKick, sv_inactivekick, 0, 0, 2, CFGFLAG_SERVER, "How 
 MACRO_CONFIG_INT(SvRollback, sv_rollback, 1, 0, 1, CFGFLAG_SERVER, "Enables / disables rollback support")
 MACRO_CONFIG_INT(SvRollbackShadow, sv_rollback_shadow, 0, 0, 1, CFGFLAG_SERVER, "Shows rollback's shadow for other players by default")
 MACRO_CONFIG_INT(SvAntiZoom, sv_antizoom, 0, 0, 1, CFGFLAG_SERVER, "Limits visability range of players, disabled by default for high ping players")
+MACRO_CONFIG_INT(SvLineOfSight, sv_line_of_sight, 0, 0, 1, CFGFLAG_SERVER, "Limits visability to players in line of sight")
 MACRO_CONFIG_INT(SvLatestTarget, sv_latest_target, 0, 0, 1, CFGFLAG_SERVER, "Shows the latest direction player is looking vs correct timing")
 
 MACRO_CONFIG_INT(SvRunAheadDefault, sv_runahead_default, 0, 0, 100, CFGFLAG_SERVER, "amount of runahead by default")

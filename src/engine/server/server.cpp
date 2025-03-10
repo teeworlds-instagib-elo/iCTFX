@@ -3230,6 +3230,7 @@ void CServer::ConMapReload(IConsole::IResult *pResult, void *pUser)
 	g_Config.m_SvRollback = 1;
 	g_Config.m_SvRollbackShadow = 0;
 	g_Config.m_SvRunAheadDefault = 0;
+	g_Config.m_SvLineOfSight = 0;
 }
 
 void CServer::ConLogout(IConsole::IResult *pResult, void *pUser)
