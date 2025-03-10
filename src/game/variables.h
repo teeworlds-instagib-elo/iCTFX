@@ -169,6 +169,8 @@ MACRO_CONFIG_INT(SvRunAheadSmoothing, sv_runahead_smoothing, 35, 0, 100, CFGFLAG
 MACRO_CONFIG_INT(SvRunAheadLaserOffset, sv_runahead_laser_offset, 1, -10, 10, CFGFLAG_SERVER, "sets amount of smoothing for runahead")
 MACRO_CONFIG_INT(SvPredictionUseInput, sv_prediction_use_input, 1, 0, 1, CFGFLAG_SERVER, "uses buffered inputs to get an more accurate prediction, disable for testing purposes")
 
+MACRO_CONFIG_INT(SvAllowDummy, sv_allow_dummy, 1, 0, 1, CFGFLAG_SERVER, "Allow the use of dummies")
+MACRO_CONFIG_INT(SvAllowZoom, sv_allow_zoom, 0, 0, 1, CFGFLAG_SERVER, "Allow the use of zoom")
 
 MACRO_CONFIG_INT(SvStrictSpectateMode, sv_strict_spectate_mode, 0, 0, 1, CFGFLAG_SERVER, "Restricts information in spectator mode")
 MACRO_CONFIG_INT(SvVoteSpectate, sv_vote_spectate, 1, 0, 1, CFGFLAG_SERVER, "Allow voting to move players to spectators")
