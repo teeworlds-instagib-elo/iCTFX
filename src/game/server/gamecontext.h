@@ -203,6 +203,8 @@ public:
 	void CreateSound(vec2 Pos, int Sound, int64_t Mask = -1);
 	void CreateSoundGlobal(int Sound, int Target = -1);
 
+	bool CheckSightVisibility(CCharacter * pChar, vec2 Pos, float radius, CCharacter * pCharTarget);
+
 	enum
 	{
 		CHAT_ALL = -2,

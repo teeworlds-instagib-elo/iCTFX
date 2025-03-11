@@ -1350,10 +1350,7 @@ void CCharacter::Snap(int SnappingClient)
 	if(g_Config.m_SvLineOfSight && SnappingClient >= 0 && m_pPlayer->GetCID() != SnappingClient && GameServer()->m_apPlayers[SnappingClient]->GetCharacter())
 	{
 		CCharacter * snapChar = GameServer()->m_apPlayers[SnappingClient]->GetCharacter();
-		vec2 At;
-		vec2 To = m_Pos;
-		GameServer()->Collision()->IntersectLine(snapChar->m_Pos, To, &To, 0);
-		if(!GameServer()->m_World.IntersectCharacter(snapChar->m_Pos, To, 0.f, At, snapChar, -1, this, -1))
+		if(!GameServer()->CheckSightVisibility(snapChar, m_Pos, CCharacter::ms_PhysSize, this))
 			return;
 	}
 

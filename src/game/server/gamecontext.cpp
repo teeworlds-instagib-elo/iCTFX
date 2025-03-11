@@ -325,6 +325,45 @@ void CGameContext::CreateSoundGlobal(int Sound, int Target)
 	}
 }
 
+bool CGameContext::CheckSightVisibility(CCharacter * pChar, vec2 Pos, float radius, CCharacter * pCharTarget)
+{
+	if(!pChar)
+		return true;
+	
+	for(int x = -1; x < 2; x+=2)
+	{
+		for(int y = -1; y < 2; y+=2)
+		{
+			for(int x2 = -1; x2 < 2; x2+=2)
+			{
+				for(int y2 = -1; y2 < 2; y2+=2)
+				{
+					vec2 At;
+					vec2 To = Pos;
+					vec2 offset1 = vec2(x, y)*CCharacter::ms_PhysSize/2;
+					vec2 offset2 = vec2(x2, y2)*radius/2;
+
+					vec2 From = pChar->m_Pos + offset1;
+					To += offset2;
+					Collision()->IntersectLine(From, To, &To, 0);
+					if(m_World.IntersectCharacter(From, To, 0.f, At, pChar, -1, pCharTarget, -1))
+						return true;
+				}
+			}
+		}
+	}
+
+	vec2 At;
+	vec2 To = Pos;
+
+	vec2 From = pChar->m_Pos;
+	Collision()->IntersectLine(From, To, &To, 0);
+	if(m_World.IntersectCharacter(From, To, 0.f, At, pChar, -1, pCharTarget, -1))
+		return true;
+
+	return false;
+}
+
 void CGameContext::CallVote(int ClientID, const char *pDesc, const char *pCmd, const char *pReason, const char *pChatmsg, const char *pSixupDesc)
 {
 	// check if a vote is already running
