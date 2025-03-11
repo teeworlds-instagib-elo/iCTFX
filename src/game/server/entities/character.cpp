@@ -1112,6 +1112,15 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int tick)
 		Die(From, Weapon, tick);
 
 		return false;
+	}else
+	{
+		int Mask = CmaskOne(m_Killer);
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetTeam() == TEAM_SPECTATORS && GameServer()->m_apPlayers[i]->m_SpectatorID == m_Killer)
+				Mask |= CmaskOne(i);
+		}
+		GameServer()->CreateSound(GameServer()->m_apPlayers[m_Killer]->m_ViewPos, SOUND_HIT, Mask);
 	}
 
 	return true;
