@@ -225,7 +225,7 @@ void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 		GameServer()->SendChat(-1, CGameContext::CHAT_ALL, aBuf, -1, CGameContext::CHAT_SIX);
 
 		GameServer()->SendChatTarget(ClientID, "welcome to iCTFX!");
-		GameServer()->SendChatTarget(ClientID, "Version: 1.1");
+		GameServer()->SendChatTarget(ClientID, "Version: 1.2");
 	}
 
 	pPlayer->m_Score = 0;

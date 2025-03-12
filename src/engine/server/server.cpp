@@ -1151,7 +1151,12 @@ void CServer::SendCapabilities(int ClientID)
 {
 	CMsgPacker Msg(NETMSG_CAPABILITIES, true);
 	Msg.AddInt(SERVERCAP_CURVERSION); // version
-	Msg.AddInt(SERVERCAPFLAG_DDNET | SERVERCAPFLAG_CHATTIMEOUTCODE | SERVERCAPFLAG_ANYPLAYERFLAG | SERVERCAPFLAG_PINGEX | SERVERCAPFLAG_ALLOWDUMMY | SERVERCAPFLAG_SYNCWEAPONINPUT); // flags
+	int flags = SERVERCAPFLAG_DDNET | !SERVERCAPFLAG_CHATTIMEOUTCODE | SERVERCAPFLAG_ANYPLAYERFLAG | SERVERCAPFLAG_PINGEX | SERVERCAPFLAG_SYNCWEAPONINPUT;
+
+	if(g_Config.m_SvAllowDummy)
+		flags = flags | SERVERCAPFLAG_ALLOWDUMMY;
+
+	Msg.AddInt(flags); // flags
 	SendMsg(&Msg, MSGFLAG_VITAL, ClientID);
 }
 
@@ -3218,6 +3223,14 @@ void CServer::ConStopRecord(IConsole::IResult *pResult, void *pUser)
 void CServer::ConMapReload(IConsole::IResult *pResult, void *pUser)
 {
 	((CServer *)pUser)->m_MapReload = true;
+	g_Config.m_sv_grenade = 0;
+	g_Config.m_sv_laser = 1;
+	g_Config.m_sv_hammer = 0;
+
+	g_Config.m_SvRollback = 1;
+	g_Config.m_SvRollbackShadow = 0;
+	g_Config.m_SvRunAheadDefault = 0;
+	g_Config.m_SvLineOfSight = 0;
 }
 
 void CServer::ConLogout(IConsole::IResult *pResult, void *pUser)

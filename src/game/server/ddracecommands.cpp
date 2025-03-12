@@ -856,6 +856,25 @@ void CGameContext::ConSwapTeams(IConsole::IResult *pResult, void *pUserData)
 	pSelf->SwapTeams();
 }
 
+void CGameContext::ConSetHitPoints(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+
+	printf(pResult->GetString(1));
+
+	for(int ClientID = 0; ClientID < MAX_CLIENTS; ClientID++)
+	{
+		if(str_comp(pResult->GetString(1), pSelf->Server()->ClientName(ClientID)) == 0)
+		{
+			pSelf->m_apPlayers[ClientID]->m_HitPoints = pResult->GetInteger(0);
+			return;
+		}
+	}
+
+	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "info",
+			"couldn't find player");
+}
+
 void CGameContext::ConShuffleTeams(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;

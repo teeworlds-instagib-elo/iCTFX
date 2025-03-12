@@ -162,12 +162,20 @@ MACRO_CONFIG_INT(SvInactiveKick, sv_inactivekick, 0, 0, 2, CFGFLAG_SERVER, "How 
 MACRO_CONFIG_INT(SvRollback, sv_rollback, 1, 0, 1, CFGFLAG_SERVER, "Enables / disables rollback support")
 MACRO_CONFIG_INT(SvRollbackShadow, sv_rollback_shadow, 0, 0, 1, CFGFLAG_SERVER, "Shows rollback's shadow for other players by default")
 MACRO_CONFIG_INT(SvAntiZoom, sv_antizoom, 0, 0, 1, CFGFLAG_SERVER, "Limits visability range of players, disabled by default for high ping players")
+MACRO_CONFIG_INT(SvLineOfSight, sv_line_of_sight, 0, 0, 1, CFGFLAG_SERVER, "Limits visability to players in line of sight")
 MACRO_CONFIG_INT(SvLatestTarget, sv_latest_target, 0, 0, 1, CFGFLAG_SERVER, "Shows the latest direction player is looking vs correct timing")
 
 MACRO_CONFIG_INT(SvRunAheadDefault, sv_runahead_default, 0, 0, 100, CFGFLAG_SERVER, "amount of runahead by default")
 MACRO_CONFIG_INT(SvRunAheadSmoothing, sv_runahead_smoothing, 35, 0, 100, CFGFLAG_SERVER, "sets amount of smoothing for runahead")
 MACRO_CONFIG_INT(SvRunAheadLaserOffset, sv_runahead_laser_offset, 1, -10, 10, CFGFLAG_SERVER, "sets amount of smoothing for runahead")
 MACRO_CONFIG_INT(SvPredictionUseInput, sv_prediction_use_input, 1, 0, 1, CFGFLAG_SERVER, "uses buffered inputs to get an more accurate prediction, disable for testing purposes")
+
+MACRO_CONFIG_INT(SvAllowDummy, sv_allow_dummy, 1, 0, 1, CFGFLAG_SERVER, "Allow the use of dummies")
+MACRO_CONFIG_INT(SvAllowZoom, sv_allow_zoom, 0, 0, 1, CFGFLAG_SERVER, "Allow the use of zoom")
+
+MACRO_CONFIG_INT(sv_laser, sv_laser, 1, 0, 1, CFGFLAG_SERVER, "give all players laser")
+MACRO_CONFIG_INT(sv_grenade, sv_grenade, 0, 0, 1, CFGFLAG_SERVER, "give all players grenade")
+MACRO_CONFIG_INT(sv_hammer, sv_hammer, 0, 0, 1, CFGFLAG_SERVER, "give all players hammer")
 
 
 MACRO_CONFIG_INT(SvStrictSpectateMode, sv_strict_spectate_mode, 0, 0, 1, CFGFLAG_SERVER, "Restricts information in spectator mode")
@@ -182,7 +190,7 @@ MACRO_CONFIG_INT(SvOldTeleportHook, sv_old_teleport_hook, 0, 0, 1, CFGFLAG_SERVE
 MACRO_CONFIG_INT(SvTeleportHoldHook, sv_teleport_hold_hook, 0, 0, 1, CFGFLAG_SERVER | CFGFLAG_GAME, "Hold hook when teleported")
 MACRO_CONFIG_INT(SvTeleportLoseWeapons, sv_teleport_lose_weapons, 0, 0, 1, CFGFLAG_SERVER | CFGFLAG_GAME, "Lose weapons when teleported (useful for some race maps)")
 MACRO_CONFIG_INT(SvDeepfly, sv_deepfly, 1, 0, 1, CFGFLAG_SERVER | CFGFLAG_GAME, "Allow fire non auto weapons when deep")
-MACRO_CONFIG_INT(SvDestroyBulletsOnDeath, sv_destroy_bullets_on_death, 1, 0, 1, CFGFLAG_SERVER | CFGFLAG_GAME, "Destroy bullets when their owner dies")
+MACRO_CONFIG_INT(SvDestroyBulletsOnDeath, sv_destroy_bullets_on_death, 0, 0, 1, CFGFLAG_SERVER | CFGFLAG_GAME, "Destroy bullets when their owner dies")
 MACRO_CONFIG_INT(SvDestroyLasersOnDeath, sv_destroy_lasers_on_death, 0, 0, 1, CFGFLAG_SERVER | CFGFLAG_GAME, "Destroy lasers when their owner dies")
 
 MACRO_CONFIG_INT(SvMapUpdateRate, sv_mapupdaterate, 5, 1, 100, CFGFLAG_SERVER, "64 player id <-> vanilla id players map update rate")

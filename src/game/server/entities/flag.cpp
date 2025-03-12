@@ -4,6 +4,8 @@
 #include "flag.h"
 #include <game/server/gamecontext.h>
 #include <game/server/entities/character.h>
+#include <game/server/player.h>
+#include <engine/shared/config.h>
 
 CFlag::CFlag(CGameWorld *pGameWorld, int Team)
 : CEntity(pGameWorld, CGameWorld::ENTTYPE_FLAG)
@@ -37,6 +39,10 @@ void CFlag::TickPaused()
 void CFlag::Snap(int SnappingClient)
 {
 	if(NetworkClipped(SnappingClient))
+		return;
+	
+	if(g_Config.m_SvLineOfSight && m_pCarryingCharacter != NULL && SnappingClient >= 0 && GameServer()->m_apPlayers[SnappingClient]->GetCharacter() &&
+		GameServer()->m_apPlayers[SnappingClient]->GetCharacter() != m_pCarryingCharacter && !GameServer()->CheckSightVisibility(GameServer()->m_apPlayers[SnappingClient]->GetCharacter(), m_Pos, CCharacter::ms_PhysSize, 0))
 		return;
 
 	CNetObj_Flag *pFlag = (CNetObj_Flag *)Server()->SnapNewItem(NETOBJTYPE_FLAG, m_Team, sizeof(CNetObj_Flag));
