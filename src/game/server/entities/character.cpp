@@ -353,7 +353,25 @@ void CCharacter::HandleWeaponSwitch()
 
 void CCharacter::FireWeapon()
 {
-	
+	if(m_Core.m_ActiveWeapon == WEAPON_LASER && m_QueuedWeapon == WEAPON_GRENADE)
+	{
+		float FireDelay;
+		if(!m_TuneZone)
+			GameServer()->Tuning()->Get(38 + WEAPON_GRENADE, &FireDelay);
+		else
+			GameServer()->TuningList()[m_TuneZone].Get(38 + WEAPON_GRENADE, &FireDelay);
+		int ReloadTimeGrenade = FireDelay * Server()->TickSpeed() / 1000;
+		if(!m_TuneZone)
+			GameServer()->Tuning()->Get(38 + WEAPON_LASER, &FireDelay);
+		else
+			GameServer()->TuningList()[m_TuneZone].Get(38 + WEAPON_LASER, &FireDelay);
+		int ReloadTimeLaser = FireDelay * Server()->TickSpeed() / 1000;
+
+
+		if(ReloadTimeLaser-ReloadTimeGrenade > m_ReloadTimer)
+			m_ReloadTimer = 0;
+	}
+		
 	if(m_ReloadTimer != 0)
 	{
 		if(m_LatestInput.m_Fire & 1)
@@ -365,7 +383,6 @@ void CCharacter::FireWeapon()
 
 	DoWeaponSwitch();
 	vec2 Direction = normalize(vec2(m_LatestInput.m_TargetX, m_LatestInput.m_TargetY));
-
 
 
 	// check if we gonna fire
@@ -391,13 +408,18 @@ void CCharacter::FireWeapon()
 	}
 
 	// check for ammo
-	// if(!m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo)
-	// {
-	// 	/*// 125ms is a magical limit of how fast a human can click
-	// 	m_ReloadTimer = 125 * Server()->TickSpeed() / 1000;
-	// 	GameServer()->CreateSound(m_Pos, SOUND_WEAPON_NOAMMO);*/
-	// 	return;
-	// }
+	if(m_Core.m_ActiveWeapon == WEAPON_GRENADE && !m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo)
+	{
+		// 125ms is a magical limit of how fast a human can click
+		m_ReloadTimer = 125 * Server()->TickSpeed() / 1000;
+		GameServer()->CreateSound(m_Pos, SOUND_WEAPON_NOAMMO);
+		return;
+	}
+
+	if(m_Core.m_ActiveWeapon == WEAPON_GRENADE)
+	{
+		m_aWeapons[WEAPON_GRENADE].m_Ammo--;
+	}
 
 	vec2 ProjStartPos = m_Pos + Direction * GetProximityRadius() * 0.75f;
 	switch(m_Core.m_ActiveWeapon)
@@ -715,6 +737,12 @@ void CCharacter::Tick()
 
 	if(m_Paused)
 		return;
+	
+	if(Server()->Tick() % 50*3 == 0)
+		m_aWeapons[WEAPON_GRENADE].m_Ammo++;
+	
+	if(m_aWeapons[WEAPON_GRENADE].m_Ammo > 4)
+		m_aWeapons[WEAPON_GRENADE].m_Ammo = 4;
 
 	// set emote
 	if(m_EmoteStop < Server()->Tick())
@@ -1098,6 +1126,9 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int tick)
 	vec2 Temp = m_Core.m_Vel + Force;
 	m_Core.m_Vel = ClampVel(m_MoveRestrictions, Temp);
 
+	if(WEAPON_GRENADE == Weapon && From == m_pPlayer->GetCID())
+		m_aWeapons[WEAPON_GRENADE].m_Ammo++;
+
 	if(WEAPON_GRENADE == Weapon && Dmg < 4)
 		return false;
 	
@@ -1276,6 +1307,8 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 		pCharacter->m_Weapon = Weapon;
 		pCharacter->m_AmmoCount = AmmoCount;
 		pCharacter->m_Health = Health;
+		if(m_pPlayer && m_pPlayer->m_HitPoints == 1)
+			pCharacter->m_Health = 10;
 		pCharacter->m_Armor = Armor;
 		pCharacter->m_PlayerFlags = GetPlayer()->m_PlayerFlags;
 
