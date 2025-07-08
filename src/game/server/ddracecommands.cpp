@@ -1008,7 +1008,13 @@ void CGameContext::ConSetHitPoints(IConsole::IResult *pResult, void *pUserData)
 void CGameContext::ConShuffleTeams(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
-	if(!pSelf->m_apController[pSelf->GetLobby(pResult->m_ClientID)]->IsTeamplay())
+
+	int Lobby = pResult->m_Lobby;
+
+	if(Lobby < 0 || Lobby >= MAX_LOBBIES)
+		return;
+
+	if(!pSelf->m_apController[Lobby]->IsTeamplay())
 		return;
 
 
@@ -1016,7 +1022,7 @@ void CGameContext::ConShuffleTeams(IConsole::IResult *pResult, void *pUserData)
 	int CounterBlue = 0;
 	int PlayerTeam = 0;
 	for(int i = 0; i < MAX_CLIENTS; ++i)
-		if(pSelf->m_apPlayers[i] && pSelf->m_apPlayers[i]->GetTeam() != TEAM_SPECTATORS)
+		if(pSelf->m_apPlayers[i] && pSelf->m_apPlayers[i]->GetTeam() != TEAM_SPECTATORS && pSelf->m_apPlayers[i]->GetLobby() == Lobby)
 			++PlayerTeam;
 	PlayerTeam = (PlayerTeam+1)/2;
 
@@ -1024,7 +1030,7 @@ void CGameContext::ConShuffleTeams(IConsole::IResult *pResult, void *pUserData)
 
 	for(int i = 0; i < MAX_CLIENTS; ++i)
 	{
-		if(pSelf->m_apPlayers[i] && pSelf->m_apPlayers[i]->GetTeam() != TEAM_SPECTATORS)
+		if(pSelf->m_apPlayers[i] && pSelf->m_apPlayers[i]->GetTeam() != TEAM_SPECTATORS && pSelf->m_apPlayers[i]->GetLobby() == Lobby)
 		{
 			if(CounterRed == PlayerTeam)
 				pSelf->m_apPlayers[i]->SetTeam(TEAM_BLUE, false);
@@ -1046,5 +1052,5 @@ void CGameContext::ConShuffleTeams(IConsole::IResult *pResult, void *pUserData)
 		}
 	}
 
-	(void)pSelf->m_apController[pSelf->GetLobby(pResult->m_ClientID)]->CheckTeamBalance();
+	(void)pSelf->m_apController[Lobby]->CheckTeamBalance();
 }
