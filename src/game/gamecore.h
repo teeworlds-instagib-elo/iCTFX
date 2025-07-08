@@ -200,6 +200,8 @@ public:
 	CTuningParams m_Tuning[2];
 	class CCharacterCore *m_apCharacters[MAX_CLIENTS];
 	CPrng *m_pPrng;
+
+	int m_Lobby;
 };
 
 class CCharacterCore
@@ -224,6 +226,7 @@ public:
 	int m_HookTick;
 	int m_HookState;
 	int m_HookedPlayer;
+	class CBot * m_HookedBot;
 	int m_ActiveWeapon;
 
 	bool m_NewHook;
@@ -239,7 +242,7 @@ public:
 
 	int m_TriggeredEvents;
 
-	void Init(CWorldCore *pWorld, CCollision *pCollision, CTeamsCore *pTeams = nullptr, std::map<int, std::vector<vec2>> *pTeleOuts = nullptr, CCharacter * character = nullptr);
+	void Init(CWorldCore *pWorld, CCollision *pCollision, std::map<int, std::vector<vec2>> *pTeleOuts = nullptr, CCharacter * character = nullptr);
 	void Reset();
 	void Tick(bool UseInput);
 	void Move();
@@ -259,7 +262,6 @@ public:
 	bool m_LeftWall;
 
 	// DDNet Character
-	void SetTeamsCore(CTeamsCore *pTeams);
 	void SetTeleOuts(std::map<int, std::vector<vec2>> *pTeleOuts);
 	void ReadDDNet(const CNetObj_DDNetCharacter *pObjDDNet);
 	bool m_Solo;
@@ -282,7 +284,6 @@ public:
 	CTuningParams m_Tuning;
 
 private:
-	CTeamsCore *m_pTeams;
 	int m_MoveRestrictions;
 	static bool IsSwitchActiveCb(int Number, void *pUser);
 };

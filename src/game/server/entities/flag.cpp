@@ -3,6 +3,7 @@
 
 #include "flag.h"
 #include <game/server/gamecontext.h>
+#include <game/server/gamemodes/DDRace.h>
 #include <game/server/entities/character.h>
 #include <game/server/player.h>
 #include <engine/shared/config.h>
@@ -20,6 +21,7 @@ CFlag::CFlag(CGameWorld *pGameWorld, int Team)
 
 void CFlag::Reset()
 {
+	m_BotGrabbed = false;
 	m_pCarryingCharacter = NULL;
 	m_AtStand = 1;
 	m_Pos = m_StandPos;
@@ -41,8 +43,11 @@ void CFlag::Snap(int SnappingClient)
 	if(NetworkClipped(SnappingClient))
 		return;
 	
-	if(g_Config.m_SvLineOfSight && m_pCarryingCharacter != NULL && SnappingClient >= 0 && GameServer()->m_apPlayers[SnappingClient]->GetCharacter() &&
-		GameServer()->m_apPlayers[SnappingClient]->GetCharacter() != m_pCarryingCharacter && !GameServer()->CheckSightVisibility(GameServer()->m_apPlayers[SnappingClient]->GetCharacter(), m_Pos, CCharacter::ms_PhysSize, 0))
+	if(GameWorld()->m_lineOfSight && m_pCarryingCharacter != NULL && SnappingClient >= 0 && GameServer()->m_apPlayers[SnappingClient]->GetCharacter() &&
+		GameServer()->m_apPlayers[SnappingClient]->GetCharacter() != m_pCarryingCharacter && !GameServer()->CheckSightVisibility(m_Lobby, GameServer()->m_apPlayers[SnappingClient]->GetCharacter(), m_Pos, CCharacter::ms_PhysSize, 0))
+		return;
+	
+	if(((CGameControllerDDRace*)GameServer()->m_apController[m_Lobby])->idm)
 		return;
 
 	CNetObj_Flag *pFlag = (CNetObj_Flag *)Server()->SnapNewItem(NETOBJTYPE_FLAG, m_Team, sizeof(CNetObj_Flag));

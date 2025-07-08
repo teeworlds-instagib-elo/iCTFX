@@ -15,15 +15,16 @@
 #include <algorithm>
 
 #include <limits>
+#include <game/server/entities/bot.h>
 
 #define GAME_TYPE_NAME "iCTFX"
 #define TEST_TYPE_NAME "TestiCTFX"
 
-CGameControllerDDRace::CGameControllerDDRace(class CGameContext *pGameServer) :
-	IGameController(pGameServer), m_Teams(pGameServer)
+CGameControllerDDRace::CGameControllerDDRace(class CGameContext *pGameServer, int Lobby) :
+	IGameController(pGameServer)
 {
 	m_pGameType = g_Config.m_SvTestingCommands ? TEST_TYPE_NAME : GAME_TYPE_NAME;
-	
+	m_Lobby = Lobby;
 	m_GameFlags = GAMEFLAG_TEAMS|GAMEFLAG_FLAGS;
 
 	InitTeleporter();
@@ -31,6 +32,9 @@ CGameControllerDDRace::CGameControllerDDRace(class CGameContext *pGameServer) :
 	m_apFlags[1] = 0;
 	m_aTeamscore[TEAM_RED] = 0;
 	m_aTeamscore[TEAM_BLUE] = 0;
+
+	idm = false;
+	m_BotCount = 0;
 	
 	if(g_Config.m_SvSaveServer) {
 		auto database = CreateMysqlConnection(g_Config.m_SqlDatabase, g_Config.m_SqlPrefix, g_Config.m_SqlUser, g_Config.m_SqlPass, g_Config.m_SqlHost, g_Config.m_SqlPort, g_Config.m_SqlSetup);
@@ -54,6 +58,136 @@ CGameControllerDDRace::CGameControllerDDRace(class CGameContext *pGameServer) :
 			database->Disconnect();
 		}
 		sql_handler->start();
+	}
+
+	int waypointAmount = 16;
+
+	m_aWaypoints[0].x = 7*32;
+	m_aWaypoints[0].y = 24.5*32;
+	m_aWaypoints[0].connections[0] = 4;
+	m_aWaypoints[0].connections[1] = 5;
+	m_aWaypoints[0].connectionAmount = 2;
+
+	m_aWaypoints[1].x = 40*32;
+	m_aWaypoints[1].y = 35*32;
+	m_aWaypoints[1].connections[0] = 2;
+	m_aWaypoints[1].connections[1] = 10;
+	m_aWaypoints[1].connections[2] = 15;
+	m_aWaypoints[1].connectionAmount = 3;
+
+	m_aWaypoints[2].x = 36*32;
+	m_aWaypoints[2].y = 22.5*32;
+	m_aWaypoints[2].connections[0] = 5;
+	m_aWaypoints[2].connections[1] = 3;
+	m_aWaypoints[2].connections[2] = 1;
+	m_aWaypoints[2].connectionAmount = 3;
+
+	m_aWaypoints[3].x = 34*32;
+	m_aWaypoints[3].y = 13*32;
+	m_aWaypoints[3].connections[0] = 4;
+	m_aWaypoints[3].connections[1] = 8;
+	m_aWaypoints[3].connections[2] = 2;
+	m_aWaypoints[3].connectionAmount = 3;
+
+	m_aWaypoints[4].x = 9*32;
+	m_aWaypoints[4].y = 13*32;
+	m_aWaypoints[4].connections[0] = 0;
+	m_aWaypoints[4].connections[1] = 3;
+	m_aWaypoints[4].connectionAmount = 2;
+
+	m_aWaypoints[5].x = 21*32;
+	m_aWaypoints[5].y = 21*32;
+	m_aWaypoints[5].connections[0] = 0;
+	m_aWaypoints[5].connections[1] = 2;
+	m_aWaypoints[5].connections[2] = 14;
+	m_aWaypoints[5].connectionAmount = 3;
+
+	m_aWaypoints[6].x = 6*32;
+	m_aWaypoints[6].y = 36*32;
+	m_aWaypoints[6].connections[0] = 14;
+	m_aWaypoints[6].connections[1] = 15;
+	m_aWaypoints[6].connectionAmount = 2;
+
+	m_aWaypoints[7].x = 51*32;
+	m_aWaypoints[7].y = 24*32;
+	m_aWaypoints[7].connections[0] = 8;
+	m_aWaypoints[7].connections[1] = 9;
+	m_aWaypoints[7].connections[2] = 1;
+	m_aWaypoints[7].connectionAmount = 3;
+
+	m_aWaypoints[8].x = 42*32;
+	m_aWaypoints[8].y = 16*32;
+	m_aWaypoints[8].connections[0] = 3;
+	m_aWaypoints[8].connections[1] = 7;
+	m_aWaypoints[8].connectionAmount = 2;
+
+	m_aWaypoints[9].x = 75*32;
+	m_aWaypoints[9].y = 22*32;
+	m_aWaypoints[9].connections[0] = 10;
+	m_aWaypoints[9].connections[1] = 7;
+	m_aWaypoints[9].connections[2] = 11;
+	m_aWaypoints[9].connectionAmount = 3;
+
+	m_aWaypoints[10].x = 75*32;
+	m_aWaypoints[10].y = 34*32;
+	m_aWaypoints[10].connections[0] = 12;
+	m_aWaypoints[10].connections[1] = 9;
+	m_aWaypoints[10].connections[2] = 1;
+	m_aWaypoints[10].connectionAmount = 3;
+
+	m_aWaypoints[11].x = 90*32;
+	m_aWaypoints[11].y = 15*32;
+	m_aWaypoints[11].connections[0] = 13;
+	m_aWaypoints[11].connections[1] = 9;
+	m_aWaypoints[11].connections[2] = 11+waypointAmount;
+	m_aWaypoints[11].connectionAmount = 3;
+
+	m_aWaypoints[12].x = 86*32;
+	m_aWaypoints[12].y = 33*32;
+	m_aWaypoints[12].connections[0] = 10;
+	m_aWaypoints[12].connections[1] = 13;
+	m_aWaypoints[12].connectionAmount = 2;
+
+	m_aWaypoints[13].x = 90*32;
+	m_aWaypoints[13].y = 25*32;
+	m_aWaypoints[13].connections[0] = 13+waypointAmount;
+	m_aWaypoints[13].connections[1] = 12;
+	m_aWaypoints[13].connections[2] = 11;
+	m_aWaypoints[13].connectionAmount = 3;
+
+	m_aWaypoints[14].x = 14*32;
+	m_aWaypoints[14].y = 29*32;
+	m_aWaypoints[14].connections[0] = 5;
+	m_aWaypoints[14].connections[1] = 6;
+	m_aWaypoints[14].connectionAmount = 2;
+
+	m_aWaypoints[15].x = 25*32;
+	m_aWaypoints[15].y = 38*32;
+	m_aWaypoints[15].connections[0] = 1;
+	m_aWaypoints[15].connections[1] = 6;
+	m_aWaypoints[15].connectionAmount = 2;
+
+
+
+	//copy and mirror
+	for(int x = 0; x < waypointAmount; x++)
+	{
+		m_aWaypoints[x+waypointAmount].x = (m_aWaypoints[x].x-99*32)*-1 +99*32;
+		m_aWaypoints[x+waypointAmount].y = m_aWaypoints[x].y;
+
+		m_aWaypoints[x+waypointAmount].connectionAmount = m_aWaypoints[x].connectionAmount;
+
+		for(int i = 0; i < m_aWaypoints[x].connectionAmount; i++)
+		{
+			if(m_aWaypoints[x].connections[i] < waypointAmount)
+			{
+				m_aWaypoints[x+waypointAmount].connections[i] = m_aWaypoints[x].connections[i] + waypointAmount;
+			}
+			else
+			{
+				m_aWaypoints[x+waypointAmount].connections[i] = m_aWaypoints[x].connections[i] - waypointAmount;
+			}
+		}
 	}
 }
 
@@ -79,10 +213,8 @@ void CGameControllerDDRace::UpdateServerStats() {
 void CGameControllerDDRace::OnCharacterSpawn(CCharacter *pChr)
 {
 	IGameController::OnCharacterSpawn(pChr);
-	pChr->SetTeams(&m_Teams);
 	pChr->SetTeleports(&m_TeleOuts, &m_TeleCheckOuts);
-	GameServer()->Collision()->SetTeleport(&m_TeleOuts);
-	m_Teams.OnCharacterSpawn(pChr->GetPlayer()->GetCID());
+	GameServer()->Collision(m_Lobby)->SetTeleport(&m_TeleOuts);
 }
 
 void CGameControllerDDRace::HandleCharacterTiles(CCharacter *pChr, int MapIndex)
@@ -90,22 +222,22 @@ void CGameControllerDDRace::HandleCharacterTiles(CCharacter *pChr, int MapIndex)
 	CPlayer *pPlayer = pChr->GetPlayer();
 	const int ClientID = pPlayer->GetCID();
 
-	int m_TileIndex = GameServer()->Collision()->GetTileIndex(MapIndex);
-	int m_TileFIndex = GameServer()->Collision()->GetFTileIndex(MapIndex);
+	int m_TileIndex = GameServer()->Collision(m_Lobby)->GetTileIndex(MapIndex);
+	int m_TileFIndex = GameServer()->Collision(m_Lobby)->GetFTileIndex(MapIndex);
 
 	//Sensitivity
-	int S1 = GameServer()->Collision()->GetPureMapIndex(vec2(pChr->GetPos().x + pChr->GetProximityRadius() / 3.f, pChr->GetPos().y - pChr->GetProximityRadius() / 3.f));
-	int S2 = GameServer()->Collision()->GetPureMapIndex(vec2(pChr->GetPos().x + pChr->GetProximityRadius() / 3.f, pChr->GetPos().y + pChr->GetProximityRadius() / 3.f));
-	int S3 = GameServer()->Collision()->GetPureMapIndex(vec2(pChr->GetPos().x - pChr->GetProximityRadius() / 3.f, pChr->GetPos().y - pChr->GetProximityRadius() / 3.f));
-	int S4 = GameServer()->Collision()->GetPureMapIndex(vec2(pChr->GetPos().x - pChr->GetProximityRadius() / 3.f, pChr->GetPos().y + pChr->GetProximityRadius() / 3.f));
-	int Tile1 = GameServer()->Collision()->GetTileIndex(S1);
-	int Tile2 = GameServer()->Collision()->GetTileIndex(S2);
-	int Tile3 = GameServer()->Collision()->GetTileIndex(S3);
-	int Tile4 = GameServer()->Collision()->GetTileIndex(S4);
-	int FTile1 = GameServer()->Collision()->GetFTileIndex(S1);
-	int FTile2 = GameServer()->Collision()->GetFTileIndex(S2);
-	int FTile3 = GameServer()->Collision()->GetFTileIndex(S3);
-	int FTile4 = GameServer()->Collision()->GetFTileIndex(S4);
+	// int S1 = GameServer()->Collision(m_Lobby)->GetPureMapIndex(vec2(pChr->GetPos().x + pChr->GetProximityRadius() / 3.f, pChr->GetPos().y - pChr->GetProximityRadius() / 3.f));
+	// int S2 = GameServer()->Collision(m_Lobby)->GetPureMapIndex(vec2(pChr->GetPos().x + pChr->GetProximityRadius() / 3.f, pChr->GetPos().y + pChr->GetProximityRadius() / 3.f));
+	// int S3 = GameServer()->Collision(m_Lobby)->GetPureMapIndex(vec2(pChr->GetPos().x - pChr->GetProximityRadius() / 3.f, pChr->GetPos().y - pChr->GetProximityRadius() / 3.f));
+	// int S4 = GameServer()->Collision(m_Lobby)->GetPureMapIndex(vec2(pChr->GetPos().x - pChr->GetProximityRadius() / 3.f, pChr->GetPos().y + pChr->GetProximityRadius() / 3.f));
+	// int Tile1 = GameServer()->Collision(m_Lobby)->GetTileIndex(S1);
+	// int Tile2 = GameServer()->Collision(m_Lobby)->GetTileIndex(S2);
+	// int Tile3 = GameServer()->Collision(m_Lobby)->GetTileIndex(S3);
+	// int Tile4 = GameServer()->Collision(m_Lobby)->GetTileIndex(S4);
+	// int FTile1 = GameServer()->Collision(m_Lobby)->GetFTileIndex(S1);
+	// int FTile2 = GameServer()->Collision(m_Lobby)->GetFTileIndex(S2);
+	// int FTile3 = GameServer()->Collision(m_Lobby)->GetFTileIndex(S3);
+	// int FTile4 = GameServer()->Collision(m_Lobby)->GetFTileIndex(S4);
 
 	// const int PlayerDDRaceState = pChr->m_DDRaceState;
 	// bool IsOnStartTile = (m_TileIndex == TILE_START) || (m_TileFIndex == TILE_START) || FTile1 == TILE_START || FTile2 == TILE_START || FTile3 == TILE_START || FTile4 == TILE_START || Tile1 == TILE_START || Tile2 == TILE_START || Tile3 == TILE_START || Tile4 == TILE_START;
@@ -149,20 +281,13 @@ void CGameControllerDDRace::HandleCharacterTiles(CCharacter *pChr, int MapIndex)
 	// if(((m_TileIndex == TILE_FINISH) || (m_TileFIndex == TILE_FINISH) || FTile1 == TILE_FINISH || FTile2 == TILE_FINISH || FTile3 == TILE_FINISH || FTile4 == TILE_FINISH || Tile1 == TILE_FINISH || Tile2 == TILE_FINISH || Tile3 == TILE_FINISH || Tile4 == TILE_FINISH) && PlayerDDRaceState == DDRACE_STARTED)
 	// 	m_Teams.OnCharacterFinish(ClientID);
 
-	// unlock team
-	if(((m_TileIndex == TILE_UNLOCK_TEAM) || (m_TileFIndex == TILE_UNLOCK_TEAM)) && m_Teams.TeamLocked(GetPlayerTeam(ClientID)))
-	{
-		m_Teams.SetTeamLock(GetPlayerTeam(ClientID), false);
-		GameServer()->SendChatTeam(GetPlayerTeam(ClientID), "Your team was unlocked by an unlock team tile");
-	}
-
 	// solo part
-	if(((m_TileIndex == TILE_SOLO_ENABLE) || (m_TileFIndex == TILE_SOLO_ENABLE)) && !m_Teams.m_Core.GetSolo(ClientID))
+	if(((m_TileIndex == TILE_SOLO_ENABLE) || (m_TileFIndex == TILE_SOLO_ENABLE)))
 	{
 		GameServer()->SendChatTarget(ClientID, "You are now in a solo part");
 		pChr->SetSolo(true);
 	}
-	else if(((m_TileIndex == TILE_SOLO_DISABLE) || (m_TileFIndex == TILE_SOLO_DISABLE)) && m_Teams.m_Core.GetSolo(ClientID))
+	else if(((m_TileIndex == TILE_SOLO_DISABLE) || (m_TileFIndex == TILE_SOLO_DISABLE)))
 	{
 		GameServer()->SendChatTarget(ClientID, "You are now out of the solo part");
 		pChr->SetSolo(false);
@@ -182,7 +307,7 @@ int CGameControllerDDRace::OnCharacterDeath(class CCharacter *pVictim, class CPl
 			HadFlag |= 2;
 		if(F && F->m_pCarryingCharacter == pVictim)
 		{
-			GameServer()->CreateSoundGlobal(SOUND_CTF_DROP);
+			GameServer()->CreateSoundGlobal(m_Lobby, SOUND_CTF_DROP);
 			F->m_DropTick = Server()->Tick();
 			F->m_pCarryingCharacter = 0;
 			F->m_Vel = vec2(0,0);
@@ -225,7 +350,10 @@ void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 		GameServer()->SendChat(-1, CGameContext::CHAT_ALL, aBuf, -1, CGameContext::CHAT_SIX);
 
 		GameServer()->SendChatTarget(ClientID, "welcome to iCTFX!");
-		GameServer()->SendChatTarget(ClientID, "Version: 1.2");
+		GameServer()->SendChatTarget(ClientID, "Version: 1.3");
+		GameServer()->SendChatTarget(ClientID, "use /lobby to go to a different lobby");
+		GameServer()->SendChatTarget(ClientID, "lobby 0 cannot be changed");
+		GameServer()->SendChatTarget(ClientID, "use /list to list all players");
 	}
 
 	pPlayer->m_Score = 0;
@@ -273,9 +401,6 @@ void CGameControllerDDRace::OnPlayerDisconnect(CPlayer *pPlayer, const char *pRe
 
 	if(!GameServer()->PlayerModerating() && WasModerator)
 		GameServer()->SendChat(-1, CGameContext::CHAT_ALL, "Server kick/spec votes are no longer actively moderated.");
-
-	if(g_Config.m_SvTeam != SV_TEAM_FORCED_SOLO)
-		m_Teams.SetForceCharacterTeam(ClientID, TEAM_FLOCK);
 	
 	if(g_Config.m_SvSaveServer)
 	{
@@ -314,6 +439,8 @@ void CGameControllerDDRace::Snap(int SnappingClient)
 			pGameDataObj->m_FlagCarrierRed = FLAG_ATSTAND;
 		else if(m_apFlags[TEAM_RED]->m_pCarryingCharacter && m_apFlags[TEAM_RED]->m_pCarryingCharacter->GetPlayer())
 			pGameDataObj->m_FlagCarrierRed = m_apFlags[TEAM_RED]->m_pCarryingCharacter->GetPlayer()->GetCID();
+		else if(m_apFlags[TEAM_RED]->m_BotGrabbed && m_apFlags[TEAM_RED]->m_Bot >= 0)
+			pGameDataObj->m_FlagCarrierRed = m_apFlags[TEAM_RED]->m_Bot;
 		else
 			pGameDataObj->m_FlagCarrierRed = FLAG_TAKEN;
 	}
@@ -325,6 +452,8 @@ void CGameControllerDDRace::Snap(int SnappingClient)
 			pGameDataObj->m_FlagCarrierBlue = FLAG_ATSTAND;
 		else if(m_apFlags[TEAM_BLUE]->m_pCarryingCharacter && m_apFlags[TEAM_BLUE]->m_pCarryingCharacter->GetPlayer())
 			pGameDataObj->m_FlagCarrierBlue = m_apFlags[TEAM_BLUE]->m_pCarryingCharacter->GetPlayer()->GetCID();
+		else if(m_apFlags[TEAM_BLUE]->m_BotGrabbed && m_apFlags[TEAM_BLUE]->m_Bot >= 0)
+			pGameDataObj->m_FlagCarrierBlue = m_apFlags[TEAM_BLUE]->m_Bot;
 		else
 			pGameDataObj->m_FlagCarrierBlue = FLAG_TAKEN;
 	}
@@ -334,13 +463,61 @@ void CGameControllerDDRace::Snap(int SnappingClient)
 
 void CGameControllerDDRace::Tick()
 {
-	if(idm)
+	if(idm || !(m_apFlags[0] && m_apFlags[1]))
 	{
+		if(m_GameFlags != 0)
+		{
+			m_ScoreLimit = 20;
+		}
+
 		m_pGameType = "iDMX";
 		m_GameFlags = 0;
+	}else
+	{
+		if(m_GameFlags != (GAMEFLAG_TEAMS|GAMEFLAG_FLAGS))
+		{
+			m_ScoreLimit = 1000;
+		}
+
+		m_pGameType = g_Config.m_SvTestingCommands ? TEST_TYPE_NAME : GAME_TYPE_NAME;
+		m_GameFlags = GAMEFLAG_TEAMS|GAMEFLAG_FLAGS;
 	}
+
 	IGameController::Tick();
-	m_Teams.Tick();
+
+	if(m_Lobby == 0)
+	{
+		int aNumplayers[2] = {0, 0};
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(GameServer()->m_apPlayers[i] && GameServer()->GetLobby(i) == m_Lobby)
+			{
+				if(GameServer()->m_apPlayers[i]->GetTeam() >= TEAM_RED && GameServer()->m_apPlayers[i]->GetTeam() <= TEAM_BLUE)
+					aNumplayers[GameServer()->m_apPlayers[i]->GetTeam()]++;
+			}
+		}
+
+		int numPlayers = aNumplayers[0] + aNumplayers[1];
+
+		int wantedAmount = g_Config.m_SvBotAmount - numPlayers;
+
+		if(!numPlayers)
+			wantedAmount = 0;
+
+		for(int i = 0; i < MAX_BOTS; i++)
+		{
+			if(m_BotCount <= i && i < wantedAmount)
+			{
+				CBot * pBot = new CBot(&GameServer()->m_World[m_Lobby], this, !(i % 2));
+				GameServer()->m_World[m_Lobby].InsertEntity(pBot);
+				m_apBots[i] = pBot;
+			}else if(m_BotCount > i && i >= wantedAmount)
+			{
+				delete m_apBots[i];
+			}
+		}
+		m_BotCount = wantedAmount;
+	}
 
 
 	if(!idm)
@@ -352,10 +529,10 @@ void CGameControllerDDRace::Tick()
 				continue;
 
 			// flag hits death-tile or left the game layer, reset it
-			if(GameServer()->Collision()->GetCollisionAt(F->m_Pos.x, F->m_Pos.y) == TILE_DEATH || F->GameLayerClipped(F->m_Pos))
+			if((GameServer()->Collision(m_Lobby)->GetCollisionAt(F->m_Pos.x, F->m_Pos.y) == TILE_DEATH || GameServer()->Collision(m_Lobby)->GetCollisionAt(F->m_Pos.x, F->m_Pos.y) == TILE_SOLID || F->GameLayerClipped(F->m_Pos)) && !F->m_BotGrabbed)
 			{
 				GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", "flag_return");
-				GameServer()->CreateSoundGlobal(SOUND_CTF_RETURN);
+				GameServer()->CreateSoundGlobal(m_Lobby, SOUND_CTF_RETURN);
 				F->Reset();
 				continue;
 			}
@@ -377,6 +554,11 @@ void CGameControllerDDRace::Tick()
 						UpdateServerStats();
 						F->m_pCarryingCharacter->GetPlayer()->m_Score += 5;
 						int playerID = F->m_pCarryingCharacter->GetPlayer()->GetCID();
+
+						// if(fi^1 == 0)
+						// {
+						// 	g_Config.m_SvBotAmount++;
+						// }
 						
 						// F->m_pCarryingCharacter->GetPlayer()->m_Stats.m_Captures++;
 
@@ -408,12 +590,16 @@ void CGameControllerDDRace::Tick()
 						for(int i = 0; i < 2; i++)
 							m_apFlags[i]->Reset();
 						
-						GameServer()->SendChat(-1, -2, aBuf);
-
-						GameServer()->CreateSoundGlobal(SOUND_CTF_CAPTURE);
 						for(int i = 0; i < MAX_CLIENTS; i++)
 						{
-							if(Server()->IsSixup(i))
+							if(GameServer()->PlayerExists(i) && GameServer()->GetLobby(i) == m_Lobby)							
+								GameServer()->SendChatTarget(i, aBuf);
+						}
+
+						GameServer()->CreateSoundGlobal(m_Lobby, SOUND_CTF_CAPTURE);
+						for(int i = 0; i < MAX_CLIENTS; i++)
+						{
+							if(Server()->IsSixup(i) && m_Lobby == GameServer()->GetLobby(i))
 							{
 								GameServer()->SendGameMsg(protocol7::GAMEMSG_CTF_CAPTURE, fi, playerID, Server()->Tick() - F->m_GrabTick, i);
 							}
@@ -422,11 +608,11 @@ void CGameControllerDDRace::Tick()
 					}
 				}
 			}
-			else
+			else if(!F->m_BotGrabbed)
 			{
 				CCharacter *apCloseCCharacters[MAX_CLIENTS];
 				int Num = 0;
-				for(CEntity *pEnt = GameServer()->m_World.m_apFirstEntityTypes[CGameWorld::ENTTYPE_CHARACTER]; pEnt; pEnt = pEnt->m_pNextTypeEntity)
+				for(CEntity *pEnt = GameServer()->m_World[m_Lobby].m_apFirstEntityTypes[CGameWorld::ENTTYPE_CHARACTER]; pEnt; pEnt = pEnt->m_pNextTypeEntity)
 				{
 					vec2 Pos = F->m_Pos;
 					int tick = ((CCharacter*)pEnt)->m_pPlayer->m_LastAckedSnapshot % POSITION_HISTORY;
@@ -443,17 +629,17 @@ void CGameControllerDDRace::Tick()
 					}
 				}
 
-				//int Num = GameServer()->m_World.FindEntities(F->m_Pos, CFlag::ms_PhysSize, (CEntity**)apCloseCCharacters, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
+				//int Num = GameServer()->m_World[m_Lobby].FindEntities(F->m_Pos, CFlag::ms_PhysSize, (CEntity**)apCloseCCharacters, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
 				
 				for(int i = 0; i < Num; i++)
 				{
-					if(!apCloseCCharacters[i]->IsAlive() || apCloseCCharacters[i]->GetPlayer()->GetTeam() == TEAM_SPECTATORS || GameServer()->Collision()->IntersectLine(F->m_Pos, apCloseCCharacters[i]->m_Pos, NULL, NULL))
+					if(!apCloseCCharacters[i]->IsAlive() || apCloseCCharacters[i]->GetPlayer()->GetTeam() == TEAM_SPECTATORS || GameServer()->Collision(m_Lobby)->IntersectLine(F->m_Pos, apCloseCCharacters[i]->m_Pos, NULL, NULL))
 						continue;
 
 					if(apCloseCCharacters[i]->GetPlayer()->GetTeam() == F->m_Team && apCloseCCharacters[i]->m_DeathTick == -1)
 					{
 						// return the flag
-						if(!F->m_AtStand)
+						if(!F->m_AtStand && !F->m_BotGrabbed)
 						{
 							CCharacter *pChr = apCloseCCharacters[i];
 							pChr->GetPlayer()->m_Score += 1;
@@ -465,7 +651,7 @@ void CGameControllerDDRace::Tick()
 								Server()->ClientName(pChr->GetPlayer()->GetCID()));
 							GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
 
-							GameServer()->CreateSoundGlobal(SOUND_CTF_RETURN);
+							GameServer()->CreateSoundGlobal(m_Lobby, SOUND_CTF_RETURN);
 							F->Reset();
 							for(int i = 0; i < MAX_CLIENTS; i++)
 							{
@@ -513,23 +699,23 @@ void CGameControllerDDRace::Tick()
 								continue;
 
 							if(pPlayer->GetTeam() == TEAM_SPECTATORS && pPlayer->m_SpectatorID != SPEC_FREEVIEW && GameServer()->m_apPlayers[pPlayer->m_SpectatorID] && GameServer()->m_apPlayers[pPlayer->m_SpectatorID]->GetTeam() == fi)
-								GameServer()->CreateSoundGlobal(SOUND_CTF_GRAB_EN, c);
+								GameServer()->CreateSoundGlobal(m_Lobby, SOUND_CTF_GRAB_EN, c);
 							else if(pPlayer->GetTeam() == fi)
-								GameServer()->CreateSoundGlobal(SOUND_CTF_GRAB_EN, c);
+								GameServer()->CreateSoundGlobal(m_Lobby, SOUND_CTF_GRAB_EN, c);
 							else
-								GameServer()->CreateSoundGlobal(SOUND_CTF_GRAB_PL, c);
+								GameServer()->CreateSoundGlobal(m_Lobby, SOUND_CTF_GRAB_PL, c);
 						}
 						// demo record entry
-						GameServer()->CreateSoundGlobal(SOUND_CTF_GRAB_EN, -2);
+						GameServer()->CreateSoundGlobal(m_Lobby, SOUND_CTF_GRAB_EN, -2);
 						break;
 					}
 				}
 
-				if(!F->m_pCarryingCharacter && !F->m_AtStand)
+				if(!F->m_pCarryingCharacter && !F->m_AtStand && !F->m_BotGrabbed)
 				{
 					if(Server()->Tick() > F->m_DropTick + Server()->TickSpeed()*30)
 					{
-						GameServer()->CreateSoundGlobal(SOUND_CTF_RETURN);
+						GameServer()->CreateSoundGlobal(m_Lobby, SOUND_CTF_RETURN);
 						F->Reset();
 						for(int i = 0; i < MAX_CLIENTS; i++)
 						{
@@ -542,11 +728,11 @@ void CGameControllerDDRace::Tick()
 					}
 					else
 					{
-						F->m_Vel.y += 0.5f; //GameServer()->m_World.m_Core.m_Tuning.m_Gravity;
-						GameServer()->Collision()->MoveBox(&F->m_Pos, &F->m_Vel, vec2(F->ms_PhysSize, F->ms_PhysSize), 0.5f);
+						F->m_Vel.y += 0.5f; //GameServer()->m_World[m_Lobby].m_Core.m_Tuning.m_Gravity;
+						GameServer()->Collision(m_Lobby)->MoveBox(&F->m_Pos, &F->m_Vel, vec2(F->ms_PhysSize, F->ms_PhysSize), 0.5f);
 						
-						int index = GameServer()->Collision()->GetMapIndex(F->m_Pos);
-						CCollision * col = GameServer()->Collision();
+						int index = GameServer()->Collision(m_Lobby)->GetMapIndex(F->m_Pos);
+						CCollision * col = GameServer()->Collision(m_Lobby);
 						int tele = col->IsTeleport(index);
 						if(!tele)
 							tele = col->IsEvilTeleport(index);
@@ -575,10 +761,10 @@ void CGameControllerDDRace::Tick()
 	if(m_GameOverTick == -1 && !m_Warmup && !g_Config.m_SvSaveServer)
 	{
 		// check score win condition
-		if(!idm)
+		if(!idm && m_apFlags[0] && m_apFlags[0])
 		{
-			if((g_Config.m_SvScorelimit > 0 && (m_aTeamscore[TEAM_RED] >= g_Config.m_SvScorelimit || m_aTeamscore[TEAM_BLUE] >= g_Config.m_SvScorelimit)) ||
-				(g_Config.m_SvTimelimit > 0 && (Server()->Tick()-m_RoundStartTick) >= g_Config.m_SvTimelimit*Server()->TickSpeed()*60))
+			if((m_ScoreLimit > 0 && (m_aTeamscore[TEAM_RED] >= m_ScoreLimit || m_aTeamscore[TEAM_BLUE] >= m_ScoreLimit)) ||
+				(m_TimeLimit > 0 && (Server()->Tick()-m_RoundStartTick) >= m_TimeLimit*Server()->TickSpeed()*60))
 			{
 				if(m_SuddenDeath)
 				{
@@ -613,8 +799,8 @@ void CGameControllerDDRace::Tick()
 			}
 
 			// check score win condition
-			if((g_Config.m_SvScorelimit > 0 && Topscore >= g_Config.m_SvScorelimit) ||
-				(g_Config.m_SvTimelimit > 0 && (Server()->Tick()-m_RoundStartTick) >= g_Config.m_SvTimelimit*Server()->TickSpeed()*60))
+			if((m_ScoreLimit > 0 && Topscore >= m_ScoreLimit) ||
+				(m_TimeLimit > 0 && (Server()->Tick()-m_RoundStartTick) >= m_TimeLimit*Server()->TickSpeed()*60))
 			{
 				if(TopscoreCount == 1)
 					EndRound();
@@ -622,10 +808,6 @@ void CGameControllerDDRace::Tick()
 					m_SuddenDeath = 1;
 			}
 		}
-		// if(m_aTeamscore[TEAM_RED])
-		// {
-		// 	EndRound();
-		// }
 	}
 }
 
@@ -637,19 +819,25 @@ void CGameControllerDDRace::DoTeamChange(class CPlayer *pPlayer, int Team, bool 
 
 	CCharacter *pCharacter = pPlayer->GetCharacter();
 
-	if(Team == TEAM_SPECTATORS)
+	IGameController::DoTeamChange(pPlayer, Team, DoChatMsg);
+}
+
+void CGameControllerDDRace::ChangeMap(const char *pToMap)
+{
+	int Map = GameServer()->Layers(m_Lobby)->m_Map;
+
+	if(Map != GameServer()->Layers(m_Lobby)->m_Map || true) //map has reloaded
 	{
-		if(g_Config.m_SvTeam != SV_TEAM_FORCED_SOLO && pCharacter)
-		{
-			// Joining spectators should not kill a locked team, but should still
-			// check if the team finished by you leaving it.
-			int DDRTeam = pCharacter->Team();
-			m_Teams.SetForceCharacterTeam(pPlayer->GetCID(), TEAM_FLOCK);
-			m_Teams.CheckTeamFinished(DDRTeam);
-		}
+		m_apFlags[0] = 0;
+		m_apFlags[1] = 0;
+
+		m_aTeamscore[0] = 0;
+		m_aTeamscore[1] = 0;
 	}
 
-	IGameController::DoTeamChange(pPlayer, Team, DoChatMsg);
+	IGameController::ChangeMap(pToMap);
+
+	InitTeleporter();
 }
 
 bool CGameControllerDDRace::OnEntity(int Index, vec2 Pos, int Layer, int Flags, int Number)
@@ -660,14 +848,21 @@ bool CGameControllerDDRace::OnEntity(int Index, vec2 Pos, int Layer, int Flags, 
 	int Team = -1;
 	if(Index == ENTITY_FLAGSTAND_RED) Team = TEAM_RED;
 	if(Index == ENTITY_FLAGSTAND_BLUE) Team = TEAM_BLUE;
-	if(Team == -1 || m_apFlags[Team])
+	if(Team == -1)
 		return false;
 
-	CFlag *F = new CFlag(&GameServer()->m_World, Team);
-	F->m_StandPos = Pos;
-	F->m_Pos = Pos;
-	m_apFlags[Team] = F;
-	GameServer()->m_World.InsertEntity(F);
+	CFlag *F = 0;
+	if(!m_apFlags[Team])
+	{
+		F = new CFlag(&GameServer()->m_World[m_Lobby], Team);
+		m_apFlags[Team] = F;
+	}
+
+	m_apFlags[Team]->m_StandPos = Pos;
+	m_apFlags[Team]->m_Pos = Pos;
+	
+	if(F)
+		GameServer()->m_World[m_Lobby].InsertEntity(F);
 	return true;
 }
 
@@ -678,20 +873,25 @@ int64_t CGameControllerDDRace::GetMaskForPlayerWorldEvent(int Asker, int ExceptI
 	if(Asker == -1)
 		return CmaskAllExceptOne(ExceptID);
 
-	return m_Teams.TeamMask(GetPlayerTeam(Asker), ExceptID, Asker);
+	//todo, maybe mask for lobbies
+	return 0;
 }
 
 void CGameControllerDDRace::InitTeleporter()
 {
-	if(!GameServer()->Collision()->Layers()->TeleLayer())
+	if(!GameServer()->Collision(m_Lobby)->Layers()->TeleLayer())
 		return;
-	int Width = GameServer()->Collision()->Layers()->TeleLayer()->m_Width;
-	int Height = GameServer()->Collision()->Layers()->TeleLayer()->m_Height;
+	
+	m_TeleOuts.clear();
+	m_TeleCheckOuts.clear();
+
+	int Width = GameServer()->Collision(m_Lobby)->Layers()->TeleLayer()->m_Width;
+	int Height = GameServer()->Collision(m_Lobby)->Layers()->TeleLayer()->m_Height;
 
 	for(int i = 0; i < Width * Height; i++)
 	{
-		int Number = GameServer()->Collision()->TeleLayer()[i].m_Number;
-		int Type = GameServer()->Collision()->TeleLayer()[i].m_Type;
+		int Number = GameServer()->Collision(m_Lobby)->TeleLayer()[i].m_Number;
+		int Type = GameServer()->Collision(m_Lobby)->TeleLayer()[i].m_Type;
 		if(Number > 0)
 		{
 			if(Type == TILE_TELEOUT)
@@ -706,9 +906,4 @@ void CGameControllerDDRace::InitTeleporter()
 			}
 		}
 	}
-}
-
-int CGameControllerDDRace::GetPlayerTeam(int ClientID) const
-{
-	return m_Teams.m_Core.Team(ClientID);
 }

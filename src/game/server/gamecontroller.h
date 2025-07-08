@@ -64,10 +64,19 @@ protected:
 	bool m_ForceBalanced;
 
 public:
+	#define MAX_BOTS 32
 	const char *m_pGameType;
 	int m_aTeamscore[2];
 	class CFlag *m_apFlags[2];
+	int m_BotCount = 0;
+	class CBot *m_apBots[MAX_BOTS] = {0};
 	bool idm; //todo, not this shitty solution
+	bool m_tourneyMode = false;
+	int m_Lobby;
+
+	int m_ScoreLimit;
+	int m_TimeLimit;
+	int m_SpectatorSlots;
 	
 	std::unique_ptr<SqlHandler> sql_handler;
 
@@ -122,7 +131,7 @@ public:
 
 	void StartRound();
 	void EndRound();
-	void ChangeMap(const char *pToMap);
+	virtual void ChangeMap(const char *pToMap);
 
 	bool IsFriendlyFire(int ClientID1, int ClientID2);
 

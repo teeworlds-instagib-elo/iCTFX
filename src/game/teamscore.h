@@ -21,36 +21,36 @@ enum
 	SV_TEAM_FORCED_SOLO = 3 // map forces a random team for each individual player
 };
 
-class CTeamsCore
-{
-	int m_Team[MAX_CLIENTS];
-	bool m_IsSolo[MAX_CLIENTS];
+// class CTeamsCore
+// {
+// 	int m_Team[MAX_CLIENTS];
+// 	bool m_IsSolo[MAX_CLIENTS];
 
-public:
-	bool m_IsDDRace16;
+// public:
+// 	bool m_IsDDRace16;
 
-	CTeamsCore();
+// 	CTeamsCore();
 
-	bool SameTeam(int ClientID1, int ClientID2) const;
+// 	bool SameTeam(int ClientID1, int ClientID2) const;
 
-	bool CanKeepHook(int ClientID1, int ClientID2) const;
-	bool CanCollide(int ClientID1, int ClientID2) const;
+// 	bool CanKeepHook(int ClientID1, int ClientID2) const;
+// 	bool CanCollide(int ClientID1, int ClientID2) const;
 
-	int Team(int ClientID) const;
-	void Team(int ClientID, int Team);
+// 	int Team(int ClientID) const;
+// 	void Team(int ClientID, int Team);
 
-	void Reset();
-	void SetSolo(int ClientID, bool Value)
-	{
-		m_IsSolo[ClientID] = Value;
-	}
+// 	void Reset();
+// 	void SetSolo(int ClientID, bool Value)
+// 	{
+// 		m_IsSolo[ClientID] = Value;
+// 	}
 
-	bool GetSolo(int ClientID) const
-	{
-		if(ClientID < 0 || ClientID >= MAX_CLIENTS)
-			return false;
-		return m_IsSolo[ClientID];
-	}
-};
+// 	bool GetSolo(int ClientID) const
+// 	{
+// 		if(ClientID < 0 || ClientID >= MAX_CLIENTS)
+// 			return false;
+// 		return m_IsSolo[ClientID];
+// 	}
+// };
 
 #endif

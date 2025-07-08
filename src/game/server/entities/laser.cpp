@@ -9,13 +9,22 @@
 #include <game/server/teams.h>
 
 #include "character.h"
+#include "bot.h"
 #include "../player.h"
 
-CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, CPlayer *pPlayer, int Type) :
+CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, CPlayer *pPlayer, int Type, CBot *pBot, int Team) :
 	CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER)
 {
 	m_Pos = Pos;
-	m_Owner = pPlayer->GetCID();
+	m_Owner = -1;
+	m_Team = Team;
+	if(pPlayer)
+		m_Owner = pPlayer->GetCID();
+	
+	m_pBot = pBot;
+	if(m_pBot)
+		m_Owner = m_pBot->m_ClientID;
+
 	m_Energy = StartEnergy;
 	m_Dir = Direction;
 	m_Bounces = 0;
@@ -32,10 +41,10 @@ CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEner
 
 	m_DidHit = false;
 
-	m_TuneZone = GameServer()->Collision()->IsTune(GameServer()->Collision()->GetMapIndex(m_Pos));
+	m_TuneZone = GameServer()->Collision(m_Lobby)->IsTune(GameServer()->Collision(m_Lobby)->GetMapIndex(m_Pos));
 	CCharacter *pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
-	m_TeamMask = pOwnerChar ? pOwnerChar->Teams()->TeamMask(pOwnerChar->Team(), -1, m_Owner) : 0;
-	m_BelongsToPracticeTeam = pOwnerChar && pOwnerChar->Teams()->IsPractice(pOwnerChar->Team());
+	m_TeamMask = 0;
+	m_BelongsToPracticeTeam = false;
 	
 	if (pPlayer) {
 		pPlayer->m_Shots++;
@@ -52,7 +61,7 @@ CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEner
 }
 
 CLaser::~CLaser() {
-	if (m_Bounces > 0) {
+	if (m_Bounces > 0 && m_Owner != -1 && !m_pBot) {
 		CPlayer *pOwner = GameServer()->m_apPlayers[m_Owner];
 		if (!pOwner) {
 			return;
@@ -68,14 +77,14 @@ CLaser::~CLaser() {
 
 bool CLaser::HitCharacter(vec2 From, vec2 To)
 {
-	vec2 At;
+	vec2 At = vec2(99999, 99999);
 	CCharacter *pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
 	CCharacter *pHit;
 	bool pDontHitSelf = g_Config.m_SvOldLaser || (m_Bounces == 0 && !m_WasTele);
 
 	int tick = -1;
 
-	if(GameServer()->m_apPlayers[m_Owner]->m_Rollback && g_Config.m_SvRollback)
+	if(m_Owner != -1 && !m_pBot && GameServer()->m_apPlayers[m_Owner]->m_Rollback && g_Config.m_SvRollback)
 		tick = GameServer()->m_apPlayers[m_Owner]->m_LastAckedSnapshot;
 	
 	shots[shot_index].tick = Server()->Tick();
@@ -85,19 +94,51 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 	shot_index++;
 
 	if(pOwnerChar ? (!(pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_LASER) && m_Type == WEAPON_LASER) || (!(pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_SHOTGUN) && m_Type == WEAPON_SHOTGUN) : g_Config.m_SvHit)
-		pHit = GameServer()->m_World.IntersectCharacter(m_Pos, To, 0.f, At, pOwnerChar, m_Owner, nullptr, tick);
+		pHit = GameServer()->m_World[m_Lobby].IntersectCharacter(m_Pos, To, 0.f, At, pOwnerChar, m_Owner, nullptr, tick);
 	else
-		pHit = GameServer()->m_World.IntersectCharacter(m_Pos, To, 0.f, At, pOwnerChar, m_Owner, pOwnerChar, tick);
+		pHit = GameServer()->m_World[m_Lobby].IntersectCharacter(m_Pos, To, 0.f, At, pOwnerChar, m_Owner, pOwnerChar, tick);
+	
+	vec2 AtBot;
+	CBot * pHitBot = GameServer()->m_World[m_Lobby].IntersectBot(m_Pos, To, 0.f, AtBot, m_pBot, m_Owner, nullptr, tick);
+
+	if(pHitBot && pHitBot != m_pBot && pHitBot->m_Alive && pHitBot->m_Team != m_Team)
+	{
+		if(distance(AtBot, From) < distance(At, From) || !pHit)
+		{
+			pHitBot->Die(m_Owner);
+			m_From = From;
+			m_Pos = AtBot;
+			m_Energy = -1;
+			m_DidHit = true;
+
+			if(m_Owner >= 0 && !m_pBot && GameServer()->m_apPlayers[m_Owner])
+			{
+				pHitBot->m_Difficulty += 0.025;
+				GameServer()->m_apPlayers[m_Owner]->m_Score++;
+
+				int Mask = CmaskOne(m_Owner);
+				for(int i = 0; i < MAX_CLIENTS; i++)
+				{
+					if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetTeam() == TEAM_SPECTATORS && GameServer()->m_apPlayers[i]->m_SpectatorID == m_Owner)
+						Mask |= CmaskOne(i);
+				}
+				GameServer()->CreateSound(m_Lobby, GameServer()->m_apPlayers[m_Owner]->m_ViewPos, SOUND_HIT, Mask);
+
+				GameServer()->CreateSound(m_Lobby, m_Pos, SOUND_PLAYER_DIE, 0);
+			}
+			return true;
+		}
+	}
 
 	m_PredHitPos = vec2(0,0);
 	bool dont = false;
 	if(!pHit || (pHit == pOwnerChar && g_Config.m_SvOldLaser) || (pHit != pOwnerChar && pOwnerChar ? (pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_LASER && m_Type == WEAPON_LASER) || (pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_SHOTGUN && m_Type == WEAPON_SHOTGUN) : !g_Config.m_SvHit))
 		dont = true;
 	
-	if(pHit && pHit->m_pPlayer->m_Rollback && GameServer()->m_apPlayers[m_Owner] && GameServer()->m_apPlayers[m_Owner]->m_RunAhead)
+	if(pHit && m_Owner != -1 && !m_pBot && pHit->m_pPlayer->m_Rollback && GameServer()->m_apPlayers[m_Owner] && GameServer()->m_apPlayers[m_Owner]->m_RunAhead)
 		dont = true; //check when rollback is in proper position
 	
-	if(dont)
+	if(dont && m_Owner != -1 && !m_pBot)
 	{
 		//try and find a prediction to potentially hit
 		if(GameServer()->m_apPlayers[m_Owner] && GameServer()->m_apPlayers[m_Owner]->m_RunAhead)
@@ -148,6 +189,14 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 		
 		return false;
 	}
+
+	if(!pHit)
+		return false;
+	
+	if(m_pBot)
+	{
+		m_pBot->m_Difficulty -= 0.05;
+	}
 	
 	m_From = From;
 	m_Pos = At;
@@ -178,7 +227,7 @@ void CLaser::DoBounce()
 	vec2 Tele;
 
 	int teleptr = 0;
-	if(m_Energy > 0 && GameServer()->Collision()->IntersectLineTeleWeapon(m_Pos, To, &Tele, &To, &teleptr))
+	if(m_Energy > 0 && GameServer()->Collision(m_Lobby)->IntersectLineTeleWeapon(m_Pos, To, &Tele, &To, &teleptr))
 	{
 		if(!HitCharacter(m_Pos, To))
 		{
@@ -189,7 +238,7 @@ void CLaser::DoBounce()
 			vec2 TempPos = m_Pos;
 			vec2 TempDir = m_Dir * 4.0f;
 
-			GameServer()->Collision()->MovePoint(&TempPos, &TempDir, 1.0f, 0);
+			GameServer()->Collision(m_Lobby)->MovePoint(&TempPos, &TempDir, 1.0f, 0);
 			m_Pos = TempPos;
 			
 			if(!teleptr)
@@ -204,13 +253,13 @@ void CLaser::DoBounce()
 			if(m_Bounces > GameServer()->Tuning()->m_LaserBounceNum && !teleptr)
 				m_Energy = -1;
 
-			GameServer()->CreateSound(m_Pos, SOUND_LASER_BOUNCE, m_TeamMask);
+			GameServer()->CreateSound(m_Lobby, m_Pos, SOUND_LASER_BOUNCE, m_TeamMask);
 			m_NextPos = m_Pos;
 
 			if(teleptr)
 			{
 				m_NextPos = Tele;
-				GameServer()->CreateSound(m_Pos, SOUND_LASER_BOUNCE, m_TeamMask);
+				GameServer()->CreateSound(m_Lobby, m_Pos, SOUND_LASER_BOUNCE, m_TeamMask);
 			}
 
 		}
@@ -240,7 +289,7 @@ void CLaser::Tick()
 	if(m_DeathTick)
 		m_MarkedForDestroy = true;
 	
-	if(!GameServer()->m_apPlayers[m_Owner] || GameServer()->m_apPlayers[m_Owner]->m_RunAhead == 0.0f)
+	if(m_Owner == -1 || m_pBot || !GameServer()->m_apPlayers[m_Owner] || GameServer()->m_apPlayers[m_Owner]->m_RunAhead == 0.0f)
 		return;
 	
 	for(int shot = 0; shot < shot_index; shot++)
@@ -282,7 +331,7 @@ void CLaser::Tick()
 
 			CCharacter *pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
 
-			CCharacter *pHit = GameServer()->m_World.IntersectCharacter(shots[shot].from, shots[shot].to, 0.f, At, pOwnerChar, -1, GameServer()->m_apPlayers[player]->GetCharacter(), tick);
+			CCharacter *pHit = GameServer()->m_World[m_Lobby].IntersectCharacter(shots[shot].from, shots[shot].to, 0.f, At, pOwnerChar, -1, GameServer()->m_apPlayers[player]->GetCharacter(), tick);
 			if(pHit)
 			{
 				pHit->TakeDamage(vec2(0.f, 0.f), GameServer()->Tuning()->m_LaserDamage, m_Owner, WEAPON_LASER, m_StartTick);

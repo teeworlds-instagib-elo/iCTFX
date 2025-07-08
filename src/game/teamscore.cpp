@@ -3,54 +3,54 @@
 #include <base/math.h>
 #include <engine/shared/config.h>
 
-CTeamsCore::CTeamsCore()
-{
-	Reset();
-	g_Config.m_SvTeam = 0;
-}
+// CTeamsCore::CTeamsCore()
+// {
+// 	Reset();
+// 	g_Config.m_SvTeam = 0;
+// }
 
-bool CTeamsCore::SameTeam(int ClientID1, int ClientID2) const
-{
-	return m_Team[ClientID1] == TEAM_SUPER || m_Team[ClientID2] == TEAM_SUPER || m_Team[ClientID1] == m_Team[ClientID2];
-}
+// bool CTeamsCore::SameTeam(int ClientID1, int ClientID2) const
+// {
+// 	return m_Team[ClientID1] == TEAM_SUPER || m_Team[ClientID2] == TEAM_SUPER || m_Team[ClientID1] == m_Team[ClientID2];
+// }
 
-int CTeamsCore::Team(int ClientID) const
-{
-	return m_Team[ClientID];
-}
+// int CTeamsCore::Team(int ClientID) const
+// {
+// 	return m_Team[ClientID];
+// }
 
-void CTeamsCore::Team(int ClientID, int Team)
-{
-	dbg_assert(Team >= TEAM_FLOCK && Team <= TEAM_SUPER, "invalid team");
-	m_Team[ClientID] = Team;
-}
+// void CTeamsCore::Team(int ClientID, int Team)
+// {
+// 	dbg_assert(Team >= TEAM_FLOCK && Team <= TEAM_SUPER, "invalid team");
+// 	m_Team[ClientID] = Team;
+// }
 
-bool CTeamsCore::CanKeepHook(int ClientID1, int ClientID2) const
-{
-	if(m_Team[ClientID1] == (m_IsDDRace16 ? VANILLA_TEAM_SUPER : TEAM_SUPER) || m_Team[ClientID2] == (m_IsDDRace16 ? VANILLA_TEAM_SUPER : TEAM_SUPER) || ClientID1 == ClientID2)
-		return true;
-	return m_Team[ClientID1] == m_Team[ClientID2];
-}
+// bool CTeamsCore::CanKeepHook(int ClientID1, int ClientID2) const
+// {
+// 	if(m_Team[ClientID1] == (m_IsDDRace16 ? VANILLA_TEAM_SUPER : TEAM_SUPER) || m_Team[ClientID2] == (m_IsDDRace16 ? VANILLA_TEAM_SUPER : TEAM_SUPER) || ClientID1 == ClientID2)
+// 		return true;
+// 	return m_Team[ClientID1] == m_Team[ClientID2];
+// }
 
-bool CTeamsCore::CanCollide(int ClientID1, int ClientID2) const
-{
-	if(m_Team[ClientID1] == (m_IsDDRace16 ? VANILLA_TEAM_SUPER : TEAM_SUPER) || m_Team[ClientID2] == (m_IsDDRace16 ? VANILLA_TEAM_SUPER : TEAM_SUPER) || ClientID1 == ClientID2)
-		return true;
-	if(m_IsSolo[ClientID1] || m_IsSolo[ClientID2])
-		return false;
-	return m_Team[ClientID1] == m_Team[ClientID2];
-}
+// bool CTeamsCore::CanCollide(int ClientID1, int ClientID2) const
+// {
+// 	if(m_Team[ClientID1] == (m_IsDDRace16 ? VANILLA_TEAM_SUPER : TEAM_SUPER) || m_Team[ClientID2] == (m_IsDDRace16 ? VANILLA_TEAM_SUPER : TEAM_SUPER) || ClientID1 == ClientID2)
+// 		return true;
+// 	if(m_IsSolo[ClientID1] || m_IsSolo[ClientID2])
+// 		return false;
+// 	return m_Team[ClientID1] == m_Team[ClientID2];
+// }
 
-void CTeamsCore::Reset()
-{
-	m_IsDDRace16 = false;
+// void CTeamsCore::Reset()
+// {
+// 	m_IsDDRace16 = false;
 
-	for(int i = 0; i < MAX_CLIENTS; ++i)
-	{
-		if(g_Config.m_SvTeam == SV_TEAM_FORCED_SOLO)
-			m_Team[i] = i;
-		else
-			m_Team[i] = TEAM_FLOCK;
-		m_IsSolo[i] = false;
-	}
-}
+// 	for(int i = 0; i < MAX_CLIENTS; ++i)
+// 	{
+// 		if(g_Config.m_SvTeam == SV_TEAM_FORCED_SOLO)
+// 			m_Team[i] = i;
+// 		else
+// 			m_Team[i] = TEAM_FLOCK;
+// 		m_IsSolo[i] = false;
+// 	}
+// }

@@ -62,7 +62,15 @@ public:
 	virtual void GetClientAddr(int ClientID, char *pAddrStr, int Size) const = 0;
 	virtual void RestrictRconOutput(int ClientID) = 0;
 
+	virtual int LoadMap(const char *pMapName, int Map) = 0;
+
 	virtual bool GetClientInput(int ClientID, int Tick, CNetObj_PlayerInput * pInput) = 0;
+	virtual bool ClientReloadMap(int ClientID) = 0;
+
+	virtual int GetBotID() = 0;
+	virtual void FreeBotID(int ID) = 0;
+
+	virtual bool IsBotID(int ID) = 0;
 
 	virtual int SendMsg(CMsgPacker *pMsg, int Flags, int ClientID) = 0;
 
@@ -202,8 +210,6 @@ public:
 		return true;
 	}
 
-	virtual void GetMapInfo(char *pMapName, int MapNameSize, int *pMapSize, SHA256_DIGEST *pSha256, int *pMapCrc) = 0;
-
 	virtual bool WouldClientNameChange(int ClientID, const char *pNameRequest) = 0;
 	virtual void SetClientName(int ClientID, char const *pName) = 0;
 	virtual void SetClientClan(int ClientID, char const *pClan) = 0;
@@ -211,8 +217,8 @@ public:
 	virtual void SetClientScore(int ClientID, int Score) = 0;
 	virtual void SetClientFlags(int ClientID, int Flags) = 0;
 
-	virtual int SnapNewID() = 0;
-	virtual void SnapFreeID(int ID) = 0;
+	virtual int SnapNewID(int Lobby) = 0;
+	virtual void SnapFreeID(int Lobby, int ID) = 0;
 	virtual void *SnapNewItem(int Type, int ID, int Size) = 0;
 
 	virtual void SnapSetStaticsize(int ItemType, int Size) = 0;
@@ -227,7 +233,6 @@ public:
 	virtual const char *GetAuthName(int ClientID) const = 0;
 	virtual void Kick(int ClientID, const char *pReason) = 0;
 	virtual void Ban(int ClientID, int Seconds, const char *pReason) = 0;
-	virtual void ChangeMap(const char *pMap) = 0;
 
 	virtual void DemoRecorder_HandleAutoStart() = 0;
 	virtual bool DemoRecorder_IsRecording() = 0;
@@ -317,15 +322,16 @@ public:
 
 	// DDRace
 
+	virtual int GetLobbiesMap(int Lobby) = 0;
+
 	virtual void OnPreTickTeehistorian() = 0;
 
 	virtual void OnSetAuthed(int ClientID, int Level) = 0;
 	virtual bool PlayerExists(int ClientID) const = 0;
+	virtual void KillPlayer(int ClientID) = 0;
 
 	virtual void OnClientEngineJoin(int ClientID, bool Sixup) = 0;
 	virtual void OnClientEngineDrop(int ClientID, const char *pReason) = 0;
-
-	virtual void FillAntibot(CAntibotRoundData *pData) = 0;
 };
 
 extern IGameServer *CreateGameServer();

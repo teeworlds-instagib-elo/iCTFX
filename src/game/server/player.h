@@ -55,6 +55,8 @@ public:
 	void OnPredictedEarlyInput(CNetObj_PlayerInput *NewInput);
 	void OnDisconnect();
 
+	int GetLobby();
+
 	void KillCharacter(int Weapon = WEAPON_GAME);
 	CCharacter *GetCharacter();
 
@@ -80,6 +82,7 @@ public:
 	int m_SpectatorID;
 
 	bool m_IsReady;
+	int m_OldLobby = -1;
 
 	//
 	int m_Vote;
@@ -210,6 +213,8 @@ public:
 	bool m_NinjaJetpack;
 	bool m_Afk;
 	bool m_HasFinishScore;
+	bool m_muteSpec = false;
+	bool m_muteLobbies = false;
 
 	int m_ChatScore;
 

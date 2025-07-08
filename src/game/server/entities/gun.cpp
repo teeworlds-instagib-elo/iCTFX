@@ -40,24 +40,21 @@ void CGun::Fire()
 	}
 
 	int Num = -1;
-	Num = GameServer()->m_World.FindEntities(m_Pos, g_Config.m_SvPlasmaRange, (CEntity **)Ents, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
+	Num = GameServer()->m_World[m_Lobby].FindEntities(m_Pos, g_Config.m_SvPlasmaRange, (CEntity **)Ents, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
 
 	for(int i = 0; i < Num; i++)
 	{
 		CCharacter *Target = Ents[i];
-		//now gun doesn't affect on super
-		if(Target->Team() == TEAM_SUPER)
+		if(m_Layer == LAYER_SWITCH && m_Number > 0 && !GameServer()->Collision(m_Lobby)->m_pSwitchers[m_Number].m_Status[0])
 			continue;
-		if(m_Layer == LAYER_SWITCH && m_Number > 0 && !GameServer()->Collision()->m_pSwitchers[m_Number].m_Status[Target->Team()])
-			continue;
-		int res = GameServer()->Collision()->IntersectLine(m_Pos, Target->m_Pos, 0, 0);
+		int res = GameServer()->Collision(m_Lobby)->IntersectLine(m_Pos, Target->m_Pos, 0, 0);
 		if(!res)
 		{
 			int Len = length(Target->m_Pos - m_Pos);
-			if(LenInTeam[Target->Team()] == 0 || LenInTeam[Target->Team()] > Len)
+			if(LenInTeam[0] == 0 || LenInTeam[0] > Len)
 			{
-				LenInTeam[Target->Team()] = Len;
-				IdInTeam[Target->Team()] = i;
+				LenInTeam[0] = Len;
+				IdInTeam[0] = i;
 			}
 		}
 	}
@@ -66,21 +63,21 @@ void CGun::Fire()
 		if(IdInTeam[i] != -1)
 		{
 			CCharacter *Target = Ents[IdInTeam[i]];
-			new CPlasma(&GameServer()->m_World, m_Pos, normalize(Target->m_Pos - m_Pos), m_Freeze, m_Explosive, i);
+			new CPlasma(&GameServer()->m_World[m_Lobby], m_Pos, normalize(Target->m_Pos - m_Pos), m_Freeze, m_Explosive, i);
 			m_LastFire = Server()->Tick();
 		}
 	}
 	for(int i = 0; i < Num; i++)
 	{
 		CCharacter *Target = Ents[i];
-		if(Target->IsAlive() && Target->Teams()->m_Core.GetSolo(Target->GetPlayer()->GetCID()))
+		if(Target->IsAlive() && Target->m_Solo)
 		{
-			if(IdInTeam[Target->Team()] != i)
+			if(IdInTeam[0] != i)
 			{
-				int res = GameServer()->Collision()->IntersectLine(m_Pos, Target->m_Pos, 0, 0);
+				int res = GameServer()->Collision(m_Lobby)->IntersectLine(m_Pos, Target->m_Pos, 0, 0);
 				if(!res)
 				{
-					new CPlasma(&GameServer()->m_World, m_Pos, normalize(Target->m_Pos - m_Pos), m_Freeze, m_Explosive, Target->Team());
+					new CPlasma(&GameServer()->m_World[m_Lobby], m_Pos, normalize(Target->m_Pos - m_Pos), m_Freeze, m_Explosive, 0);
 					m_LastFire = Server()->Tick();
 				}
 			}
@@ -99,10 +96,10 @@ void CGun::Tick()
 	{
 		int Flags;
 		m_EvalTick = Server()->Tick();
-		int index = GameServer()->Collision()->IsMover(m_Pos.x, m_Pos.y, &Flags);
+		int index = GameServer()->Collision(m_Lobby)->IsMover(m_Pos.x, m_Pos.y, &Flags);
 		if(index)
 		{
-			m_Core = GameServer()->Collision()->CpSpeed(index, Flags);
+			m_Core = GameServer()->Collision(m_Lobby)->CpSpeed(index, Flags);
 		}
 		m_Pos += m_Core;
 	}
@@ -144,7 +141,7 @@ void CGun::Snap(int SnappingClient)
 	else
 	{
 		int Tick = (Server()->Tick() % Server()->TickSpeed()) % 11;
-		if(Char && Char->IsAlive() && (m_Layer == LAYER_SWITCH && m_Number > 0 && !GameServer()->Collision()->m_pSwitchers[m_Number].m_Status[Char->Team()]) && (!Tick))
+		if(Char && Char->IsAlive() && (m_Layer == LAYER_SWITCH && m_Number > 0 && !GameServer()->Collision(m_Lobby)->m_pSwitchers[m_Number].m_Status[Char->Team()]) && (!Tick))
 			return;
 	}
 

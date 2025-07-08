@@ -8,7 +8,6 @@
 #include <engine/server.h>
 
 #include <game/layers.h>
-#include <game/mapbugs.h>
 #include <game/voting.h>
 
 #include <base/tl/array.h>
@@ -67,8 +66,8 @@ class CGameContext : public IGameServer
 	IEngine *m_pEngine;
 	IStorage *m_pStorage;
 	IAntibot *m_pAntibot;
-	CLayers m_Layers;
-	CCollision m_Collision;
+	CLayers m_Layers[MAX_LOBBIES];
+	CCollision m_Collision[MAX_LOBBIES];
 	protocol7::CNetObjHandler m_NetObjHandler7;
 	CNetObjHandler m_NetObjHandler;
 	CTuningParams m_Tuning;
@@ -79,12 +78,11 @@ class CGameContext : public IGameServer
 	CTeeHistorian m_TeeHistorian;
 	ASYNCIO *m_pTeeHistorianFile;
 	CUuid m_GameUuid;
-	CMapBugs m_MapBugs;
 	CPrng m_Prng;
 
 	bool m_Resetting;
 
-	void SwapTeams();
+	void SwapTeams(int Lobby);
 
 	static void CommandCallback(int ClientID, int FlagMask, const char *pCmd, IConsole::IResult *pResult, void *pUser);
 	static void TeeHistorianWrite(const void *pData, int DataSize, void *pUser);
@@ -98,11 +96,16 @@ class CGameContext : public IGameServer
 	static void ConTuneResetZone(IConsole::IResult *pResult, void *pUserData);
 	static void ConTuneSetZoneMsgEnter(IConsole::IResult *pResult, void *pUserData);
 	static void ConTuneSetZoneMsgLeave(IConsole::IResult *pResult, void *pUserData);
-	static void ConMapbug(IConsole::IResult *pResult, void *pUserData);
 	static void ConSwitchOpen(IConsole::IResult *pResult, void *pUserData);
 	static void ConPause(IConsole::IResult *pResult, void *pUserData);
 	static void ConChangeMap(IConsole::IResult *pResult, void *pUserData);
 	static void ConRestart(IConsole::IResult *pResult, void *pUserData);
+	static void ConTimeLimit(IConsole::IResult *pResult, void *pUserData);
+	static void ConScoreLimit(IConsole::IResult *pResult, void *pUserData);
+	static void ConSpectatorSlots(IConsole::IResult *pResult, void *pUserData);
+	static void ConLobby(IConsole::IResult *pResult, void *pUserData);
+	static void ConMuteSpec(IConsole::IResult *pResult, void *pUserData);
+	static void ConMuteLobbies(IConsole::IResult *pResult, void *pUserData);
 	static void ConBroadcast(IConsole::IResult *pResult, void *pUserData);
 	static void ConSay(IConsole::IResult *pResult, void *pUserData);
 	static void ConSetTeam(IConsole::IResult *pResult, void *pUserData);
@@ -123,7 +126,6 @@ class CGameContext : public IGameServer
 	void Construct(int Resetting);
 	void Destruct(int Resetting);
 	void AddVote(const char *pDescription, const char *pCommand);
-	static int MapScan(const char *pName, int IsDir, int DirType, void *pUserData);
 
 	struct CPersistentClientData
 	{
@@ -136,7 +138,7 @@ public:
 	IConsole *Console() { return m_pConsole; }
 	IEngine *Engine() { return m_pEngine; }
 	IStorage *Storage() { return m_pStorage; }
-	CCollision *Collision() { return &m_Collision; }
+	CCollision *Collision(int Lobby) { return &m_Collision[Lobby]; }
 	CTuningParams *Tuning() { return &m_Tuning; }
 	CTuningParams *TuningList() { return &m_aTuningList[0]; }
 	IAntibot *Antibot() { return m_pAntibot; }
@@ -149,34 +151,52 @@ public:
 
 	void Clear();
 
+	void CreateMapEntities(int Lobby);
+
 	CEventHandler m_Events;
 	CPlayer *m_apPlayers[MAX_CLIENTS];
 
-	IGameController *m_pController;
-	CGameWorld m_World;
+	IGameController *m_apController[MAX_LOBBIES];
+	CGameWorld m_World[MAX_LOBBIES];
+
+	bool m_AddMapVotes = false;
 
 	// helper functions
 	class CCharacter *GetPlayerChar(int ClientID);
 	bool EmulateBug(int Bug);
 
+	virtual int GetLobbiesMap(int Lobby);
+
 	// voting
-	void StartVote(const char *pDesc, const char *pCommand, const char *pReason, const char *pSixupDesc);
-	void EndVote();
-	void SendVoteSet(int ClientID);
-	void SendVoteStatus(int ClientID, int Total, int Yes, int No);
+	void StartVote(int Lobby, const char *pDesc, const char *pCommand, const char *pReason, const char *pSixupDesc);
+	void EndVote(int Lobby);
+	void SendVoteSet(int ClientID, int Lobby);
+	void SendVoteStatus(int ClientID, int Total, int Yes, int No, int Lobby);
 	void AbortVoteKickOnDisconnect(int ClientID);
 
-	int m_VoteCreator;
-	int m_VoteType;
-	int64_t m_VoteCloseTime;
-	bool m_VoteUpdate;
-	int m_VotePos;
-	char m_aVoteDescription[VOTE_DESC_LENGTH];
-	char m_aSixupVoteDescription[VOTE_DESC_LENGTH];
-	char m_aVoteCommand[VOTE_CMD_LENGTH];
-	char m_aVoteReason[VOTE_REASON_LENGTH];
+	struct CVote
+	{
+		int m_VoteCreator;
+		int m_VoteType;
+		int64_t m_VoteCloseTime;
+		bool m_VoteUpdate;
+		int m_VotePos;
+		char m_aVoteDescription[VOTE_DESC_LENGTH];
+		char m_aSixupVoteDescription[VOTE_DESC_LENGTH];
+		char m_aVoteCommand[VOTE_CMD_LENGTH];
+		char m_aVoteReason[VOTE_REASON_LENGTH];
+		int m_VoteEnforce;
+		int64_t m_LastMapVote;
+		bool m_VoteWillPass;
+
+		int m_VoteVictim;
+		int m_VoteEnforcer;
+	};
+
 	int m_NumVoteOptions;
-	int m_VoteEnforce;
+
+	CVote m_aVotes[MAX_LOBBIES];
+
 	char m_aaZoneEnterMsg[NUM_TUNEZONES][256]; // 0 is used for switching from or to area without tunings
 	char m_aaZoneLeaveMsg[NUM_TUNEZONES][256];
 
@@ -195,15 +215,15 @@ public:
 	CVoteOptionServer *m_pVoteOptionLast;
 
 	// helper functions
-	void CreateDamageInd(vec2 Pos, float AngleMod, int Amount, int64_t Mask = -1);
-	void CreateExplosion(vec2 Pos, int Owner, int Weapon, bool NoDamage, int ActivatedTeam, int64_t Mask);
-	void CreateHammerHit(vec2 Pos, int64_t Mask = -1);
-	void CreatePlayerSpawn(vec2 Pos, int64_t Mask = -1);
-	void CreateDeath(vec2 Pos, int ClientID, int64_t Mask = -1);
-	void CreateSound(vec2 Pos, int Sound, int64_t Mask = -1);
-	void CreateSoundGlobal(int Sound, int Target = -1);
+	void CreateDamageInd(int Lobby, vec2 Pos, float AngleMod, int Amount, int64_t Mask = -1);
+	void CreateExplosion(int Lobby, vec2 Pos, int Owner, int Weapon, bool NoDamage, int ActivatedTeam, int64_t Mask);
+	void CreateHammerHit(int Lobby, vec2 Pos, int64_t Mask = -1);
+	void CreatePlayerSpawn(int Lobby, vec2 Pos, int64_t Mask = -1);
+	void CreateDeath(int Lobby, vec2 Pos, int ClientID, int64_t Mask = -1);
+	void CreateSound(int Lobby, vec2 Pos, int Sound, int64_t Mask = -1);
+	void CreateSoundGlobal(int Lobby, int Sound, int Target = -1);
 
-	bool CheckSightVisibility(CCharacter * pChar, vec2 Pos, float radius, CCharacter * pCharTarget);
+	bool CheckSightVisibility(int Lobby, CCharacter * pChar, vec2 Pos, float radius, CCharacter * pCharTarget);
 
 	enum
 	{
@@ -284,14 +304,13 @@ public:
 	// DDRace
 	void OnPreTickTeehistorian();
 	bool OnClientDDNetVersionKnown(int ClientID);
-	virtual void FillAntibot(CAntibotRoundData *pData);
 	int ProcessSpamProtection(int ClientID, bool RespectChatInitialDelay = true);
-	int GetDDRaceTeam(int ClientID);
+	int GetLobby(int ClientID);
 	// Describes the time when the first player joined the server.
 	int64_t m_NonEmptySince;
-	int64_t m_LastMapVote;
 	int GetClientVersion(int ClientID) const;
 	bool PlayerExists(int ClientID) const { return m_apPlayers[ClientID]; }
+	void KillPlayer(int ClientID) override;
 	// Returns true if someone is actively moderating.
 	bool PlayerModerating() const;
 	void ForceVote(int EnforcerID, bool Success);
@@ -303,8 +322,6 @@ public:
 	std::shared_ptr<CScoreRandomMapResult> m_SqlRandomMapResult;
 
 private:
-	bool m_VoteWillPass;
-
 	//DDRace Console Commands
 
 	static void ConKillPlayer(IConsole::IResult *pResult, void *pUserData);
@@ -317,9 +334,12 @@ private:
 	static void ConLiveFreeze(IConsole::IResult *pResult, void *pUserData);
 	static void ConUnLiveFreeze(IConsole::IResult *pResult, void *pUserData);
 	static void ConUnSuper(IConsole::IResult *pResult, void *pUserData);
-	static void ConSuper(IConsole::IResult *pResult, void *pUserData);
 	static void ConShotgun(IConsole::IResult *pResult, void *pUserData);
+	static void ConIDM(IConsole::IResult *pResult, void *pUserData);
+	static void ConLOS(IConsole::IResult *pResult, void *pUserData);
 	static void ConGrenade(IConsole::IResult *pResult, void *pUserData);
+	static void ConHammer(IConsole::IResult *pResult, void *pUserData);
+	static void ConTournamentMode(IConsole::IResult *pResult, void *pUserData);
 	static void ConLaser(IConsole::IResult *pResult, void *pUserData);
 	static void ConJetpack(IConsole::IResult *pResult, void *pUserData);
 	static void ConWeapons(IConsole::IResult *pResult, void *pUserData);
@@ -404,8 +424,6 @@ private:
 	static void ConModerate(IConsole::IResult *pResult, void *pUserData);
 
 	static void ConList(IConsole::IResult *pResult, void *pUserData);
-	static void ConSetDDRTeam(IConsole::IResult *pResult, void *pUserData);
-	static void ConUninvite(IConsole::IResult *pResult, void *pUserData);
 	static void ConFreezeHammer(IConsole::IResult *pResult, void *pUserData);
 	static void ConUnFreezeHammer(IConsole::IResult *pResult, void *pUserData);
 
@@ -438,7 +456,7 @@ private:
 	void UnlockTeam(int ClientID, int Team);
 
 public:
-	CLayers *Layers() { return &m_Layers; }
+	CLayers *Layers(int Lobby) { return &m_Layers[Lobby]; }
 
 	enum
 	{
@@ -450,12 +468,10 @@ public:
 		VOTE_TYPE_KICK,
 		VOTE_TYPE_SPECTATE,
 	};
-	int m_VoteVictim;
-	int m_VoteEnforcer;
 
-	inline bool IsOptionVote() const { return m_VoteType == VOTE_TYPE_OPTION; }
-	inline bool IsKickVote() const { return m_VoteType == VOTE_TYPE_KICK; }
-	inline bool IsSpecVote() const { return m_VoteType == VOTE_TYPE_SPECTATE; }
+	inline bool IsOptionVote(int Lobby) const { return m_aVotes[Lobby].m_VoteType == VOTE_TYPE_OPTION; }
+	inline bool IsKickVote(int Lobby) const { return m_aVotes[Lobby].m_VoteType == VOTE_TYPE_KICK; }
+	inline bool IsSpecVote(int Lobby) const { return m_aVotes[Lobby].m_VoteType == VOTE_TYPE_SPECTATE; }
 
 	static void SendChatResponse(const char *pLine, void *pUser, ColorRGBA PrintColor = {1, 1, 1, 1});
 	static void SendChatResponseAll(const char *pLine, void *pUser);

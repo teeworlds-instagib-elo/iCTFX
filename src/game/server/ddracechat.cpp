@@ -345,11 +345,13 @@ void ToggleSpecPauseVoted(IConsole::IResult *pResult, void *pUserData, int Pause
 		return;
 	}
 
-	bool IsPlayerBeingVoted = pSelf->m_VoteCloseTime &&
-				  (pSelf->IsKickVote() || pSelf->IsSpecVote()) &&
-				  pResult->m_ClientID != pSelf->m_VoteVictim;
+	int Lobby = pPlayer->GetLobby();
+
+	bool IsPlayerBeingVoted = pSelf->m_aVotes[Lobby].m_VoteCloseTime &&
+				  (pSelf->IsKickVote(Lobby) || pSelf->IsSpecVote(Lobby)) &&
+				  pResult->m_ClientID != pSelf->m_aVotes[Lobby].m_VoteVictim;
 	if((!IsPlayerBeingVoted && -PauseState == PauseType) ||
-		(IsPlayerBeingVoted && PauseState && pPlayer->m_SpectatorID == pSelf->m_VoteVictim))
+		(IsPlayerBeingVoted && PauseState && pPlayer->m_SpectatorID == pSelf->m_aVotes[Lobby].m_VoteVictim))
 	{
 		pPlayer->Pause(CPlayer::PAUSE_NONE, false);
 	}
@@ -357,7 +359,7 @@ void ToggleSpecPauseVoted(IConsole::IResult *pResult, void *pUserData, int Pause
 	{
 		pPlayer->Pause(PauseType, false);
 		if(IsPlayerBeingVoted)
-			pPlayer->m_SpectatorID = pSelf->m_VoteVictim;
+			pPlayer->m_SpectatorID = pSelf->m_aVotes[Lobby].m_VoteVictim;
 	}
 }
 
@@ -818,13 +820,8 @@ void CGameContext::ConTele(IConsole::IResult *pResult, void *pUserData)
 	if(!pChr)
 		return;
 
-	CGameTeams &Teams = ((CGameControllerDDRace *)pSelf->m_pController)->m_Teams;
-	int Team = Teams.m_Core.Team(pResult->m_ClientID);
-	if(!Teams.IsPractice(Team))
-	{
-		pSelf->SendChatTarget(pPlayer->GetCID(), "You're not in a team with /practice turned on. Note that you can't earn a rank with practice enabled.");
-		return;
-	}
+	pSelf->SendChatTarget(pPlayer->GetCID(), "You can't teleport in this server.");
+	return;
 
 	vec2 Pos = pPlayer->m_ViewPos;
 
@@ -928,7 +925,7 @@ void CGameContext::ConRank(IConsole::IResult *pResult, void *pUserData) {
 	if(!CheckClientID(pResult->m_ClientID))
 		return;
 	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
-	pSelf->m_pController->sql_handler->show_rank(pPlayer, pSelf->Server()->ClientName(pResult->m_ClientID));
+	pSelf->m_apController[pPlayer->GetLobby()]->sql_handler->show_rank(pPlayer, pSelf->Server()->ClientName(pResult->m_ClientID));
 }
 
 void CGameContext::ConTop5(IConsole::IResult *pResult, void *pUserData) {
@@ -936,7 +933,7 @@ void CGameContext::ConTop5(IConsole::IResult *pResult, void *pUserData) {
 	if(!CheckClientID(pResult->m_ClientID))
 		return;
 	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
-	pSelf->m_pController->sql_handler->show_top5(pPlayer);
+	pSelf->m_apController[pPlayer->GetLobby()]->sql_handler->show_top5(pPlayer);
 }
 
 void CGameContext::ConProtectedKill(IConsole::IResult *pResult, void *pUserData)

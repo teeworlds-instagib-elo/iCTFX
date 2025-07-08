@@ -14,7 +14,7 @@
 class CGameControllerDDRace : public IGameController
 {
 public:
-	CGameControllerDDRace(class CGameContext *pGameServer);
+	CGameControllerDDRace(class CGameContext *pGameServer, int Lobby);
 	~CGameControllerDDRace();
 
 	void UpdateServerStats();
@@ -30,6 +30,8 @@ public:
 	void OnPlayerDisconnect(class CPlayer *pPlayer, const char *pReason) override;
 	void OnPlayerNameChange(class CPlayer *pPlayer) override;
 
+	void ChangeMap(const char *pToMap) override;
+
 	void Tick() override;
 
 	void DoTeamChange(class CPlayer *pPlayer, int Team, bool DoChatMsg) override;
@@ -38,11 +40,20 @@ public:
 
 	void InitTeleporter();
 
-	int GetPlayerTeam(int ClientID) const;
-
-	CGameTeams m_Teams;
-
 	std::map<int, std::vector<vec2>> m_TeleOuts;
 	std::map<int, std::vector<vec2>> m_TeleCheckOuts;
+
+	#define MAX_WAYPOINT_CONNECTIONS 12
+	#define MAX_WAYPOINTS 32
+	struct CWaypoint
+	{
+		int x;
+		int y;
+		int connections[MAX_WAYPOINT_CONNECTIONS];
+		int connectionAmount;
+	};
+
+	CWaypoint m_aWaypoints[MAX_WAYPOINTS] = {0};
+
 };
 #endif // GAME_SERVER_GAMEMODES_DDRACE_H

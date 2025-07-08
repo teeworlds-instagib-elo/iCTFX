@@ -14,6 +14,8 @@ public:
 	CCharacter *m_pCarryingCharacter;
 	vec2 m_Vel;
 	vec2 m_StandPos;
+	bool m_BotGrabbed;
+	int m_Bot;
 
 	vec2 m_Positions[POSITION_HISTORY];
 

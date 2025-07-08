@@ -17,11 +17,20 @@ CLayers::CLayers()
 	m_pFrontLayer = 0;
 	m_pSwitchLayer = 0;
 	m_pTuneLayer = 0;
+	m_Map = -1;
 }
 
-void CLayers::Init(class IKernel *pKernel)
+void CLayers::Init(class IKernel *pKernel, int Map)
 {
-	m_pMap = pKernel->RequestInterface<IMap>();
+	m_Map = Map;
+	m_pMap = pKernel->GetIMap(Map);
+
+	if(!m_pMap)
+	{
+		m_Map = -1;
+		return;
+	}
+
 	m_pMap->GetType(MAPITEMTYPE_GROUP, &m_GroupsStart, &m_GroupsNum);
 	m_pMap->GetType(MAPITEMTYPE_LAYER, &m_LayersStart, &m_LayersNum);
 
@@ -113,6 +122,9 @@ void CLayers::Init(class IKernel *pKernel)
 
 void CLayers::InitBackground(class IMap *pMap)
 {
+	if(!pMap)
+		return;
+	
 	m_pMap = pMap;
 	m_pMap->GetType(MAPITEMTYPE_GROUP, &m_GroupsStart, &m_GroupsNum);
 	m_pMap->GetType(MAPITEMTYPE_LAYER, &m_LayersStart, &m_LayersNum);
@@ -165,6 +177,9 @@ void CLayers::InitBackground(class IMap *pMap)
 
 void CLayers::InitTilemapSkip()
 {
+	if(!m_pMap)
+		return;
+	
 	for(int g = 0; g < NumGroups(); g++)
 	{
 		const CMapItemGroup *pGroup = GetGroup(g);
@@ -199,10 +214,14 @@ void CLayers::InitTilemapSkip()
 
 CMapItemGroup *CLayers::GetGroup(int Index) const
 {
+	if(!m_pMap)
+		return 0;
 	return static_cast<CMapItemGroup *>(m_pMap->GetItem(m_GroupsStart + Index, 0, 0));
 }
 
 CMapItemLayer *CLayers::GetLayer(int Index) const
 {
+	if(!m_pMap)
+		return 0;
 	return static_cast<CMapItemLayer *>(m_pMap->GetItem(m_LayersStart + Index, 0, 0));
 }

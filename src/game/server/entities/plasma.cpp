@@ -29,7 +29,7 @@ CPlasma::CPlasma(CGameWorld *pGameWorld, vec2 Pos, vec2 Dir, bool Freeze,
 bool CPlasma::HitCharacter()
 {
 	vec2 To2;
-	CCharacter *Hit = GameServer()->m_World.IntersectCharacter(m_Pos,
+	CCharacter *Hit = GameServer()->m_World[m_Lobby].IntersectCharacter(m_Pos,
 		m_Pos + m_Core, 0.0f, To2);
 	if(!Hit)
 		return false;
@@ -38,8 +38,8 @@ bool CPlasma::HitCharacter()
 		return false;
 	m_Freeze ? Hit->Freeze() : Hit->UnFreeze();
 	if(m_Explosive)
-		GameServer()->CreateExplosion(m_Pos, -1, WEAPON_GRENADE, true,
-			m_ResponsibleTeam, Hit->Teams()->TeamMask(m_ResponsibleTeam));
+		GameServer()->CreateExplosion(m_Lobby, m_Pos, -1, WEAPON_GRENADE, true,
+			m_ResponsibleTeam, 0);
 	m_MarkedForDestroy = true;
 	return true;
 }
@@ -67,18 +67,18 @@ void CPlasma::Tick()
 	HitCharacter();
 
 	int Res = 0;
-	Res = GameServer()->Collision()->IntersectNoLaser(m_Pos, m_Pos + m_Core, 0,
+	Res = GameServer()->Collision(m_Lobby)->IntersectNoLaser(m_Pos, m_Pos + m_Core, 0,
 		0);
 	if(Res)
 	{
 		if(m_Explosive)
-			GameServer()->CreateExplosion(
+			GameServer()->CreateExplosion( m_Lobby,
 				m_Pos,
 				-1,
 				WEAPON_GRENADE,
 				true,
 				m_ResponsibleTeam,
-				((CGameControllerDDRace *)GameServer()->m_pController)->m_Teams.TeamMask(m_ResponsibleTeam));
+				0);
 		Reset();
 	}
 }
@@ -91,7 +91,7 @@ void CPlasma::Snap(int SnappingClient)
 	CPlayer *SnapPlayer = SnappingClient != SERVER_DEMO_CLIENT ? GameServer()->m_apPlayers[SnappingClient] : 0;
 	int Tick = (Server()->Tick() % Server()->TickSpeed()) % 11;
 
-	if(SnapChar && SnapChar->IsAlive() && (m_Layer == LAYER_SWITCH && m_Number > 0 && !GameServer()->Collision()->m_pSwitchers[m_Number].m_Status[SnapChar->Team()]) && (!Tick))
+	if(SnapChar && SnapChar->IsAlive() && (m_Layer == LAYER_SWITCH && m_Number > 0 && !GameServer()->Collision(m_Lobby)->m_pSwitchers[m_Number].m_Status[SnapChar->Team()]) && (!Tick))
 		return;
 
 	if(SnapPlayer && (SnapPlayer->GetTeam() == TEAM_SPECTATORS || SnapPlayer->IsPaused()) && SnapPlayer->m_SpectatorID != SPEC_FREEVIEW && GameServer()->GetPlayerChar(SnapPlayer->m_SpectatorID) && GameServer()->GetPlayerChar(SnapPlayer->m_SpectatorID)->Team() != m_ResponsibleTeam && SnapPlayer->m_ShowOthers != SHOW_OTHERS_ON)

@@ -242,6 +242,9 @@ void CNetConnection::DirectInit(NETADDR &Addr, SECURITY_TOKEN SecurityToken, SEC
 
 int CNetConnection::Feed(CNetPacketConstruct *pPacket, NETADDR *pAddr, SECURITY_TOKEN SecurityToken)
 {
+	if(State() == NET_CONNSTATE_BOT)
+		return 0;
+	
 	if(!m_Sixup && State() != NET_CONNSTATE_OFFLINE && m_SecurityToken != NET_SECURITY_TOKEN_UNKNOWN && m_SecurityToken != NET_SECURITY_TOKEN_UNSUPPORTED)
 	{
 		// supposed to have a valid token in this packet, check it
@@ -391,6 +394,9 @@ int CNetConnection::Feed(CNetPacketConstruct *pPacket, NETADDR *pAddr, SECURITY_
 
 int CNetConnection::Update()
 {
+	if(State() == NET_CONNSTATE_BOT)
+		return 0;
+	
 	int64_t Now = time_get();
 
 	if(State() == NET_CONNSTATE_ERROR && m_TimeoutSituation && (Now - m_LastRecvTime) > time_freq() * g_Config.m_ConnTimeoutProtection)

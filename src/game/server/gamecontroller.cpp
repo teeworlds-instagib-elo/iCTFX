@@ -17,6 +17,7 @@
 #include "entities/light.h"
 #include "entities/plasma.h"
 #include "entities/projectile.h"
+#include "entities/bot.h"
 #include <game/layers.h>
 
 IGameController::IGameController(class CGameContext *pGameServer): sql_handler(std::make_unique<SqlHandler>())
@@ -44,6 +45,11 @@ IGameController::IGameController(class CGameContext *pGameServer): sql_handler(s
 	m_FakeWarmup = 0;
 
 	m_CurrentRecord = 0;
+
+	m_ScoreLimit = g_Config.m_SvScorelimit;
+	m_TimeLimit = g_Config.m_SvTimelimit;
+	m_SpectatorSlots = g_Config.m_SvSpectatorSlots;
+	m_tourneyMode = g_Config.m_SvTournamentMode;
 }
 
 IGameController::~IGameController() = default;
@@ -81,7 +87,7 @@ void IGameController::DoActivityCheck()
 					for(auto &pPlayer : GameServer()->m_apPlayers)
 						if(pPlayer && pPlayer->GetTeam() == TEAM_SPECTATORS)
 							++Spectators;
-					if(Spectators >= g_Config.m_SvSpectatorSlots)
+					if(Spectators >= m_SpectatorSlots)
 						Server()->Kick(i, "Kicked for inactivity");
 					else
 						DoTeamChange(GameServer()->m_apPlayers[i], TEAM_SPECTATORS);
@@ -101,14 +107,17 @@ void IGameController::DoActivityCheck()
 float IGameController::EvaluateSpawnPos(CSpawnEval *pEval, vec2 Pos, int DDTeam)
 {
 	float Score = 0.0f;
-	CCharacter *pC = static_cast<CCharacter *>(GameServer()->m_World.FindFirst(CGameWorld::ENTTYPE_CHARACTER));
+	CCharacter *pC = static_cast<CCharacter *>(GameServer()->m_World[m_Lobby].FindFirst(CGameWorld::ENTTYPE_CHARACTER));
 	for(; pC; pC = (CCharacter *)pC->TypeNext())
 	{
-		// ignore players in other teams
-		if(GameServer()->GetDDRaceTeam(pC->GetPlayer()->GetCID()) != DDTeam)
-			continue;
-
 		float d = distance(Pos, pC->m_Pos);
+		Score += d == 0 ? 1000000000.0f : 1.0f / d;
+	}
+
+	CBot *pB = static_cast<CBot *>(GameServer()->m_World[m_Lobby].FindFirst(CGameWorld::ENTTYPE_BOT));
+	for(; pB; pB = (CBot *)pB->TypeNext())
+	{
+		float d = distance(Pos, pB->m_Pos);
 		Score += d == 0 ? 1000000000.0f : 1.0f / d;
 	}
 
@@ -129,16 +138,16 @@ void IGameController::EvaluateSpawnType(CSpawnEval *pEval, int Type, int DDTeam)
 			{
 				// check if the position is occupado
 				CCharacter *aEnts[MAX_CLIENTS];
-				int Num = GameServer()->m_World.FindEntities(m_aaSpawnPoints[Type][i], 64, (CEntity **)aEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
+				int Num = GameServer()->m_World[m_Lobby].FindEntities(m_aaSpawnPoints[Type][i], 64, (CEntity **)aEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_CHARACTER);
 				vec2 Positions[5] = {vec2(0.0f, 0.0f), vec2(-32.0f, 0.0f), vec2(0.0f, -32.0f), vec2(32.0f, 0.0f), vec2(0.0f, 32.0f)}; // start, left, up, right, down
 				int Result = -1;
 				for(int Index = 0; Index < 5 && Result == -1; ++Index)
 				{
 					Result = Index;
-					if(!GameServer()->m_World.m_Core.m_Tuning[0].m_PlayerCollision)
+					if(!GameServer()->m_World[m_Lobby].m_Core.m_Tuning[0].m_PlayerCollision)
 						break;
 					for(int c = 0; c < Num; ++c)
-						if(GameServer()->Collision()->CheckPoint(m_aaSpawnPoints[Type][i] + Positions[Index]) ||
+						if(GameServer()->Collision(m_Lobby)->CheckPoint(m_aaSpawnPoints[Type][i] + Positions[Index]) ||
 							distance(aEnts[c]->m_Pos, m_aaSpawnPoints[Type][i] + Positions[Index]) <= aEnts[c]->GetProximityRadius())
 						{
 							Result = -1;
@@ -203,14 +212,14 @@ bool IGameController::OnEntity(int Index, vec2 Pos, int Layer, int Flags, int Nu
 	x = (Pos.x - 16.0f) / 32.0f;
 	y = (Pos.y - 16.0f) / 32.0f;
 	int sides[8];
-	sides[0] = GameServer()->Collision()->Entity(x, y + 1, Layer);
-	sides[1] = GameServer()->Collision()->Entity(x + 1, y + 1, Layer);
-	sides[2] = GameServer()->Collision()->Entity(x + 1, y, Layer);
-	sides[3] = GameServer()->Collision()->Entity(x + 1, y - 1, Layer);
-	sides[4] = GameServer()->Collision()->Entity(x, y - 1, Layer);
-	sides[5] = GameServer()->Collision()->Entity(x - 1, y - 1, Layer);
-	sides[6] = GameServer()->Collision()->Entity(x - 1, y, Layer);
-	sides[7] = GameServer()->Collision()->Entity(x - 1, y + 1, Layer);
+	sides[0] = GameServer()->Collision(m_Lobby)->Entity(x, y + 1, Layer);
+	sides[1] = GameServer()->Collision(m_Lobby)->Entity(x + 1, y + 1, Layer);
+	sides[2] = GameServer()->Collision(m_Lobby)->Entity(x + 1, y, Layer);
+	sides[3] = GameServer()->Collision(m_Lobby)->Entity(x + 1, y - 1, Layer);
+	sides[4] = GameServer()->Collision(m_Lobby)->Entity(x, y - 1, Layer);
+	sides[5] = GameServer()->Collision(m_Lobby)->Entity(x - 1, y - 1, Layer);
+	sides[6] = GameServer()->Collision(m_Lobby)->Entity(x - 1, y, Layer);
+	sides[7] = GameServer()->Collision(m_Lobby)->Entity(x - 1, y + 1, Layer);
 
 	if(Index >= ENTITY_SPAWN && Index <= ENTITY_SPAWN_BLUE)
 	{
@@ -226,7 +235,7 @@ bool IGameController::OnEntity(int Index, vec2 Pos, int Layer, int Flags, int Nu
 			if(sides[i] >= ENTITY_LASER_SHORT && sides[i] <= ENTITY_LASER_LONG)
 			{
 				new CDoor(
-					&GameServer()->m_World, //GameWorld
+					&GameServer()->m_World[m_Lobby], //GameWorld
 					Pos, //Pos
 					pi / 4 * i, //Rotation
 					32 * 3 + 32 * (sides[i] - ENTITY_LASER_SHORT) * 3, //Length
@@ -248,7 +257,7 @@ bool IGameController::OnEntity(int Index, vec2 Pos, int Layer, int Flags, int Nu
 			Dir = 3;
 		float Deg = Dir * (pi / 2);
 		CProjectile *bullet = new CProjectile(
-			&GameServer()->m_World,
+			&GameServer()->m_World[m_Lobby],
 			WEAPON_SHOTGUN, //Type
 			-1, //Owner
 			Pos, //Pos
@@ -275,7 +284,7 @@ bool IGameController::OnEntity(int Index, vec2 Pos, int Layer, int Flags, int Nu
 			Dir = 3;
 		float Deg = Dir * (pi / 2);
 		CProjectile *bullet = new CProjectile(
-			&GameServer()->m_World,
+			&GameServer()->m_World[m_Lobby],
 			WEAPON_SHOTGUN, //Type
 			-1, //Owner
 			Pos, //Pos
@@ -321,14 +330,14 @@ bool IGameController::OnEntity(int Index, vec2 Pos, int Layer, int Flags, int Nu
 	if(Index >= ENTITY_LASER_FAST_CCW && Index <= ENTITY_LASER_FAST_CW)
 	{
 		int sides2[8];
-		sides2[0] = GameServer()->Collision()->Entity(x, y + 2, Layer);
-		sides2[1] = GameServer()->Collision()->Entity(x + 2, y + 2, Layer);
-		sides2[2] = GameServer()->Collision()->Entity(x + 2, y, Layer);
-		sides2[3] = GameServer()->Collision()->Entity(x + 2, y - 2, Layer);
-		sides2[4] = GameServer()->Collision()->Entity(x, y - 2, Layer);
-		sides2[5] = GameServer()->Collision()->Entity(x - 2, y - 2, Layer);
-		sides2[6] = GameServer()->Collision()->Entity(x - 2, y, Layer);
-		sides2[7] = GameServer()->Collision()->Entity(x - 2, y + 2, Layer);
+		sides2[0] = GameServer()->Collision(m_Lobby)->Entity(x, y + 2, Layer);
+		sides2[1] = GameServer()->Collision(m_Lobby)->Entity(x + 2, y + 2, Layer);
+		sides2[2] = GameServer()->Collision(m_Lobby)->Entity(x + 2, y, Layer);
+		sides2[3] = GameServer()->Collision(m_Lobby)->Entity(x + 2, y - 2, Layer);
+		sides2[4] = GameServer()->Collision(m_Lobby)->Entity(x, y - 2, Layer);
+		sides2[5] = GameServer()->Collision(m_Lobby)->Entity(x - 2, y - 2, Layer);
+		sides2[6] = GameServer()->Collision(m_Lobby)->Entity(x - 2, y, Layer);
+		sides2[7] = GameServer()->Collision(m_Lobby)->Entity(x - 2, y + 2, Layer);
 
 		float AngularSpeed = 0.0f;
 		int Ind = Index - ENTITY_LASER_STOP;
@@ -357,7 +366,7 @@ bool IGameController::OnEntity(int Index, vec2 Pos, int Layer, int Flags, int Nu
 		{
 			if(sides[i] >= ENTITY_LASER_SHORT && sides[i] <= ENTITY_LASER_LONG)
 			{
-				CLight *Lgt = new CLight(&GameServer()->m_World, Pos, pi / 4 * i, 32 * 3 + 32 * (sides[i] - ENTITY_LASER_SHORT) * 3, Layer, Number);
+				CLight *Lgt = new CLight(&GameServer()->m_World[m_Lobby], Pos, pi / 4 * i, 32 * 3 + 32 * (sides[i] - ENTITY_LASER_SHORT) * 3, Layer, Number);
 				Lgt->m_AngularSpeed = AngularSpeed;
 				if(sides2[i] >= ENTITY_LASER_C_SLOW && sides2[i] <= ENTITY_LASER_C_FAST)
 				{
@@ -376,35 +385,28 @@ bool IGameController::OnEntity(int Index, vec2 Pos, int Layer, int Flags, int Nu
 	}
 	else if(Index >= ENTITY_DRAGGER_WEAK && Index <= ENTITY_DRAGGER_STRONG)
 	{
-		CDraggerTeam(&GameServer()->m_World, Pos, Index - ENTITY_DRAGGER_WEAK + 1, false, Layer, Number);
+		CDraggerTeam(&GameServer()->m_World[m_Lobby], Pos, Index - ENTITY_DRAGGER_WEAK + 1, false, Layer, Number);
 	}
 	else if(Index >= ENTITY_DRAGGER_WEAK_NW && Index <= ENTITY_DRAGGER_STRONG_NW)
 	{
-		CDraggerTeam(&GameServer()->m_World, Pos, Index - ENTITY_DRAGGER_WEAK_NW + 1, true, Layer, Number);
+		CDraggerTeam(&GameServer()->m_World[m_Lobby], Pos, Index - ENTITY_DRAGGER_WEAK_NW + 1, true, Layer, Number);
 	}
 	else if(Index == ENTITY_PLASMAE)
 	{
-		new CGun(&GameServer()->m_World, Pos, false, true, Layer, Number);
+		new CGun(&GameServer()->m_World[m_Lobby], Pos, false, true, Layer, Number);
 	}
 	else if(Index == ENTITY_PLASMAF)
 	{
-		new CGun(&GameServer()->m_World, Pos, true, false, Layer, Number);
+		new CGun(&GameServer()->m_World[m_Lobby], Pos, true, false, Layer, Number);
 	}
 	else if(Index == ENTITY_PLASMA)
 	{
-		new CGun(&GameServer()->m_World, Pos, true, true, Layer, Number);
+		new CGun(&GameServer()->m_World[m_Lobby], Pos, true, true, Layer, Number);
 	}
 	else if(Index == ENTITY_PLASMAU)
 	{
-		new CGun(&GameServer()->m_World, Pos, false, false, Layer, Number);
+		new CGun(&GameServer()->m_World[m_Lobby], Pos, false, false, Layer, Number);
 	}
-
-	// if(Type != -1)
-	// {
-	// 	CPickup *pPickup = new CPickup(&GameServer()->m_World, Type, SubType, Layer, Number);
-	// 	pPickup->m_Pos = Pos;
-	// 	return true;
-	// }
 
 	return false;
 }
@@ -446,15 +448,20 @@ void IGameController::EndRound()
 {
 	if(m_Warmup) // game can't end when we are running warmup
 		return;
+	
+	char aBuf[256];
+	str_format(aBuf, 256, "Game finished in lobby %i", m_Lobby);
 
-	GameServer()->m_World.m_Paused = true;
+	GameServer()->SendChat(-1, CGameContext::CHAT_ALL, aBuf);
+
+	GameServer()->m_World[m_Lobby].m_Paused = true;
 	m_GameOverTick = Server()->Tick();
 	m_SuddenDeath = 0;
 }
 
 void IGameController::ResetGame()
 {
-	GameServer()->m_World.m_ResetRequested = true;
+	GameServer()->m_World[m_Lobby].m_ResetRequested = true;
 }
 
 const char *IGameController::GetTeamName(int Team)
@@ -475,7 +482,7 @@ void IGameController::StartRound()
 	m_RoundStartTick = Server()->Tick();
 	m_SuddenDeath = 0;
 	m_GameOverTick = -1;
-	GameServer()->m_World.m_Paused = false;
+	GameServer()->m_World[m_Lobby].m_Paused = false;
 	m_ForceBalanced = false;
 	Server()->DemoRecorder_HandleAutoStart();
 	char aBuf[256];
@@ -508,7 +515,25 @@ void IGameController::StartRound()
 
 void IGameController::ChangeMap(const char *pToMap)
 {
-	Server()->ChangeMap(pToMap);
+	if(!pToMap)
+		return;
+
+	for(int i = 0; i < GameServer()->Kernel()->m_AmountMaps; i++)
+	{
+		if(GameServer()->Kernel()->GetIMap(i) && GameServer()->Kernel()->GetIMap(i)->m_aCurrentMap[0] != 0 &&
+			str_comp(GameServer()->Kernel()->GetIMap(i)->m_aMapName, pToMap) == 0)
+		{
+			GameServer()->m_World[m_Lobby].DeleteAllEntities();
+			GameServer()->Layers(m_Lobby)->Init(GameServer()->Kernel(), i);
+			GameServer()->Collision(m_Lobby)->Init(GameServer()->Layers(m_Lobby));
+			
+			for(int i = 0; i < 3; i++)
+				m_aNumSpawnPoints[i] = 0;
+			
+			GameServer()->CreateMapEntities(m_Lobby);
+			break;
+		}
+	}
 }
 
 void IGameController::OnReset()
@@ -610,15 +635,15 @@ void IGameController::Tick()
 	if(m_FakeWarmup)
 	{
 		m_FakeWarmup--;
-		if(!m_FakeWarmup && GameServer()->m_World.m_Paused)
+		if(!m_FakeWarmup && GameServer()->m_World[m_Lobby].m_Paused)
 		{
-			GameServer()->m_World.m_Paused = false;
+			GameServer()->m_World[m_Lobby].m_Paused = false;
 			GameServer()->SendChat(-1, CGameContext::CHAT_ALL, "Game started");
 		}
 	}
 
 	// game is Paused
-	if(GameServer()->m_World.m_Paused)
+	if(GameServer()->m_World[m_Lobby].m_Paused)
 		++m_RoundStartTick;
 
 	// do team-balancing
@@ -706,7 +731,7 @@ void IGameController::Tick()
 							for(int j = 0; j < MAX_CLIENTS; ++j)
 								if(GameServer()->m_apPlayers[j] && GameServer()->m_apPlayers[j]->GetTeam() == TEAM_SPECTATORS)
 									++Spectators;
-							if(Spectators >= g_Config.m_SvSpectatorSlots)
+							if(Spectators >= m_SpectatorSlots)
 								Server()->Kick(i, "Kicked for inactivity");
 							else
 								GameServer()->m_apPlayers[i]->SetTeam(TEAM_SPECTATORS);
@@ -738,7 +763,7 @@ void IGameController::Snap(int SnappingClient)
 		pGameInfoObj->m_GameStateFlags |= GAMESTATEFLAG_GAMEOVER;
 	if(m_SuddenDeath)
 		pGameInfoObj->m_GameStateFlags |= GAMESTATEFLAG_SUDDENDEATH;
-	if(GameServer()->m_World.m_Paused)
+	if(GameServer()->m_World[m_Lobby].m_Paused)
 		pGameInfoObj->m_GameStateFlags |= GAMESTATEFLAG_PAUSED;
 	pGameInfoObj->m_RoundStartTick = m_RoundStartTick;
 	if(m_FakeWarmup)
@@ -749,8 +774,8 @@ void IGameController::Snap(int SnappingClient)
 	pGameInfoObj->m_RoundNum = 0;
 	pGameInfoObj->m_RoundCurrent = m_RoundCount + 1;
 
-	pGameInfoObj->m_ScoreLimit = g_Config.m_SvScorelimit;
-	pGameInfoObj->m_TimeLimit = g_Config.m_SvTimelimit;
+	pGameInfoObj->m_ScoreLimit = m_ScoreLimit;
+	pGameInfoObj->m_TimeLimit = m_TimeLimit;
 
 	CCharacter *pChr;
 	CPlayer *pPlayer = SnappingClient != SERVER_DEMO_CLIENT ? GameServer()->m_apPlayers[SnappingClient] : 0;
@@ -831,7 +856,7 @@ void IGameController::Snap(int SnappingClient)
 			pGameData->m_GameStateFlags |= protocol7::GAMESTATEFLAG_GAMEOVER;
 		if(m_SuddenDeath)
 			pGameData->m_GameStateFlags |= protocol7::GAMESTATEFLAG_SUDDENDEATH;
-		if(GameServer()->m_World.m_Paused)
+		if(GameServer()->m_World[m_Lobby].m_Paused)
 			pGameData->m_GameStateFlags |= protocol7::GAMESTATEFLAG_PAUSED;
 
 		
@@ -879,7 +904,7 @@ void IGameController::Snap(int SnappingClient)
 		// pRaceData->m_RaceFlags = protocol7::RACEFLAG_HIDE_KILLMSG | protocol7::RACEFLAG_KEEP_WANTED_WEAPON;
 	}
 
-	if(GameServer()->Collision()->m_pSwitchers)
+	if(GameServer()->Collision(m_Lobby)->m_pSwitchers)
 	{
 		int Team = pPlayer && pPlayer->GetCharacter() ? pPlayer->GetCharacter()->Team() : 0;
 
@@ -893,7 +918,7 @@ void IGameController::Snap(int SnappingClient)
 		if(!pSwitchState)
 			return;
 
-		pSwitchState->m_NumSwitchers = clamp(GameServer()->Collision()->m_NumSwitchers, 0, 255);
+		pSwitchState->m_NumSwitchers = clamp(GameServer()->Collision(m_Lobby)->m_NumSwitchers, 0, 255);
 		pSwitchState->m_Status1 = 0;
 		pSwitchState->m_Status2 = 0;
 		pSwitchState->m_Status3 = 0;
@@ -905,7 +930,7 @@ void IGameController::Snap(int SnappingClient)
 
 		for(int i = 0; i < pSwitchState->m_NumSwitchers + 1; i++)
 		{
-			int Status = (int)GameServer()->Collision()->m_pSwitchers[i].m_Status[Team];
+			int Status = (int)GameServer()->Collision(m_Lobby)->m_pSwitchers[i].m_Status[Team];
 
 			if(i < 32)
 				pSwitchState->m_Status1 |= Status << i;
@@ -938,7 +963,7 @@ int IGameController::GetAutoTeam(int NotThisID)
 	int aNumplayers[2] = {0, 0};
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
-		if(GameServer()->m_apPlayers[i] && i != NotThisID)
+		if(GameServer()->m_apPlayers[i] && i != NotThisID && GameServer()->GetLobby(i) == m_Lobby)
 		{
 			if(GameServer()->m_apPlayers[i]->GetTeam() >= TEAM_RED && GameServer()->m_apPlayers[i]->GetTeam() <= TEAM_BLUE)
 				aNumplayers[GameServer()->m_apPlayers[i]->GetTeam()]++;
@@ -957,20 +982,21 @@ int IGameController::GetAutoTeam(int NotThisID)
 
 bool IGameController::CanJoinTeam(int Team, int NotThisID)
 {
-	if(Team == TEAM_SPECTATORS || (GameServer()->m_apPlayers[NotThisID] && GameServer()->m_apPlayers[NotThisID]->GetTeam() != TEAM_SPECTATORS))
+	if(Team == TEAM_SPECTATORS || (GameServer()->m_apPlayers[NotThisID]
+		&& GameServer()->m_apPlayers[NotThisID]->GetLobby() == m_Lobby && GameServer()->m_apPlayers[NotThisID]->GetTeam() != TEAM_SPECTATORS))
 		return true;
 
 	int aNumplayers[2] = {0, 0};
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
-		if(GameServer()->m_apPlayers[i] && i != NotThisID)
+		if(GameServer()->m_apPlayers[i] && i != NotThisID && GameServer()->GetLobby(i) == m_Lobby)
 		{
 			if(GameServer()->m_apPlayers[i]->GetTeam() >= TEAM_RED && GameServer()->m_apPlayers[i]->GetTeam() <= TEAM_BLUE)
 				aNumplayers[GameServer()->m_apPlayers[i]->GetTeam()]++;
 		}
 	}
 
-	return (aNumplayers[0] + aNumplayers[1]) < Server()->MaxClients() - g_Config.m_SvSpectatorSlots;
+	return (aNumplayers[0] + aNumplayers[1]) < Server()->MaxClients() - m_SpectatorSlots;
 }
 
 bool IGameController::CheckTeamBalance()
@@ -991,15 +1017,15 @@ bool IGameController::CheckTeamBalance()
 	{
 		str_format(aBuf, sizeof(aBuf), "Teams are NOT balanced (red=%d blue=%d)", aT[0], aT[1]);
 		GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
-		if(GameServer()->m_pController->m_UnbalancedTick == -1)
-			GameServer()->m_pController->m_UnbalancedTick = Server()->Tick();
+		if(m_UnbalancedTick == -1)
+			m_UnbalancedTick = Server()->Tick();
 		return false;
 	}
 	else
 	{
 		str_format(aBuf, sizeof(aBuf), "Teams are balanced (red=%d blue=%d)", aT[0], aT[1]);
 		GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
-		GameServer()->m_pController->m_UnbalancedTick = -1;
+		m_UnbalancedTick = -1;
 		return true;
 	}
 }
@@ -1026,28 +1052,28 @@ void IGameController::DoTeamChange(CPlayer *pPlayer, int Team, bool DoChatMsg)
 		return;
 	
 	int aT[2] = {0, 0};
-	if(Team != TEAM_SPECTATORS)
-	{
-		for(int i = 0; i < MAX_CLIENTS; i++)
-		{
-			CPlayer *pP = GameServer()->m_apPlayers[i];
-			if(pP && pP->GetTeam() != TEAM_SPECTATORS)
-				aT[pP->GetTeam()]++;
-		}
+	// if(Team != TEAM_SPECTATORS)
+	// {
+	// 	for(int i = 0; i < MAX_CLIENTS; i++)
+	// 	{
+	// 		CPlayer *pP = GameServer()->m_apPlayers[i];
+	// 		if(pP && pP->GetTeam() != TEAM_SPECTATORS)
+	// 			aT[pP->GetTeam()]++;
+	// 	}
 
-		// simulate what would happen if changed team
-		aT[Team]++;
-		if (pPlayer->GetTeam() != TEAM_SPECTATORS)
-			aT[Team^1]--;
+	// 	// simulate what would happen if changed team
+	// 	aT[Team]++;
+	// 	if (pPlayer->GetTeam() != TEAM_SPECTATORS)
+	// 		aT[Team^1]--;
 
-		// there is a player-difference of at least 2
-		if(absolute(aT[0]-aT[1]) >= 2)
-		{
-			// player wants to join team with less players
-			if (!((aT[0] < aT[1] && Team == TEAM_RED) || (aT[0] > aT[1] && Team == TEAM_BLUE)))
-				return;
-		}
-	}
+	// 	// there is a player-difference of at least 2
+	// 	if(absolute(aT[0]-aT[1]) >= 2)
+	// 	{
+	// 		// player wants to join team with less players
+	// 		if (!((aT[0] < aT[1] && Team == TEAM_RED) || (aT[0] > aT[1] && Team == TEAM_BLUE)))
+	// 			return;
+	// 	}
+	// }
 	pPlayer->SetTeam(Team);
 	int ClientID = pPlayer->GetCID();
 
@@ -1055,7 +1081,7 @@ void IGameController::DoTeamChange(CPlayer *pPlayer, int Team, bool DoChatMsg)
 	// DoChatMsg = false;
 	if(DoChatMsg)
 	{
-		str_format(aBuf, sizeof(aBuf), "'%s' joined the %s", Server()->ClientName(ClientID), GameServer()->m_pController->GetTeamName(Team));
+		str_format(aBuf, sizeof(aBuf), "'%s' joined the %s", Server()->ClientName(ClientID), GetTeamName(Team));
 		GameServer()->SendChat(-1, CGameContext::CHAT_ALL, aBuf);
 	}
 
@@ -1068,6 +1094,9 @@ void IGameController::DoTeamChange(CPlayer *pPlayer, int Team, bool DoChatMsg)
 bool IGameController::IsFriendlyFire(int ClientID1, int ClientID2)
 {
 	if(ClientID1 == ClientID2)
+		return false;
+	
+	if(ClientID2 < 0 || ClientID1 < 0)
 		return false;
 
 	if(IsTeamplay())

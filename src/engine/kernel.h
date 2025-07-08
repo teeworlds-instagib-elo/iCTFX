@@ -15,9 +15,9 @@ class IInterface
 	IKernel *m_pKernel;
 
 protected:
-	IKernel *Kernel() { return m_pKernel; }
 
 public:
+	IKernel *Kernel() { return m_pKernel; }
 	IInterface() :
 		m_pKernel(0) {}
 	virtual ~IInterface() {}
@@ -28,6 +28,9 @@ public: \
 	static const char *InterfaceName() { return Name; } \
 \
 private:
+
+class IMap;
+class IEngineMap;
 
 // This kernel thingie makes the structure very flat and basiclly singletons.
 // I'm not sure if this is a good idea but it works for now.
@@ -41,6 +44,8 @@ class IKernel
 public:
 	static IKernel *Create();
 	virtual ~IKernel() {}
+
+	int m_AmountMaps = 0;
 
 	// templated access to handle pointer conversions and interface names
 	template<class TINTERFACE>
@@ -61,6 +66,10 @@ public:
 	{
 		return reinterpret_cast<TINTERFACE *>(RequestInterfaceImpl(TINTERFACE::InterfaceName()));
 	}
+
+	virtual IMap * GetIMap(int Map) = 0;
+	virtual IEngineMap * GetIEngineMap(int Map) = 0;
+	virtual void SetMapAmount(int Amount) = 0;
 };
 
 #endif
