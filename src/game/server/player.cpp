@@ -202,7 +202,7 @@ void CPlayer::Tick()
 			char aMsg[32];
 			str_format(aMsg, 32, "afk in %li", (m_LastPlaytime-(time_get() - time_freq() * 65)) / time_freq());
 			GameServer()->SendBroadcast(aMsg, m_ClientID, true);
-			GameServer()->SendChat(m_ClientID, CGameContext::CHAT_ALL, aMsg);
+			GameServer()->SendChatTarget(m_ClientID, aMsg);
 		}
 
 		if(m_LastPlaytime < time_get() - time_freq() * 65)
