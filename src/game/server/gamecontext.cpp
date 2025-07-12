@@ -453,8 +453,7 @@ void CGameContext::SendChat(int ChatterClientID, int Team, const char *pText, in
 
 			if(ChatterClientID >= 0 && GetLobby(ChatterClientID) != GetLobby(i))
 			{
-				Msg.m_ClientID = -1;
-				str_format(aText2, 256, "%i: %s: %s", GetLobby(ChatterClientID), Server()->ClientName(ChatterClientID), aText);
+				str_format(aText2, 256, "(Lobby %i): %s", GetLobby(ChatterClientID), aText);
 				Msg.m_pMessage = aText2;
 			}
 
@@ -4146,7 +4145,7 @@ void CGameContext::OnSnap(int ClientID)
 
 	for(auto &pPlayer : m_apPlayers)
 	{
-		if(pPlayer && pPlayer->GetLobby() == Lobby)
+		if(pPlayer)
 			pPlayer->Snap(ClientID);
 	}
 

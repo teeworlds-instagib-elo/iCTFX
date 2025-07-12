@@ -391,6 +391,8 @@ void CPlayer::Snap(int SnappingClient)
 		if(!Server()->ClientIngame(m_ClientID))
 			return;
 
+	int SnappingLobby = GameServer()->GetLobby(SnappingClient);
+
 	int id = m_ClientID;
 	if(!Server()->Translate(id, SnappingClient))
 		return;
@@ -426,6 +428,10 @@ void CPlayer::Snap(int SnappingClient)
 		pPlayerInfo->m_Local = (int)(m_ClientID == SnappingClient && (m_Paused != PAUSE_PAUSED || SnappingClientVersion >= VERSION_DDNET_OLD));
 		pPlayerInfo->m_ClientID = id;
 		pPlayerInfo->m_Team = m_Team;
+
+		if(SnappingLobby != GetLobby())
+			pPlayerInfo->m_Team = TEAM_SPECTATORS;
+
 		if(SnappingClientVersion < VERSION_DDNET_INDEPENDENT_SPECTATORS_TEAM)
 		{
 			// In older versions the SPECTATORS TEAM was also used if the own player is in PAUSE_PAUSED or if any player is in PAUSE_SPEC.
