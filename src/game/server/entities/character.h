@@ -7,7 +7,6 @@
 #include <game/server/entity.h>
 
 class CAntibot;
-class CGameTeams;
 struct CAntibotCharacterData;
 
 enum
@@ -65,6 +64,7 @@ public:
 
 	void Die(int Killer, int Weapon, int tick=-1);
 	int m_Killer, m_KillerWeapon, m_DeathTick = 0, m_KillTick;
+	bool m_KillerIsBot;
 	vec2 m_DeathPos;
 	void Death();
 	bool TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int tick=-1);
@@ -115,7 +115,6 @@ private:
 	int m_LastWeapon;
 	int m_QueuedWeapon;
 
-	int m_ReloadTimer;
 	int m_AttackTick;
 
 	int m_DamageTaken;
@@ -134,7 +133,6 @@ private:
 
 	// input
 	CNetObj_PlayerInput m_PrevInput;
-	CNetObj_PlayerInput m_Input;
 	CNetObj_PlayerInput m_SavedInput;
 	int m_NumInputs;
 	int m_Jumped;
@@ -152,8 +150,6 @@ private:
 		int m_CurrentMoveTime;
 		int m_OldVelAmount;
 	} m_Ninja;
-
-	CGameTeams *m_pTeams = nullptr;
 
 	std::map<int, std::vector<vec2>> *m_pTeleOuts = nullptr;
 	std::map<int, std::vector<vec2>> *m_pTeleCheckOuts = nullptr;
@@ -179,17 +175,16 @@ private:
 	IAntibot *Antibot();
 
 	bool m_SetSavePos;
-	bool m_Solo;
 
 public:
-	CGameTeams *Teams() { return m_pTeams; }
-	void SetTeams(CGameTeams *pTeams);
 	void SetTeleports(std::map<int, std::vector<vec2>> *pTeleOuts, std::map<int, std::vector<vec2>> *pTeleCheckOuts);
+	int m_ReloadTimer;
+	CNetObj_PlayerInput m_Input;
 
 	// the player core for the physics
 	CCharacterCore m_Core;
+	bool m_Solo;
 
-	void FillAntibot(CAntibotCharacterData *pData);
 	void Pause(bool Pause);
 	bool Freeze(int Seconds);
 	bool Freeze();

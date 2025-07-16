@@ -48,22 +48,22 @@ class CSnapIDPool
 		int m_Timeout;
 	};
 
-	CID m_aIDs[MAX_IDS];
+	CID m_aIDs[MAX_LOBBIES][MAX_IDS];
 
-	int m_FirstFree;
-	int m_FirstTimed;
-	int m_LastTimed;
-	int m_Usage;
-	int m_InUsage;
+	int m_FirstFree[MAX_LOBBIES];
+	int m_FirstTimed[MAX_LOBBIES];
+	int m_LastTimed[MAX_LOBBIES];
+	int m_Usage[MAX_LOBBIES];
+	int m_InUsage[MAX_LOBBIES];
 
 public:
 	CSnapIDPool();
 
 	void Reset();
-	void RemoveFirstTimeout();
-	int NewID();
-	void TimeoutIDs();
-	void FreeID(int ID);
+	void RemoveFirstTimeout(int Lobby);
+	int NewID(int Lobby);
+	void TimeoutIDs(int Lobby);
+	void FreeID(int Lobby, int ID);
 };
 
 class CServerBan : public CNetBan
@@ -131,6 +131,7 @@ public:
 			STATE_CONNECTING,
 			STATE_READY,
 			STATE_INGAME,
+			STATE_BOT,
 
 			SNAPRATE_INIT = 0,
 			SNAPRATE_FULL,
@@ -165,6 +166,9 @@ public:
 		CInput m_LatestInput;
 		CInput m_aInputs[200]; // TODO: handle input better
 		int m_CurrentInput;
+
+		int m_Lobby;
+		int m_Map;
 
 		char m_aName[MAX_NAME_LENGTH];
 		char m_aClan[MAX_CLAN_LENGTH];
@@ -213,8 +217,6 @@ public:
 #endif
 	CServerBan m_ServerBan;
 
-	IEngineMap *m_pMap;
-
 	int64_t m_GameStartTime;
 	//int m_CurrentGameTick;
 
@@ -227,8 +229,6 @@ public:
 
 	int m_RunServer;
 
-	bool m_MapReload;
-	bool m_ReloadedWhenEmpty;
 	int m_RconClientID;
 	int m_RconAuthLevel;
 	int m_PrintCBIndex;
@@ -241,11 +241,6 @@ public:
 		NUM_MAP_TYPES
 	};
 
-	char m_aCurrentMap[IO_MAX_PATH_LENGTH];
-	SHA256_DIGEST m_aCurrentMapSha256[NUM_MAP_TYPES];
-	unsigned m_aCurrentMapCrc[NUM_MAP_TYPES];
-	unsigned char *m_apCurrentMapData[NUM_MAP_TYPES];
-	unsigned int m_aCurrentMapSize[NUM_MAP_TYPES];
 
 	CDemoRecorder m_aDemoRecorder[MAX_CLIENTS + 1];
 	CRegister m_Register;
@@ -275,6 +270,11 @@ public:
 	virtual void SetClientFlags(int ClientID, int Flags);
 
 	virtual bool GetClientInput(int ClientID, int Tick, CNetObj_PlayerInput * pInput);
+	virtual bool ClientReloadMap(int ClientID);
+
+	virtual int GetBotID();
+	virtual void FreeBotID(int ID);
+	virtual bool IsBotID(int ID);
 
 	void Kick(int ClientID, const char *pReason);
 	void Ban(int ClientID, int Seconds, const char *pReason);
@@ -291,7 +291,6 @@ public:
 	void SetRconCID(int ClientID);
 	int GetAuthedState(int ClientID) const;
 	const char *GetAuthName(int ClientID) const;
-	void GetMapInfo(char *pMapName, int MapNameSize, int *pMapSize, SHA256_DIGEST *pMapSha256, int *pMapCrc);
 	int GetClientInfo(int ClientID, CClientInfo *pInfo) const;
 	void SetClientDDNetVersion(int ClientID, int DDNetVersion);
 	void GetClientAddr(int ClientID, char *pAddrStr, int Size) const;
@@ -365,9 +364,8 @@ public:
 
 	void PumpNetwork(bool PacketWaiting);
 
-	virtual void ChangeMap(const char *pMap);
 	const char *GetMapName() const;
-	int LoadMap(const char *pMapName);
+	virtual int LoadMap(const char *pMapName, int Map);
 
 	void SaveDemo(int ClientID, float Time);
 	void StartRecord(int ClientID);
@@ -423,8 +421,8 @@ public:
 
 	void RegisterCommands();
 
-	virtual int SnapNewID();
-	virtual void SnapFreeID(int ID);
+	virtual int SnapNewID(int Lobby);
+	virtual void SnapFreeID(int Lobby, int ID);
 	virtual void *SnapNewItem(int Type, int ID, int Size);
 	void SnapSetStaticsize(int ItemType, int Size);
 

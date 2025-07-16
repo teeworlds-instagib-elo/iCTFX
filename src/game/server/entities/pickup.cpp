@@ -46,7 +46,7 @@ void CPickup::Tick()
 			m_SpawnTick = -1;
 
 			if(m_Type == POWERUP_WEAPON)
-				GameServer()->CreateSound(m_Pos, SOUND_WEAPON_SPAWN);
+				GameServer()->CreateSound(m_Lobby, m_Pos, SOUND_WEAPON_SPAWN);
 		}
 		else
 			return;
@@ -60,7 +60,7 @@ void CPickup::Tick()
 
 		if(pChr && pChr->IsAlive())
 		{
-			if(m_Layer == LAYER_SWITCH && m_Number > 0 && !GameServer()->Collision()->m_pSwitchers[m_Number].m_Status[pChr->Team()])
+			if(m_Layer == LAYER_SWITCH && m_Number > 0 && !GameServer()->Collision(m_Lobby)->m_pSwitchers[m_Number].m_Status[pChr->Team()])
 				continue;
 			bool Sound = false;
 			// player picked us up, is someone was hooking us, let them go
@@ -68,7 +68,7 @@ void CPickup::Tick()
 			{
 			case POWERUP_HEALTH:
 				if(pChr->Freeze())
-					GameServer()->CreateSound(m_Pos, SOUND_PICKUP_HEALTH, pChr->TeamMask());
+					GameServer()->CreateSound(m_Lobby, m_Pos, SOUND_PICKUP_HEALTH, pChr->TeamMask());
 				break;
 
 			case POWERUP_ARMOR:
@@ -89,7 +89,7 @@ void CPickup::Tick()
 				if(Sound)
 				{
 					pChr->SetLastWeapon(WEAPON_GUN);
-					GameServer()->CreateSound(m_Pos, SOUND_PICKUP_ARMOR, pChr->TeamMask());
+					GameServer()->CreateSound(m_Lobby, m_Pos, SOUND_PICKUP_ARMOR, pChr->TeamMask());
 				}
 				if(pChr->GetActiveWeapon() >= WEAPON_SHOTGUN)
 					pChr->SetActiveWeapon(WEAPON_HAMMER);
@@ -104,11 +104,11 @@ void CPickup::Tick()
 					//RespawnTime = g_pData->m_aPickups[m_Type].m_Respawntime;
 
 					if(m_Subtype == WEAPON_GRENADE)
-						GameServer()->CreateSound(m_Pos, SOUND_PICKUP_GRENADE, pChr->TeamMask());
+						GameServer()->CreateSound(m_Lobby, m_Pos, SOUND_PICKUP_GRENADE, pChr->TeamMask());
 					else if(m_Subtype == WEAPON_SHOTGUN)
-						GameServer()->CreateSound(m_Pos, SOUND_PICKUP_SHOTGUN, pChr->TeamMask());
+						GameServer()->CreateSound(m_Lobby, m_Pos, SOUND_PICKUP_SHOTGUN, pChr->TeamMask());
 					else if(m_Subtype == WEAPON_LASER)
-						GameServer()->CreateSound(m_Pos, SOUND_PICKUP_SHOTGUN, pChr->TeamMask());
+						GameServer()->CreateSound(m_Lobby, m_Pos, SOUND_PICKUP_SHOTGUN, pChr->TeamMask());
 
 					if(pChr->GetPlayer())
 						GameServer()->SendWeaponPickup(pChr->GetPlayer()->GetCID(), m_Subtype);
@@ -177,7 +177,7 @@ void CPickup::Snap(int SnappingClient)
 	else
 	{
 		int Tick = (Server()->Tick() % Server()->TickSpeed()) % 11;
-		if(Char && Char->IsAlive() && m_Layer == LAYER_SWITCH && m_Number > 0 && !GameServer()->Collision()->m_pSwitchers[m_Number].m_Status[Char->Team()] && !Tick)
+		if(Char && Char->IsAlive() && m_Layer == LAYER_SWITCH && m_Number > 0 && !GameServer()->Collision(m_Lobby)->m_pSwitchers[m_Number].m_Status[Char->Team()] && !Tick)
 			return;
 	}
 
@@ -205,10 +205,10 @@ void CPickup::Move()
 	if(Server()->Tick() % int(Server()->TickSpeed() * 0.15f) == 0)
 	{
 		int Flags;
-		int index = GameServer()->Collision()->IsMover(m_Pos.x, m_Pos.y, &Flags);
+		int index = GameServer()->Collision(m_Lobby)->IsMover(m_Pos.x, m_Pos.y, &Flags);
 		if(index)
 		{
-			m_Core = GameServer()->Collision()->CpSpeed(index, Flags);
+			m_Core = GameServer()->Collision(m_Lobby)->CpSpeed(index, Flags);
 		}
 		m_Pos += m_Core;
 	}

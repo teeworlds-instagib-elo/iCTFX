@@ -6,6 +6,7 @@
 #include "entities/character.h"
 #include "gamecontext.h"
 #include <engine/server.h>
+#include <engine/server/server.h>
 #include <game/gamecore.h>
 #include <game/version.h>
 #include <game/server/gamecontroller.h>
@@ -63,7 +64,7 @@ void CPlayer::Reset()
 	// DDRace
 
 	m_LastCommandPos = 0;
-	m_LastPlaytime = 0;
+	m_LastPlaytime = time_get();
 	mem_zero(m_SentAfkWarning, sizeof(m_SentAfkWarning));
 	m_ChatScore = 0;
 	m_Moderating = false;
@@ -169,6 +170,18 @@ static int PlayerFlags_SixToSeven(int Flags)
 	return Seven;
 }
 
+int CPlayer::GetLobby()
+{
+	if(!Server()->ClientIngame(m_ClientID))
+		return 0;
+	
+	int Lobby = ((CServer *)Server())->m_aClients[m_ClientID].m_Lobby;
+	if(Lobby < 0 || Lobby >= MAX_LOBBIES)
+		return 0;
+	
+	return Lobby;
+}
+
 void CPlayer::Tick()
 {
 	// if(m_ScoreQueryResult != nullptr && m_ScoreQueryResult->m_Completed)
@@ -181,6 +194,20 @@ void CPlayer::Tick()
 	// 	ProcessScoreResult(*m_ScoreFinishResult);
 	// 	m_ScoreFinishResult = nullptr;
 	// }
+
+	if(GetCharacter() && m_LastPlaytime < time_get() - time_freq() * 60)
+	{
+		if(Server()->Tick() % 50 == 0)
+		{
+			char aMsg[32];
+			str_format(aMsg, 32, "afk in %li", (m_LastPlaytime-(time_get() - time_freq() * 65)) / time_freq());
+			GameServer()->SendBroadcast(aMsg, m_ClientID, true);
+			GameServer()->SendChatTarget(m_ClientID, aMsg);
+		}
+
+		if(m_LastPlaytime < time_get() - time_freq() * 65)
+			SetTeam(TEAM_SPECTATORS);
+	}
 
 	bool ClientIngame = Server()->ClientIngame(m_ClientID);
 #ifdef CONF_DEBUG
@@ -275,7 +302,7 @@ void CPlayer::Tick()
 		}
 	}
 
-	if(!GameServer()->m_World.m_Paused)
+	if(!GameServer()->m_World[GetLobby()].m_Paused)
 	{
 		if(!m_pCharacter && m_DieTick+Server()->TickSpeed()*3 <= Server()->Tick())
 			m_Spawning = true;
@@ -305,8 +332,8 @@ void CPlayer::Tick()
 	}
 
 	m_TuneZoneOld = m_TuneZone; // determine needed tunings with viewpos
-	int CurrentIndex = GameServer()->Collision()->GetMapIndex(m_ViewPos);
-	m_TuneZone = GameServer()->Collision()->IsTune(CurrentIndex);
+	int CurrentIndex = GameServer()->Collision(GetLobby())->GetMapIndex(m_ViewPos);
+	m_TuneZone = GameServer()->Collision(GetLobby())->IsTune(CurrentIndex);
 
 	if(m_TuneZone != m_TuneZoneOld) // don't send tunings all the time
 	{
@@ -352,7 +379,7 @@ void CPlayer::PostPostTick()
 		if(!Server()->ClientIngame(m_ClientID))
 			return;
 
-	if(!GameServer()->m_World.m_Paused && !m_pCharacter && m_Spawning && m_WeakHookSpawn)
+	if(!GameServer()->m_World[GetLobby()].m_Paused && !m_pCharacter && m_Spawning && m_WeakHookSpawn)
 		TryRespawn();
 }
 
@@ -363,6 +390,8 @@ void CPlayer::Snap(int SnappingClient)
 #endif
 		if(!Server()->ClientIngame(m_ClientID))
 			return;
+
+	int SnappingLobby = GameServer()->GetLobby(SnappingClient);
 
 	int id = m_ClientID;
 	if(!Server()->Translate(id, SnappingClient))
@@ -399,6 +428,10 @@ void CPlayer::Snap(int SnappingClient)
 		pPlayerInfo->m_Local = (int)(m_ClientID == SnappingClient && (m_Paused != PAUSE_PAUSED || SnappingClientVersion >= VERSION_DDNET_OLD));
 		pPlayerInfo->m_ClientID = id;
 		pPlayerInfo->m_Team = m_Team;
+
+		if(SnappingLobby != GetLobby())
+			pPlayerInfo->m_Team = TEAM_SPECTATORS;
+
 		if(SnappingClientVersion < VERSION_DDNET_INDEPENDENT_SPECTATORS_TEAM)
 		{
 			// In older versions the SPECTATORS TEAM was also used if the own player is in PAUSE_PAUSED or if any player is in PAUSE_SPEC.
@@ -474,7 +507,7 @@ void CPlayer::Snap(int SnappingClient)
 	if(SnappingClient != SERVER_DEMO_CLIENT)
 	{
 		CPlayer *pSnapPlayer = GameServer()->m_apPlayers[SnappingClient];
-		ShowSpec = ShowSpec && (GameServer()->GetDDRaceTeam(m_ClientID) == GameServer()->GetDDRaceTeam(SnappingClient) || pSnapPlayer->m_ShowOthers == SHOW_OTHERS_ON || (pSnapPlayer->GetTeam() == TEAM_SPECTATORS || pSnapPlayer->IsPaused()));
+		ShowSpec = ShowSpec && (pSnapPlayer->m_ShowOthers == SHOW_OTHERS_ON || (pSnapPlayer->GetTeam() == TEAM_SPECTATORS || pSnapPlayer->IsPaused()));
 	}
 
 	if(ShowSpec)
@@ -653,7 +686,7 @@ void CPlayer::Respawn(bool WeakHook)
 CCharacter *CPlayer::ForceSpawn(vec2 Pos)
 {
 	m_Spawning = false;
-	m_pCharacter = new(m_ClientID) CCharacter(&GameServer()->m_World);
+	m_pCharacter = new(m_ClientID) CCharacter(&GameServer()->m_World[GetLobby()]);
 	m_pCharacter->Spawn(this, Pos);
 	m_Team = 0;
 	return m_pCharacter;
@@ -736,15 +769,15 @@ void CPlayer::TryRespawn()
 {
 	vec2 SpawnPos;
 
-	if(!GameServer()->m_pController->CanSpawn(m_Team, &SpawnPos, GameServer()->GetDDRaceTeam(m_ClientID)))
+	if(!GameServer()->m_apController[GetLobby()]->CanSpawn(m_Team, &SpawnPos, 0))
 		return;
 
 	m_WeakHookSpawn = false;
 	m_Spawning = false;
-	m_pCharacter = new(m_ClientID) CCharacter(&GameServer()->m_World);
+	m_pCharacter = new(m_ClientID) CCharacter(&GameServer()->m_World[GetLobby()]);
 	m_ViewPos = SpawnPos;
 	m_pCharacter->Spawn(this, SpawnPos);
-	GameServer()->CreatePlayerSpawn(SpawnPos, GameServer()->m_pController->GetMaskForPlayerWorldEvent(m_ClientID));
+	GameServer()->CreatePlayerSpawn(GetLobby(), SpawnPos, GameServer()->m_apController[GetLobby()]->GetMaskForPlayerWorldEvent(m_ClientID));
 	m_pCharacter->SetWeapon(m_LastWeapon);
 
 	if(g_Config.m_SvTeam == SV_TEAM_FORCED_SOLO)
@@ -854,8 +887,8 @@ void CPlayer::ProcessPause()
 	if(m_Paused == PAUSE_SPEC && !m_pCharacter->IsPaused() && m_pCharacter->IsGrounded() && m_pCharacter->m_Pos == m_pCharacter->m_PrevPos)
 	{
 		m_pCharacter->Pause(true);
-		GameServer()->CreateDeath(m_pCharacter->m_Pos, m_ClientID, GameServer()->m_pController->GetMaskForPlayerWorldEvent(m_ClientID));
-		GameServer()->CreateSound(m_pCharacter->m_Pos, SOUND_PLAYER_DIE, GameServer()->m_pController->GetMaskForPlayerWorldEvent(m_ClientID));
+		GameServer()->CreateDeath(GetLobby(), m_pCharacter->m_Pos, m_ClientID, GameServer()->m_apController[GetLobby()]->GetMaskForPlayerWorldEvent(m_ClientID));
+		GameServer()->CreateSound(GetLobby(), m_pCharacter->m_Pos, SOUND_PLAYER_DIE, GameServer()->m_apController[GetLobby()]->GetMaskForPlayerWorldEvent(m_ClientID));
 	}
 }
 
@@ -884,7 +917,7 @@ int CPlayer::Pause(int State, bool Force)
 				}
 				m_pCharacter->Pause(false);
 				m_ViewPos = m_pCharacter->m_Pos;
-				GameServer()->CreatePlayerSpawn(m_pCharacter->m_Pos, GameServer()->m_pController->GetMaskForPlayerWorldEvent(m_ClientID));
+				GameServer()->CreatePlayerSpawn(GetLobby(), m_pCharacter->m_Pos, GameServer()->m_apController[GetLobby()]->GetMaskForPlayerWorldEvent(m_ClientID));
 			}
 			// fall-thru
 		case PAUSE_SPEC:

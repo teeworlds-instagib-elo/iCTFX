@@ -5,6 +5,7 @@
 #include <engine/shared/config.h>
 #include <game/server/entities/character.h>
 #include <game/server/player.h>
+#include <game/server/entities/bot.h>
 
 const char *CTuningParams::ms_apNames[] =
 	{
@@ -58,13 +59,12 @@ float VelocityRamp(float Value, float Start, float Range, float Curvature)
 	return 1.0f / powf(Curvature, (Value - Start) / Range);
 }
 
-void CCharacterCore::Init(CWorldCore *pWorld, CCollision *pCollision, CTeamsCore *pTeams, std::map<int, std::vector<vec2>> *pTeleOuts, CCharacter * character)
+void CCharacterCore::Init(CWorldCore *pWorld, CCollision *pCollision, std::map<int, std::vector<vec2>> *pTeleOuts, CCharacter * character)
 {
 	m_pWorld = pWorld;
 	m_pCollision = pCollision;
 	m_pTeleOuts = pTeleOuts;
 
-	m_pTeams = pTeams;
 	m_Id = -1;
 	m_pCharacter = character;
 
@@ -272,7 +272,7 @@ void CCharacterCore::Tick(bool UseInput)
 			for(int i = 0; i < MAX_CLIENTS; i++)
 			{
 				CCharacterCore *pCharCore = m_pWorld->m_apCharacters[i];
-				if(!pCharCore || pCharCore == this || (!(m_Super || pCharCore->m_Super) && ((m_Id != -1 && !m_pTeams->CanCollide(i, m_Id)) || pCharCore->m_Solo || m_Solo)))
+				if(!pCharCore || pCharCore == this || (!(m_Super || pCharCore->m_Super) && (pCharCore->m_Solo || m_Solo)))
 					continue;
 
 				vec2 pos = pCharCore->m_Pos;
@@ -305,6 +305,39 @@ void CCharacterCore::Tick(bool UseInput)
 							m_HookState = HOOK_GRABBED;
 							m_HookedPlayer = i;
 							Distance = distance(m_HookPos, pos);
+						}
+					}
+				}
+			}
+
+			//hook collision with bots
+			if(m_pCharacter)
+			{
+				CEntity *apEnts[MAX_CLIENTS];
+				int Num = m_pCharacter->GameServer()->m_World[m_pCharacter->m_Lobby].FindEntities(m_Pos, 15*32, apEnts, MAX_CLIENTS, CGameWorld::ENTTYPE_BOT);
+				for(int i = 0; i < Num; i++)
+				{
+					CBot * pBot = (CBot *)apEnts[i];
+
+					if(!pBot->m_Alive || pBot->m_ClientID < 0)
+						continue;
+
+					vec2 pos = pBot->m_Pos;
+					vec2 hookpos = m_HookPos;
+
+					vec2 ClosestPoint;
+					if(closest_point_on_line(hookpos, NewPos, pos, ClosestPoint))
+					{
+						if(distance(pos, ClosestPoint) < PhysSize + 2.0f)
+						{
+							if(m_HookedPlayer == -1 || distance(m_HookPos, pos) < Distance)
+							{
+								m_TriggeredEvents |= COREEVENT_HOOK_ATTACH_PLAYER;
+								m_HookState = HOOK_GRABBED;
+								m_HookedPlayer = pBot->m_ClientID;
+								m_HookedBot = pBot;
+								Distance = distance(m_HookPos, pos);
+							}
 						}
 					}
 				}
@@ -347,15 +380,29 @@ void CCharacterCore::Tick(bool UseInput)
 	{
 		if(m_HookedPlayer != -1 && m_pWorld)
 		{
-			CCharacterCore *pCharCore = m_pWorld->m_apCharacters[m_HookedPlayer];
-			if(pCharCore && m_Id != -1 && m_pTeams->CanKeepHook(m_Id, pCharCore->m_Id))
-				m_HookPos = pCharCore->m_Pos;
-			else
+			if(m_pCharacter && m_pCharacter->Server()->IsBotID(m_HookedPlayer))
 			{
-				// release hook
-				m_HookedPlayer = -1;
-				m_HookState = HOOK_RETRACTED;
-				m_HookPos = m_Pos;
+				if(m_HookedBot && m_Id != -1)
+					m_HookPos = m_HookedBot->m_Pos;
+				else
+				{
+					// release hook
+					m_HookedPlayer = -1;
+					m_HookState = HOOK_RETRACTED;
+					m_HookPos = m_Pos;
+				}
+			}else
+			{
+				CCharacterCore *pCharCore = m_pWorld->m_apCharacters[m_HookedPlayer];
+				if(pCharCore && m_Id != -1)
+					m_HookPos = pCharCore->m_Pos;
+				else
+				{
+					// release hook
+					m_HookedPlayer = -1;
+					m_HookState = HOOK_RETRACTED;
+					m_HookPos = m_Pos;
+				}
 			}
 
 			// keep players hooked for a max of 1.5sec
@@ -388,11 +435,19 @@ void CCharacterCore::Tick(bool UseInput)
 
 		// release hook (max default hook time is 1.25 s)
 		m_HookTick++;
-		if(m_HookedPlayer != -1 && (m_HookTick > SERVER_TICK_SPEED + SERVER_TICK_SPEED / 5 || (m_pWorld && !m_pWorld->m_apCharacters[m_HookedPlayer])))
+		if(m_HookedPlayer != -1 && (m_HookTick > SERVER_TICK_SPEED + SERVER_TICK_SPEED / 5 || (m_pWorld && !m_HookedBot && !m_pWorld->m_apCharacters[m_HookedPlayer])))
 		{
 			m_HookedPlayer = -1;
 			m_HookState = HOOK_RETRACTED;
 			m_HookPos = m_Pos;
+		}
+	}
+	else
+	{
+		if(m_HookedBot)
+		{
+			m_HookedBot->m_HookedID = -1;
+			m_HookedBot = nullptr;
 		}
 	}
 
@@ -401,13 +456,13 @@ void CCharacterCore::Tick(bool UseInput)
 		for(int i = 0; i < MAX_CLIENTS; i++)
 		{
 			CCharacterCore *pCharCore = m_pWorld->m_apCharacters[i];
-			if(!pCharCore)
+			if(!pCharCore || !pCharCore->m_pCharacter)
 				continue;
 
 			//player *p = (player*)ent;
 			//if(pCharCore == this) // || !(p->flags&FLAG_ALIVE)
 
-			if(pCharCore == this || (m_Id != -1 && !m_pTeams->CanCollide(m_Id, i)))
+			if(pCharCore == this)
 				continue; // make sure that we don't nudge our self
 
 			if(!(m_Super || pCharCore->m_Super) && (m_Solo || pCharCore->m_Solo))
@@ -456,6 +511,30 @@ void CCharacterCore::Tick(bool UseInput)
 						Temp.y = SaturatedAdd(-DragSpeed, DragSpeed, m_Vel.y, -HookAccel * Dir.y * 0.25f);
 						m_Vel = ClampVel(m_MoveRestrictions, Temp);
 					}
+				}
+			}
+		}
+
+		if(m_Hook && m_HookedPlayer != -1 && m_HookedBot && m_Tuning.m_PlayerHooking)
+		{
+			float Distance = distance(m_Pos, m_HookedBot->m_Pos);
+			if(Distance > 0)
+			{
+				vec2 Dir = normalize(m_Pos - m_HookedBot->m_Pos);
+				if(Distance > PhysSize * 1.50f) // TODO: fix tweakable variable
+				{
+					float HookAccel = m_Tuning.m_HookDragAccel * (Distance / m_Tuning.m_HookLength);
+					float DragSpeed = m_Tuning.m_HookDragSpeed;
+
+					vec2 Temp;
+					// add force to the hooked player
+					Temp.x = SaturatedAdd(-DragSpeed, DragSpeed, m_HookedBot->m_Vel.x, HookAccel * Dir.x * 1.5f);
+					Temp.y = SaturatedAdd(-DragSpeed, DragSpeed, m_HookedBot->m_Vel.y, HookAccel * Dir.y * 1.5f);
+					m_HookedBot->m_Vel = Temp;
+					// add a little bit force to the guy who has the grip
+					Temp.x = SaturatedAdd(-DragSpeed, DragSpeed, m_Vel.x, -HookAccel * Dir.x * 0.25f);
+					Temp.y = SaturatedAdd(-DragSpeed, DragSpeed, m_Vel.y, -HookAccel * Dir.y * 0.25f);
+					m_Vel = ClampVel(m_MoveRestrictions, Temp);
 				}
 			}
 		}
@@ -512,7 +591,7 @@ void CCharacterCore::Move()
 					CCharacterCore *pCharCore = m_pWorld->m_apCharacters[p];
 					if(!pCharCore || pCharCore == this)
 						continue;
-					if((!(pCharCore->m_Super || m_Super) && (m_Solo || pCharCore->m_Solo || !pCharCore->m_Collision || pCharCore->m_NoCollision || (m_Id != -1 && !m_pTeams->CanCollide(m_Id, p)))))
+					if((!(pCharCore->m_Super || m_Super) && (m_Solo || pCharCore->m_Solo || !pCharCore->m_Collision || pCharCore->m_NoCollision)))
 						continue;
 					if(pCharCore->m_pCharacter->m_DeathTick > 0)
 						continue;
@@ -613,11 +692,6 @@ void CCharacterCore::Quantize()
 
 // DDRace
 
-void CCharacterCore::SetTeamsCore(CTeamsCore *pTeams)
-{
-	m_pTeams = pTeams;
-}
-
 void CCharacterCore::SetTeleOuts(std::map<int, std::vector<vec2>> *pTeleOuts)
 {
 	m_pTeleOuts = pTeleOuts;
@@ -627,7 +701,7 @@ bool CCharacterCore::IsSwitchActiveCb(int Number, void *pUser)
 {
 	CCharacterCore *pThis = (CCharacterCore *)pUser;
 	if(pThis->Collision()->m_pSwitchers)
-		if(pThis->m_Id != -1 && pThis->m_pTeams->Team(pThis->m_Id) != (pThis->m_pTeams->m_IsDDRace16 ? VANILLA_TEAM_SUPER : TEAM_SUPER))
-			return pThis->Collision()->m_pSwitchers[Number].m_Status[pThis->m_pTeams->Team(pThis->m_Id)];
+		if(pThis->m_Id != -1)
+			return pThis->Collision()->m_pSwitchers[Number].m_Status[0];
 	return false;
 }

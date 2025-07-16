@@ -416,8 +416,11 @@ bool CConsole::LineIsValid(const char *pStr)
 	return true;
 }
 
-void CConsole::ExecuteLineStroked(int Stroke, const char *pStr, int ClientID, bool InterpretSemicolons)
+void CConsole::ExecuteLineStroked(int Stroke, const char *pStr, int Lobby, int ClientID, bool InterpretSemicolons)
 {
+	if(Lobby < 0 || Lobby > MAX_LOBBIES)
+		return;
+	
 	const char *pWithoutPrefix = str_startswith(pStr, "mc;");
 	if(pWithoutPrefix)
 	{
@@ -428,6 +431,7 @@ void CConsole::ExecuteLineStroked(int Stroke, const char *pStr, int ClientID, bo
 	{
 		CResult Result;
 		Result.m_ClientID = ClientID;
+		Result.m_Lobby = Lobby;
 		const char *pEnd = pStr;
 		const char *pNextPart = 0;
 		int InString = 0;
@@ -585,17 +589,20 @@ CConsole::CCommand *CConsole::FindCommand(const char *pName, int FlagMask)
 	return 0x0;
 }
 
-void CConsole::ExecuteLine(const char *pStr, int ClientID, bool InterpretSemicolons)
+void CConsole::ExecuteLine(const char *pStr, int Lobby, int ClientID, bool InterpretSemicolons)
 {
-	CConsole::ExecuteLineStroked(1, pStr, ClientID, InterpretSemicolons); // press it
-	CConsole::ExecuteLineStroked(0, pStr, ClientID, InterpretSemicolons); // then release it
+	CConsole::ExecuteLineStroked(1, pStr, Lobby, ClientID, InterpretSemicolons); // press it
+	CConsole::ExecuteLineStroked(0, pStr, Lobby, ClientID, InterpretSemicolons); // then release it
 }
 
-void CConsole::ExecuteLineFlag(const char *pStr, int FlagMask, int ClientID, bool InterpretSemicolons)
+void CConsole::ExecuteLineFlag(const char *pStr, int FlagMask, int Lobby, int ClientID, bool InterpretSemicolons)
 {
+	if(Lobby < 0 || Lobby >= MAX_LOBBIES)
+		return;
+	
 	int Temp = m_FlagMask;
 	m_FlagMask = FlagMask;
-	ExecuteLine(pStr, ClientID, InterpretSemicolons);
+	ExecuteLine(pStr, Lobby, ClientID, InterpretSemicolons);
 	m_FlagMask = Temp;
 }
 
@@ -630,7 +637,7 @@ void CConsole::ExecuteFile(const char *pFilename, int ClientID, bool LogFailure,
 		Reader.Init(File);
 
 		while((pLine = Reader.Get()))
-			ExecuteLine(pLine, ClientID);
+			ExecuteLine(pLine, 0, ClientID);
 
 		io_close(File);
 	}
@@ -884,7 +891,7 @@ void CConsole::ConToggle(IConsole::IResult *pResult, void *pUser)
 			CIntVariableData *pData = static_cast<CIntVariableData *>(pUserData);
 			int Val = *(pData->m_pVariable) == pResult->GetInteger(1) ? pResult->GetInteger(2) : pResult->GetInteger(1);
 			str_format(aBuf, sizeof(aBuf), "%s %i", pResult->GetString(0), Val);
-			pConsole->ExecuteLine(aBuf);
+			pConsole->ExecuteLine(aBuf, pResult->m_Lobby);
 			aBuf[0] = 0;
 		}
 		else if(pfnCallback == StrVariableCommand)
@@ -895,7 +902,7 @@ void CConsole::ConToggle(IConsole::IResult *pResult, void *pUser)
 			char *pDst = aBuf + str_length(aBuf);
 			str_escape(&pDst, pStr, aBuf + sizeof(aBuf));
 			str_append(aBuf, "\"", sizeof(aBuf));
-			pConsole->ExecuteLine(aBuf);
+			pConsole->ExecuteLine(aBuf, pResult->m_Lobby);
 			aBuf[0] = 0;
 		}
 		else if(pfnCallback == ColVariableCommand)
@@ -908,7 +915,7 @@ void CConsole::ConToggle(IConsole::IResult *pResult, void *pUser)
 			ColorHSLA Val = Cur == pResult->GetColor(1, Light).Pack(Darkest, Alpha) ? pResult->GetColor(2, Light) : pResult->GetColor(1, Light);
 
 			str_format(aBuf, sizeof(aBuf), "%s %u", pResult->GetString(0), Val.Pack(Darkest, Alpha));
-			pConsole->ExecuteLine(aBuf);
+			pConsole->ExecuteLine(aBuf, pResult->m_Lobby);
 			aBuf[0] = 0;
 		}
 		else
@@ -941,7 +948,7 @@ void CConsole::ConToggleStroke(IConsole::IResult *pResult, void *pUser)
 		{
 			int Val = pResult->GetInteger(0) == 0 ? pResult->GetInteger(3) : pResult->GetInteger(2);
 			str_format(aBuf, sizeof(aBuf), "%s %i", pResult->GetString(1), Val);
-			pConsole->ExecuteLine(aBuf);
+			pConsole->ExecuteLine(aBuf, pResult->m_Lobby);
 			aBuf[0] = 0;
 		}
 		else
@@ -1056,7 +1063,7 @@ void CConsole::ParseArguments(int NumArgs, const char **ppArguments)
 		else
 		{
 			// search arguments for overrides
-			ExecuteLine(ppArguments[i]);
+			ExecuteLine(ppArguments[i], 0);
 		}
 	}
 }

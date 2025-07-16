@@ -5,11 +5,13 @@
 
 #include <game/server/entity.h>
 
+class CBot;
+
 #define SHOTS_HISTORY 3
 class CLaser : public CEntity
 {
 public:
-	CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, CPlayer *pPlayer, int Type);
+	CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEnergy, CPlayer *pPlayer, int Type, CBot *pBot=nullptr, int Team=0);
 	virtual ~CLaser();
 
 	virtual void Reset() override;
@@ -17,6 +19,9 @@ public:
 	virtual void TickPaused() override;
 	virtual void Snap(int SnappingClient) override;
 	virtual void SwapClients(int Client1, int Client2) override;
+
+	CBot* m_pBot;
+	int m_Team;
 
 protected:
 	bool HitCharacter(vec2 From, vec2 To);

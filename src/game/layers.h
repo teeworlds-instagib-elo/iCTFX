@@ -20,7 +20,7 @@ class CLayers
 
 public:
 	CLayers();
-	void Init(class IKernel *pKernel);
+	void Init(class IKernel *pKernel, int Map);
 	void InitBackground(class IMap *pMap);
 	int NumGroups() const { return m_GroupsNum; }
 	int NumLayers() const { return m_LayersNum; }
@@ -31,6 +31,7 @@ public:
 	CMapItemLayer *GetLayer(int Index) const;
 
 	// DDRace
+	int m_Map;
 
 	CMapItemLayerTilemap *TeleLayer() const { return m_pTeleLayer; }
 	CMapItemLayerTilemap *SpeedupLayer() const { return m_pSpeedupLayer; }

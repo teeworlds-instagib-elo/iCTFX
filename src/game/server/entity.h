@@ -46,6 +46,7 @@ public: // TODO: Maybe make protected
 	vec2 m_Pos;
 	vec2 m_NextPos;
 	float m_ProximityRadius;
+	int m_Lobby = 0;
 
 	/* Getters */
 	int GetID() const { return m_ID; }

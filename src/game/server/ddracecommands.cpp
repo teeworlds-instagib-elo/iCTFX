@@ -119,38 +119,6 @@ void CGameContext::ConUnEndlessHook(IConsole::IResult *pResult, void *pUserData)
 	}
 }
 
-void CGameContext::ConSuper(IConsole::IResult *pResult, void *pUserData)
-{
-	CGameContext *pSelf = (CGameContext *)pUserData;
-	if(!CheckClientID(pResult->m_ClientID))
-		return;
-	CCharacter *pChr = pSelf->GetPlayerChar(pResult->m_ClientID);
-	if(pChr && !pChr->m_Super)
-	{
-		pChr->m_Super = true;
-		pChr->Core()->m_Super = true;
-		pChr->UnFreeze();
-		pChr->m_TeamBeforeSuper = pChr->Team();
-		pChr->Teams()->SetCharacterTeam(pResult->m_ClientID, TEAM_SUPER);
-		pChr->m_DDRaceState = DDRACE_CHEAT;
-	}
-}
-
-void CGameContext::ConUnSuper(IConsole::IResult *pResult, void *pUserData)
-{
-	CGameContext *pSelf = (CGameContext *)pUserData;
-	if(!CheckClientID(pResult->m_ClientID))
-		return;
-	CCharacter *pChr = pSelf->GetPlayerChar(pResult->m_ClientID);
-	if(pChr && pChr->m_Super)
-	{
-		pChr->m_Super = false;
-		pChr->Core()->m_Super = false;
-		pChr->Teams()->SetForceCharacterTeam(pResult->m_ClientID,
-			pChr->m_TeamBeforeSuper);
-	}
-}
-
 void CGameContext::ConUnSolo(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
@@ -197,16 +165,178 @@ void CGameContext::ConShotgun(IConsole::IResult *pResult, void *pUserData)
 	pSelf->ModifyWeapons(pResult, pUserData, WEAPON_SHOTGUN, false);
 }
 
+void CGameContext::ConLOS(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	int Lobby = pResult->m_Lobby;
+	if(Lobby == 0)	//Lobby 0 is save server
+	{
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+				continue;
+			
+			pSelf->SendChatTarget(i, "You cannot change settings in lobby 0, got a different lobby");
+		}
+		return;
+	}
+
+	pSelf->m_World[pResult->m_Lobby].m_lineOfSight = !pSelf->m_World[pResult->m_Lobby].m_lineOfSight;
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(!pSelf->PlayerExists(i))
+			continue;
+		
+		char aBuf[256];
+		str_format(aBuf, 256, "line of sight is %s", pSelf->m_World[pResult->m_Lobby].m_lineOfSight ? "enabled" : "disabled");
+
+		pSelf->SendChatTarget(i, aBuf);
+	}
+}
+
+void CGameContext::ConIDM(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	int Lobby = pResult->m_Lobby;
+	if(Lobby == 0)	//Lobby 0 is save server
+	{
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+				continue;
+			
+			pSelf->SendChatTarget(i, "You cannot change settings in lobby 0, got a different lobby");
+		}
+		return;
+	}
+
+	pSelf->m_apController[pResult->m_Lobby]->idm = !pSelf->m_apController[pResult->m_Lobby]->idm;
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(!pSelf->PlayerExists(i))
+			continue;
+		
+		char aBuf[256];
+		str_format(aBuf, 256, "iDM is %s", pSelf->m_apController[pResult->m_Lobby]->idm ? "enabled" : "disabled");
+
+		pSelf->SendChatTarget(i, aBuf);
+	}
+}
+
+void CGameContext::ConTournamentMode(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	int Lobby = pResult->m_Lobby;
+	if(Lobby == 0)	//Lobby 0 is save server
+	{
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+				continue;
+			
+			pSelf->SendChatTarget(i, "You cannot change settings in lobby 0, got a different lobby");
+		}
+		return;
+	}
+
+	pSelf->m_apController[pResult->m_Lobby]->m_tourneyMode = !pSelf->m_apController[pResult->m_Lobby]->m_tourneyMode;
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(!pSelf->PlayerExists(i))
+			continue;
+		
+		char aBuf[256];
+		str_format(aBuf, 256, "Tournament mode is %s", pSelf->m_apController[pResult->m_Lobby]->m_tourneyMode ? "enabled" : "disabled");
+
+		pSelf->SendChatTarget(i, aBuf);
+	}
+}
+
+void CGameContext::ConHammer(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	int Lobby = pResult->m_Lobby;
+	if(Lobby == 0)	//Lobby 0 is save server
+	{
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+				continue;
+			
+			pSelf->SendChatTarget(i, "You cannot change settings in lobby 0, got a different lobby");
+		}
+		return;
+	}
+
+	pSelf->m_World[pResult->m_Lobby].m_hammer = !pSelf->m_World[pResult->m_Lobby].m_hammer;
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(!pSelf->PlayerExists(i))
+			continue;
+		
+		char aBuf[256];
+		str_format(aBuf, 256, "hammer is %s", pSelf->m_World[pResult->m_Lobby].m_hammer ? "enabled" : "disabled");
+
+		pSelf->SendChatTarget(i, aBuf);
+	}
+}
+
 void CGameContext::ConGrenade(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
-	pSelf->ModifyWeapons(pResult, pUserData, WEAPON_GRENADE, false);
+	int Lobby = pResult->m_Lobby;
+	if(Lobby == 0)	//Lobby 0 is save server
+	{
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+				continue;
+			
+			pSelf->SendChatTarget(i, "You cannot change settings in lobby 0, got a different lobby");
+		}
+		return;
+	}
+
+	pSelf->m_World[pResult->m_Lobby].m_grenade = !pSelf->m_World[pResult->m_Lobby].m_grenade;
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(!pSelf->PlayerExists(i))
+			continue;
+		
+		char aBuf[256];
+		str_format(aBuf, 256, "grenade is %s", pSelf->m_World[pResult->m_Lobby].m_grenade ? "enabled" : "disabled");
+
+		pSelf->SendChatTarget(i, aBuf);
+	}
 }
 
 void CGameContext::ConLaser(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
-	pSelf->ModifyWeapons(pResult, pUserData, WEAPON_LASER, false);
+	int Lobby = pResult->m_Lobby;
+	if(Lobby == 0)	//Lobby 0 is save server
+	{
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+				continue;
+			
+			pSelf->SendChatTarget(i, "You cannot change settings in lobby 0, got a different lobby");
+		}
+		return;
+	}
+
+	pSelf->m_World[pResult->m_Lobby].m_laser = !pSelf->m_World[pResult->m_Lobby].m_laser;
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(!pSelf->PlayerExists(i))
+			continue;
+		
+		char aBuf[256];
+		str_format(aBuf, 256, "laser is %s", pSelf->m_World[pResult->m_Lobby].m_laser ? "enabled" : "disabled");
+
+		pSelf->SendChatTarget(i, aBuf);
+	}
 }
 
 void CGameContext::ConJetpack(IConsole::IResult *pResult, void *pUserData)
@@ -308,14 +438,18 @@ void CGameContext::ConToTeleporter(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
 	unsigned int TeleTo = pResult->GetInteger(0);
-	CGameControllerDDRace *pGameControllerDDRace = (CGameControllerDDRace *)pSelf->m_pController;
+	CGameControllerDDRace *pGameControllerDDRace = (CGameControllerDDRace *)pSelf->m_apController[pSelf->GetLobby(pResult->m_ClientID)];
 
 	if(!pGameControllerDDRace->m_TeleOuts[TeleTo - 1].empty())
 	{
 		CCharacter *pChr = pSelf->GetPlayerChar(pResult->m_ClientID);
 		if(pChr)
 		{
-			int TeleOut = pSelf->m_World.m_Core.RandomOr0(pGameControllerDDRace->m_TeleOuts[TeleTo - 1].size());
+			int Lobby = pSelf->GetLobby(pResult->m_ClientID);
+			if(Lobby == -1)
+				Lobby = 0;
+			
+			int TeleOut = pSelf->m_World[Lobby].m_Core.RandomOr0(pGameControllerDDRace->m_TeleOuts[TeleTo - 1].size());
 			pSelf->Teleport(pChr, pGameControllerDDRace->m_TeleOuts[TeleTo - 1][TeleOut]);
 		}
 	}
@@ -325,14 +459,18 @@ void CGameContext::ConToCheckTeleporter(IConsole::IResult *pResult, void *pUserD
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
 	unsigned int TeleTo = pResult->GetInteger(0);
-	CGameControllerDDRace *pGameControllerDDRace = (CGameControllerDDRace *)pSelf->m_pController;
+	CGameControllerDDRace *pGameControllerDDRace = (CGameControllerDDRace *)pSelf->m_apController[pSelf->GetLobby(pResult->m_ClientID)];
 
 	if(!pGameControllerDDRace->m_TeleCheckOuts[TeleTo - 1].empty())
 	{
 		CCharacter *pChr = pSelf->GetPlayerChar(pResult->m_ClientID);
 		if(pChr)
 		{
-			int TeleOut = pSelf->m_World.m_Core.RandomOr0(pGameControllerDDRace->m_TeleCheckOuts[TeleTo - 1].size());
+			int Lobby = pSelf->GetLobby(pResult->m_ClientID);
+			if(Lobby == -1)
+				Lobby = 0;
+			
+			int TeleOut = pSelf->m_World[Lobby].m_Core.RandomOr0(pGameControllerDDRace->m_TeleCheckOuts[TeleTo - 1].size());
 			pSelf->Teleport(pChr, pGameControllerDDRace->m_TeleCheckOuts[TeleTo - 1][TeleOut]);
 			pChr->m_TeleCheckpoint = TeleTo;
 		}
@@ -723,40 +861,6 @@ void CGameContext::ConModerate(IConsole::IResult *pResult, void *pUserData)
 		pSelf->SendChatTarget(pResult->m_ClientID, "Active moderator mode disabled for you.");
 }
 
-void CGameContext::ConSetDDRTeam(IConsole::IResult *pResult, void *pUserData)
-{
-	CGameContext *pSelf = (CGameContext *)pUserData;
-	CGameControllerDDRace *pController = (CGameControllerDDRace *)pSelf->m_pController;
-
-	if(g_Config.m_SvTeam == SV_TEAM_FORBIDDEN || g_Config.m_SvTeam == SV_TEAM_FORCED_SOLO)
-	{
-		pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "join",
-			"Teams are disabled");
-		return;
-	}
-
-	int Target = pResult->GetVictim();
-	int Team = pResult->GetInteger(1);
-
-	if(Team < TEAM_FLOCK || Team >= TEAM_SUPER)
-		return;
-
-	CCharacter *pChr = pSelf->GetPlayerChar(Target);
-
-	if((pController->m_Teams.m_Core.Team(Target) && pController->m_Teams.GetDDRaceState(pSelf->m_apPlayers[Target]) == DDRACE_STARTED) || (pChr && pController->m_Teams.IsPractice(pChr->Team())))
-		pSelf->m_apPlayers[Target]->KillCharacter(WEAPON_GAME);
-
-	pController->m_Teams.SetForceCharacterTeam(Target, Team);
-}
-
-void CGameContext::ConUninvite(IConsole::IResult *pResult, void *pUserData)
-{
-	CGameContext *pSelf = (CGameContext *)pUserData;
-	CGameControllerDDRace *pController = (CGameControllerDDRace *)pSelf->m_pController;
-
-	pController->m_Teams.SetClientInvited(pResult->GetInteger(1), pResult->GetVictim(), false);
-}
-
 void CGameContext::ConFreezeHammer(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
@@ -806,10 +910,22 @@ void CGameContext::ConDumpAntibot(IConsole::IResult *pResult, void *pUserData)
 
 void CGameContext::ConStop(IConsole::IResult *pResult, void *pUserData)
 {
+	CGameContext *pSelf = (CGameContext *)pUserData;
 	if(!g_Config.m_SvSaveServer) {
-		CGameContext *pSelf = (CGameContext *)pUserData;
-		pSelf->m_World.m_Paused = true;
-			pSelf->SendChat(-1, CHAT_ALL, "Server paused");
+		int Lobby = pResult->m_Lobby;
+		if(Lobby == 0)	//Lobby 0 is save server
+		{
+			for(int i = 0; i < MAX_CLIENTS; i++)
+			{
+				if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+					continue;
+				
+				pSelf->SendChatTarget(i, "You cannot pause the game in lobby 0, got a different lobby");
+			}
+			return;
+		}
+		pSelf->m_World[pResult->m_Lobby].m_Paused = true;
+		pSelf->SendChat(-1, CHAT_ALL, "Server paused");
 	}
 }
 
@@ -817,7 +933,7 @@ void CGameContext::ConGo(IConsole::IResult *pResult, void *pUserData)
 {
 	if(!g_Config.m_SvSaveServer) {
 		CGameContext *pSelf = (CGameContext *)pUserData;
-		pSelf->m_pController->m_FakeWarmup = pSelf->Server()->TickSpeed() * g_Config.m_SvGoTime;
+		pSelf->m_apController[pResult->m_Lobby]->m_FakeWarmup = pSelf->Server()->TickSpeed() * g_Config.m_SvGoTime;
 		pSelf->SendChat(-1, CHAT_ALL, "Server continuing");
 	}
 }
@@ -827,9 +943,25 @@ void CGameContext::ConXonX(IConsole::IResult *pResult, void *pUserData)
 {
 	if (!g_Config.m_SvSaveServer) {
 		CGameContext *pSelf = (CGameContext *)pUserData;
+		int Lobby = pResult->m_Lobby;
+		if(Lobby < 0 || Lobby > MAX_LOBBIES)
+			return;
+		
+		if(Lobby == 0)	//Lobby 0 is save server
+		{
+			for(int i = 0; i < MAX_CLIENTS; i++)
+			{
+				if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+					continue;
+				
+				pSelf->SendChatTarget(i, "You cannot do a match in lobby 0, got a different lobby");
+			}
+			return;
+		}
+		
 		int Mode = pResult->GetInteger(0);
-		g_Config.m_SvSpectatorSlots = g_Config.m_SvMaxClients - 2*Mode;
-		pSelf->m_pController->DoWarmup(g_Config.m_SvWarTime);
+		pSelf->m_apController[Lobby]->m_SpectatorSlots = g_Config.m_SvMaxClients - 2*Mode;
+		pSelf->m_apController[Lobby]->DoWarmup(g_Config.m_SvWarTime);
 		char aBuf[128];
 
 		str_format(aBuf, sizeof(aBuf), "Upcoming %don%d! Please stay on spectator", Mode, Mode);
@@ -844,7 +976,7 @@ void CGameContext::ConReset(IConsole::IResult *pResult, void *pUserData)
 {
 	if(!g_Config.m_SvSaveServer) {
 		CGameContext *pSelf = (CGameContext *)pUserData;
-		g_Config.m_SvSpectatorSlots = 0;
+		pSelf->m_apController[pResult->m_Lobby]->m_SpectatorSlots = 0;
 		pSelf->SendChat(-1, CHAT_ALL, "Reset spectator slots");
 	}
 }
@@ -853,14 +985,12 @@ void CGameContext::ConSwapTeams(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
 
-	pSelf->SwapTeams();
+	pSelf->SwapTeams(pSelf->GetLobby(pResult->m_ClientID));
 }
 
 void CGameContext::ConSetHitPoints(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
-
-	printf(pResult->GetString(1));
 
 	for(int ClientID = 0; ClientID < MAX_CLIENTS; ClientID++)
 	{
@@ -878,7 +1008,13 @@ void CGameContext::ConSetHitPoints(IConsole::IResult *pResult, void *pUserData)
 void CGameContext::ConShuffleTeams(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
-	if(!pSelf->m_pController->IsTeamplay())
+
+	int Lobby = pResult->m_Lobby;
+
+	if(Lobby < 0 || Lobby >= MAX_LOBBIES)
+		return;
+
+	if(!pSelf->m_apController[Lobby]->IsTeamplay())
 		return;
 
 
@@ -886,7 +1022,7 @@ void CGameContext::ConShuffleTeams(IConsole::IResult *pResult, void *pUserData)
 	int CounterBlue = 0;
 	int PlayerTeam = 0;
 	for(int i = 0; i < MAX_CLIENTS; ++i)
-		if(pSelf->m_apPlayers[i] && pSelf->m_apPlayers[i]->GetTeam() != TEAM_SPECTATORS)
+		if(pSelf->m_apPlayers[i] && pSelf->m_apPlayers[i]->GetTeam() != TEAM_SPECTATORS && pSelf->m_apPlayers[i]->GetLobby() == Lobby)
 			++PlayerTeam;
 	PlayerTeam = (PlayerTeam+1)/2;
 
@@ -894,7 +1030,7 @@ void CGameContext::ConShuffleTeams(IConsole::IResult *pResult, void *pUserData)
 
 	for(int i = 0; i < MAX_CLIENTS; ++i)
 	{
-		if(pSelf->m_apPlayers[i] && pSelf->m_apPlayers[i]->GetTeam() != TEAM_SPECTATORS)
+		if(pSelf->m_apPlayers[i] && pSelf->m_apPlayers[i]->GetTeam() != TEAM_SPECTATORS && pSelf->m_apPlayers[i]->GetLobby() == Lobby)
 		{
 			if(CounterRed == PlayerTeam)
 				pSelf->m_apPlayers[i]->SetTeam(TEAM_BLUE, false);
@@ -916,5 +1052,5 @@ void CGameContext::ConShuffleTeams(IConsole::IResult *pResult, void *pUserData)
 		}
 	}
 
-	(void)pSelf->m_pController->CheckTeamBalance();
+	(void)pSelf->m_apController[Lobby]->CheckTeamBalance();
 }

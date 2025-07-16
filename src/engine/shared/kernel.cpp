@@ -2,6 +2,7 @@
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include <base/system.h>
 #include <engine/kernel.h>
+#include <engine/map.h>
 
 class CKernel : public IKernel
 {
@@ -54,6 +55,52 @@ public:
 				delete m_aInterfaces[i].m_pInterface;
 				m_aInterfaces[i].m_pInterface = 0;
 			}
+		}
+
+		for(int i = 0; i < m_AmountMaps; i++)
+		{
+			delete m_papEngineMap[i];
+		}
+	}
+
+	IEngineMap ** m_papEngineMap = 0;
+
+	virtual IMap * GetIMap(int Map)
+	{
+		if(Map < 0 || Map >= m_AmountMaps)
+			return 0;
+		
+		return static_cast<IMap *>(m_papEngineMap[Map]);
+	}
+
+	virtual IEngineMap * GetIEngineMap(int Map)
+	{
+		if(Map < 0 || Map >= m_AmountMaps)
+			return 0;
+		
+		return m_papEngineMap[Map];
+	}
+
+	virtual void SetMapAmount(int Amount)
+	{
+		m_AmountMaps = Amount;
+
+		if(m_papEngineMap)	 //already initialized / set
+		{
+			//delete extra
+			for(int i = Amount; i < m_AmountMaps; i++)
+			{
+				delete m_papEngineMap[i];
+			}
+			return;
+		}
+		
+		m_papEngineMap = (IEngineMap **)calloc(Amount, sizeof(IEngineMap*));
+		
+		for(int i = 0; i < Amount; i++)
+		{
+			m_papEngineMap[i] = CreateEngineMap();
+			m_papEngineMap[i]->m_pKernel = this;
 		}
 	}
 

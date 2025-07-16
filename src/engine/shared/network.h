@@ -9,6 +9,7 @@
 #include <base/math.h>
 
 #include <engine/message.h>
+#include <engine/shared/protocol.h>
 
 /*
 
@@ -66,6 +67,7 @@ enum
 	NET_CONNSTATE_PENDING = 2,
 	NET_CONNSTATE_ONLINE = 3,
 	NET_CONNSTATE_ERROR = 4,
+	NET_CONNSTATE_BOT = 5,
 
 	NET_PACKETFLAG_UNUSED = 1 << 0,
 	NET_PACKETFLAG_TOKEN = 1 << 1,
@@ -217,6 +219,7 @@ public:
 	const char *ErrorString();
 	void SignalResend();
 	int State() const { return m_State; }
+	void SetState(int state) { m_State = state; }
 	const NETADDR *PeerAddress() const { return &m_PeerAddr; }
 
 	void ResetErrorString() { m_aErrorString[0] = 0; }
@@ -352,6 +355,11 @@ public:
 	bool Open(NETADDR BindAddr, class CNetBan *pNetBan, int MaxClients, int MaxClientsPerIP);
 	int Close();
 
+	int GetBotID();
+	void FreeBotID(int ID);
+	
+	bool IsBotID(int ID);
+
 	//
 	int Recv(CNetChunk *pChunk, SECURITY_TOKEN *pResponseToken);
 	int Send(CNetChunk *pChunk);
@@ -371,6 +379,13 @@ public:
 
 	void SendTokenSixup(NETADDR &Addr, SECURITY_TOKEN Token);
 	int SendConnlessSixup(CNetChunk *pChunk, SECURITY_TOKEN ResponseToken);
+
+	int ConnectionState(int ClientID) const { 
+		if(ClientID < 0 || ClientID >= MAX_CLIENTS)
+			return NET_CONNSTATE_OFFLINE;
+		
+		return m_aSlots[ClientID].m_Connection.State();
+	}
 
 	//
 	void SetMaxClientsPerIP(int Max);
