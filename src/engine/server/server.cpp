@@ -1159,7 +1159,7 @@ void CServer::SendMap(int ClientID)
 	int MapType = IsSixup(ClientID) ? MAP_TYPE_SIXUP : MAP_TYPE_SIX;
 	{
 		CMsgPacker Msg(NETMSG_MAP_DETAILS, true);
-		Msg.AddString(GetMapName(), 0);
+		Msg.AddString(pMap->m_aMapName, 0);
 		Msg.AddRaw(&pMap->m_aCurrentMapSha256[MapType].data, sizeof(pMap->m_aCurrentMapSha256[MapType].data));
 		Msg.AddInt(pMap->m_aCurrentMapCrc[MapType]);
 		Msg.AddInt(pMap->m_aCurrentMapSize[MapType]);
@@ -1167,7 +1167,7 @@ void CServer::SendMap(int ClientID)
 	}
 	{
 		CMsgPacker Msg(NETMSG_MAP_CHANGE, true);
-		Msg.AddString(GetMapName(), 0);
+		Msg.AddString(pMap->m_aMapName, 0);
 		Msg.AddInt(pMap->m_aCurrentMapCrc[MapType]);
 		Msg.AddInt(pMap->m_aCurrentMapSize[MapType]);
 		if(MapType == MAP_TYPE_SIXUP)
