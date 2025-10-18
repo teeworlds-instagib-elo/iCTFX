@@ -280,6 +280,7 @@ public:
 	// FullShutdown is true if the program is about to exit (not if the map is changed)
 	virtual void OnShutdown() = 0;
 
+	virtual void ResetAllGames() = 0;
 	virtual void OnTick() = 0;
 	virtual void OnPreSnap() = 0;
 	virtual void OnSnap(int ClientID) = 0;

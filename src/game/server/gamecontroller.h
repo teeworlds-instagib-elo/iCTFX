@@ -48,8 +48,6 @@ protected:
 	float EvaluateSpawnPos(CSpawnEval *pEval, vec2 Pos, int DDTeam);
 	void EvaluateSpawnType(CSpawnEval *pEval, int Type, int DDTeam);
 
-	void ResetGame();
-
 	char m_aMapWish[MAX_MAP_LENGTH];
 
 	int m_RoundStartTick;
@@ -69,6 +67,7 @@ public:
 	int m_aTeamscore[2];
 	class CFlag *m_apFlags[2];
 	int m_BotCount = 0;
+	int m_WantedBotAmount = 0;
 	class CBot *m_apBots[MAX_BOTS] = {0};
 	bool idm; //todo, not this shitty solution
 	bool m_tourneyMode = false;
@@ -77,6 +76,8 @@ public:
 	int m_ScoreLimit;
 	int m_TimeLimit;
 	int m_SpectatorSlots;
+
+	void ResetGame();
 	
 	std::unique_ptr<SqlHandler> sql_handler;
 

@@ -462,6 +462,25 @@ void IGameController::EndRound()
 void IGameController::ResetGame()
 {
 	GameServer()->m_World[m_Lobby].m_ResetRequested = true;
+
+	if(!g_Config.m_SvSaveServer) {
+		m_aTeamscore[TEAM_RED] =  0;
+		m_aTeamscore[TEAM_BLUE] = 0;
+	}
+
+	m_RoundStartTick = Server()->Tick();
+	m_SuddenDeath = 0;
+	m_GameOverTick = -1;
+	GameServer()->m_World[m_Lobby].m_Paused = false;
+	m_ForceBalanced = false;
+
+
+	if(!g_Config.m_SvSaveServer) {
+		m_aTeamscore[TEAM_RED] =  0;
+		m_aTeamscore[TEAM_BLUE] = 0;
+	}
+
+	m_WantedBotAmount = 0;
 }
 
 const char *IGameController::GetTeamName(int Team)
@@ -479,11 +498,6 @@ void IGameController::StartRound()
 {
 	ResetGame();
 
-	m_RoundStartTick = Server()->Tick();
-	m_SuddenDeath = 0;
-	m_GameOverTick = -1;
-	GameServer()->m_World[m_Lobby].m_Paused = false;
-	m_ForceBalanced = false;
 	Server()->DemoRecorder_HandleAutoStart();
 	char aBuf[256];
 	str_format(aBuf, sizeof(aBuf), "start round type='%s' teamplay='%d'", m_pGameType, m_GameFlags & GAMEFLAG_TEAMS);
@@ -506,11 +520,6 @@ void IGameController::StartRound()
 			}
 		}
 	}
-
-	if(!g_Config.m_SvSaveServer) {
-		m_aTeamscore[TEAM_RED] =  0;
-		m_aTeamscore[TEAM_BLUE] = 0;
-	}
 }
 
 void IGameController::ChangeMap(const char *pToMap)
@@ -523,6 +532,10 @@ void IGameController::ChangeMap(const char *pToMap)
 		if(GameServer()->Kernel()->GetIMap(i) && GameServer()->Kernel()->GetIMap(i)->m_aCurrentMap[0] != 0 &&
 			str_comp(GameServer()->Kernel()->GetIMap(i)->m_aMapName, pToMap) == 0)
 		{
+			ResetGame();
+			m_apFlags[0] = 0;
+			m_apFlags[1] = 0;
+
 			GameServer()->m_World[m_Lobby].DeleteAllEntities();
 			GameServer()->Layers(m_Lobby)->Init(GameServer()->Kernel(), i);
 			GameServer()->Collision(m_Lobby)->Init(GameServer()->Layers(m_Lobby));

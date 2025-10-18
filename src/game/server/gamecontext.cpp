@@ -352,7 +352,7 @@ void CGameContext::CallVote(int ClientID, const char *pDesc, const char *pCmd, c
 	if(!pPlayer)
 		return;
 
-	SendChat(-1, CGameContext::CHAT_ALL, pChatmsg, -1, CHAT_SIX);
+	SendChat(-1, CGameContext::CHAT_ALL, pChatmsg, -1, CHAT_SIX, Lobby);
 	if(!pSixupDesc)
 		pSixupDesc = pDesc;
 
@@ -402,7 +402,7 @@ void CGameContext::SendChatTeam(int Team, const char *pText)
 		SendChatTarget(i, pText);
 }
 
-void CGameContext::SendChat(int ChatterClientID, int Team, const char *pText, int SpamProtectionClientID, int Flags)
+void CGameContext::SendChat(int ChatterClientID, int Team, const char *pText, int SpamProtectionClientID, int Flags, int Lobby)
 {
 	if(SpamProtectionClientID >= 0 && SpamProtectionClientID < MAX_CLIENTS)
 		if(ProcessSpamProtection(SpamProtectionClientID))
@@ -443,6 +443,9 @@ void CGameContext::SendChat(int ChatterClientID, int Team, const char *pText, in
 			if(ChatterClientID >= 0 && m_apPlayers[ChatterClientID]->GetTeam() == TEAM_SPECTATORS && m_apPlayers[i]->m_muteSpec)
 				continue;
 			
+			if(Lobby != GetLobby(i) && Lobby != -1)
+				continue;
+
 			bool Send = (Server()->IsSixup(i) && (Flags & CHAT_SIXUP)) ||
 				    (!Server()->IsSixup(i) && (Flags & CHAT_SIX));
 			
@@ -891,6 +894,12 @@ void CGameContext::SetPlayer_LastAckedSnapshot(int ClientID, int tick)
 	m_apPlayers[ClientID]->m_LastAckedSnapshot = tick;
 }
 
+void CGameContext::ResetAllGames()
+{
+	for(auto &pController : m_apController)
+		pController->ResetGame();
+}
+
 void CGameContext::OnTick()
 {
 	if(m_AddMapVotes)
@@ -1134,7 +1143,7 @@ void CGameContext::OnTick()
 					Console()->ExecuteLine(Vote.m_aVoteCommand, Lobby);
 					Server()->SetRconCID(IServer::RCON_CID_SERV);
 					EndVote(Lobby);
-					SendChat(-1, CGameContext::CHAT_ALL, "Vote passed", -1, CHAT_SIX);
+					SendChat(-1, CGameContext::CHAT_ALL, "Vote passed", -1, CHAT_SIX, Lobby);
 
 					if(m_apPlayers[Vote.m_VoteCreator] && !IsKickVote(Lobby) && !IsSpecVote(Lobby))
 						m_apPlayers[Vote.m_VoteCreator]->m_LastVoteCall = 0;
@@ -1144,7 +1153,7 @@ void CGameContext::OnTick()
 					char aBuf[64];
 					str_format(aBuf, sizeof(aBuf), "Vote passed enforced by authorized player");
 					Console()->ExecuteLine(Vote.m_aVoteCommand, Lobby, Vote.m_VoteEnforcer);
-					SendChat(-1, CGameContext::CHAT_ALL, aBuf, -1, CHAT_SIX);
+					SendChat(-1, CGameContext::CHAT_ALL, aBuf, -1, CHAT_SIX, Lobby);
 					EndVote(Lobby);
 				}
 				else if(Vote.m_VoteEnforce == VOTE_ENFORCE_NO_ADMIN)
@@ -1152,16 +1161,16 @@ void CGameContext::OnTick()
 					char aBuf[64];
 					str_format(aBuf, sizeof(aBuf), "Vote failed enforced by authorized player");
 					EndVote(Lobby);
-					SendChat(-1, CGameContext::CHAT_ALL, aBuf, -1, CHAT_SIX);
+					SendChat(-1, CGameContext::CHAT_ALL, aBuf, -1, CHAT_SIX, Lobby);
 				}
 				//else if(Vote.m_VoteEnforce == VOTE_ENFORCE_NO || time_get() > Vote.m_VoteCloseTime)
 				else if(Vote.m_VoteEnforce == VOTE_ENFORCE_NO || time_get() > Vote.m_VoteCloseTime)
 				{
 					EndVote(Lobby);
 					if(VetoStop || (Vote.m_VoteWillPass && Veto))
-						SendChat(-1, CGameContext::CHAT_ALL, "Vote failed because of veto. Find an empty server instead", -1, CHAT_SIX);
+						SendChat(-1, CGameContext::CHAT_ALL, "Vote failed because of veto. Find an empty server instead", -1, CHAT_SIX, Lobby);
 					else
-						SendChat(-1, CGameContext::CHAT_ALL, "Vote failed", -1, CHAT_SIX);
+						SendChat(-1, CGameContext::CHAT_ALL, "Vote failed", -1, CHAT_SIX, Lobby);
 				}
 				else if(Vote.m_VoteUpdate)
 				{
@@ -2079,6 +2088,13 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					char aWhisperMsg[256];
 					str_copy(aWhisperMsg, pMsg->m_pMessage + 3, 256);
 					Whisper(pPlayer->GetCID(), aWhisperMsg);
+				}
+				else if(str_startswith(pMsg->m_pMessage + 1, "lc "))
+				{
+					char aMsg[256];
+					snprintf(aMsg, 256, "(Lobby): %s", pMsg->m_pMessage + 4);
+					int lobby = GetLobby(ClientID);
+					SendChat(ClientID, CHAT_ALL, aMsg, -1, 3, lobby);
 				}
 				else if(str_startswith(pMsg->m_pMessage + 1, "whisper "))
 				{
@@ -3147,7 +3163,19 @@ void CGameContext::ConLobby(IConsole::IResult *pResult, void *pUserData)
 		pSelf->m_apPlayers[pResult->m_ClientID]->m_WallshotKills = 0;
 		pSelf->m_apPlayers[pResult->m_ClientID]->m_Suicides = 0;
 		
-		
+		int aNumplayers[2] = {0, 0};
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(pSelf->m_apPlayers[i] && pSelf->GetLobby(i) == lobby)
+			{
+				if(pSelf->m_apPlayers[i]->GetTeam() == TEAM_RED || pSelf->m_apPlayers[i]->GetTeam() == TEAM_BLUE)
+					aNumplayers[pSelf->m_apPlayers[i]->GetTeam()]++;
+			}
+		}
+
+		pSelf->m_apPlayers[pResult->m_ClientID]->SetTeam(TEAM_RED);
+		if (aNumplayers[TEAM_RED] > aNumplayers[TEAM_BLUE])
+			pSelf->m_apPlayers[pResult->m_ClientID]->SetTeam(TEAM_BLUE);
 		
 		if(pSelf->m_apController[lobby]->m_tourneyMode)
 			spec = true;

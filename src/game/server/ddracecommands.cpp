@@ -184,7 +184,7 @@ void CGameContext::ConLOS(IConsole::IResult *pResult, void *pUserData)
 	pSelf->m_World[pResult->m_Lobby].m_lineOfSight = !pSelf->m_World[pResult->m_Lobby].m_lineOfSight;
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
-		if(!pSelf->PlayerExists(i))
+		if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
 			continue;
 		
 		char aBuf[256];
@@ -213,11 +213,43 @@ void CGameContext::ConIDM(IConsole::IResult *pResult, void *pUserData)
 	pSelf->m_apController[pResult->m_Lobby]->idm = !pSelf->m_apController[pResult->m_Lobby]->idm;
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
-		if(!pSelf->PlayerExists(i))
+		if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
 			continue;
 		
 		char aBuf[256];
 		str_format(aBuf, 256, "iDM is %s", pSelf->m_apController[pResult->m_Lobby]->idm ? "enabled" : "disabled");
+
+		pSelf->SendChatTarget(i, aBuf);
+	}
+}
+
+void CGameContext::ConBotAmount(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	int Lobby = pResult->m_Lobby;
+	if(Lobby < 0 || Lobby > MAX_LOBBIES)
+		return;
+
+	if(Lobby == 0)	//Lobby 0 is save server
+	{
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+				continue;
+			
+			pSelf->SendChatTarget(i, "You cannot change settings in lobby 0, got a different lobby");
+		}
+		return;
+	}
+
+	pSelf->m_apController[Lobby]->m_WantedBotAmount = pResult->GetInteger(0);
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+			continue; 
+		
+		char aBuf[256];
+		str_format(aBuf, 256, "set amount of bots to %i", pSelf->m_apController[Lobby]->m_WantedBotAmount);
 
 		pSelf->SendChatTarget(i, aBuf);
 	}
@@ -242,7 +274,7 @@ void CGameContext::ConTournamentMode(IConsole::IResult *pResult, void *pUserData
 	pSelf->m_apController[pResult->m_Lobby]->m_tourneyMode = !pSelf->m_apController[pResult->m_Lobby]->m_tourneyMode;
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
-		if(!pSelf->PlayerExists(i))
+		if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
 			continue;
 		
 		char aBuf[256];
@@ -271,7 +303,7 @@ void CGameContext::ConHammer(IConsole::IResult *pResult, void *pUserData)
 	pSelf->m_World[pResult->m_Lobby].m_hammer = !pSelf->m_World[pResult->m_Lobby].m_hammer;
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
-		if(!pSelf->PlayerExists(i))
+		if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
 			continue;
 		
 		char aBuf[256];
@@ -300,7 +332,7 @@ void CGameContext::ConGrenade(IConsole::IResult *pResult, void *pUserData)
 	pSelf->m_World[pResult->m_Lobby].m_grenade = !pSelf->m_World[pResult->m_Lobby].m_grenade;
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
-		if(!pSelf->PlayerExists(i))
+		if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
 			continue;
 		
 		char aBuf[256];
@@ -329,7 +361,7 @@ void CGameContext::ConLaser(IConsole::IResult *pResult, void *pUserData)
 	pSelf->m_World[pResult->m_Lobby].m_laser = !pSelf->m_World[pResult->m_Lobby].m_laser;
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
-		if(!pSelf->PlayerExists(i))
+		if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
 			continue;
 		
 		char aBuf[256];
