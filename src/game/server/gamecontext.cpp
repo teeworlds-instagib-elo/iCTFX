@@ -891,6 +891,12 @@ void CGameContext::SetPlayer_LastAckedSnapshot(int ClientID, int tick)
 	m_apPlayers[ClientID]->m_LastAckedSnapshot = tick;
 }
 
+void CGameContext::ResetAllGames()
+{
+	for(auto &pController : m_apController)
+		pController->ResetGame();
+}
+
 void CGameContext::OnTick()
 {
 	if(m_AddMapVotes)

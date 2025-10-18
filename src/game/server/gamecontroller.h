@@ -48,8 +48,6 @@ protected:
 	float EvaluateSpawnPos(CSpawnEval *pEval, vec2 Pos, int DDTeam);
 	void EvaluateSpawnType(CSpawnEval *pEval, int Type, int DDTeam);
 
-	void ResetGame();
-
 	char m_aMapWish[MAX_MAP_LENGTH];
 
 	int m_RoundStartTick;
@@ -77,6 +75,8 @@ public:
 	int m_ScoreLimit;
 	int m_TimeLimit;
 	int m_SpectatorSlots;
+
+	void ResetGame();
 	
 	std::unique_ptr<SqlHandler> sql_handler;
 

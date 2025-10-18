@@ -272,6 +272,7 @@ public:
 	virtual void OnMapChange(char *pNewMapName, int MapNameSize);
 	virtual void OnShutdown();
 
+	virtual void ResetAllGames();
 	virtual void OnTick();
 	virtual void OnPreSnap();
 	virtual void OnSnap(int ClientID);
