@@ -26,6 +26,7 @@ public:
 	int m_HookedID;
 
 	int m_AvoidCharge;
+	int m_Score;
 
 	vec2 m_Vel;
 	int m_Chase;
