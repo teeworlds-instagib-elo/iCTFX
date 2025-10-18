@@ -352,7 +352,7 @@ void CGameContext::CallVote(int ClientID, const char *pDesc, const char *pCmd, c
 	if(!pPlayer)
 		return;
 
-	SendChat(-1, CGameContext::CHAT_ALL, pChatmsg, -1, CHAT_SIX);
+	SendChat(-1, CGameContext::CHAT_ALL, pChatmsg, -1, CHAT_SIX, Lobby);
 	if(!pSixupDesc)
 		pSixupDesc = pDesc;
 
@@ -1143,7 +1143,7 @@ void CGameContext::OnTick()
 					Console()->ExecuteLine(Vote.m_aVoteCommand, Lobby);
 					Server()->SetRconCID(IServer::RCON_CID_SERV);
 					EndVote(Lobby);
-					SendChat(-1, CGameContext::CHAT_ALL, "Vote passed", -1, CHAT_SIX);
+					SendChat(-1, CGameContext::CHAT_ALL, "Vote passed", -1, CHAT_SIX, Lobby);
 
 					if(m_apPlayers[Vote.m_VoteCreator] && !IsKickVote(Lobby) && !IsSpecVote(Lobby))
 						m_apPlayers[Vote.m_VoteCreator]->m_LastVoteCall = 0;
@@ -1153,7 +1153,7 @@ void CGameContext::OnTick()
 					char aBuf[64];
 					str_format(aBuf, sizeof(aBuf), "Vote passed enforced by authorized player");
 					Console()->ExecuteLine(Vote.m_aVoteCommand, Lobby, Vote.m_VoteEnforcer);
-					SendChat(-1, CGameContext::CHAT_ALL, aBuf, -1, CHAT_SIX);
+					SendChat(-1, CGameContext::CHAT_ALL, aBuf, -1, CHAT_SIX, Lobby);
 					EndVote(Lobby);
 				}
 				else if(Vote.m_VoteEnforce == VOTE_ENFORCE_NO_ADMIN)
@@ -1161,16 +1161,16 @@ void CGameContext::OnTick()
 					char aBuf[64];
 					str_format(aBuf, sizeof(aBuf), "Vote failed enforced by authorized player");
 					EndVote(Lobby);
-					SendChat(-1, CGameContext::CHAT_ALL, aBuf, -1, CHAT_SIX);
+					SendChat(-1, CGameContext::CHAT_ALL, aBuf, -1, CHAT_SIX, Lobby);
 				}
 				//else if(Vote.m_VoteEnforce == VOTE_ENFORCE_NO || time_get() > Vote.m_VoteCloseTime)
 				else if(Vote.m_VoteEnforce == VOTE_ENFORCE_NO || time_get() > Vote.m_VoteCloseTime)
 				{
 					EndVote(Lobby);
 					if(VetoStop || (Vote.m_VoteWillPass && Veto))
-						SendChat(-1, CGameContext::CHAT_ALL, "Vote failed because of veto. Find an empty server instead", -1, CHAT_SIX);
+						SendChat(-1, CGameContext::CHAT_ALL, "Vote failed because of veto. Find an empty server instead", -1, CHAT_SIX, Lobby);
 					else
-						SendChat(-1, CGameContext::CHAT_ALL, "Vote failed", -1, CHAT_SIX);
+						SendChat(-1, CGameContext::CHAT_ALL, "Vote failed", -1, CHAT_SIX, Lobby);
 				}
 				else if(Vote.m_VoteUpdate)
 				{
