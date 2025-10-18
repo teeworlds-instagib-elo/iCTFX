@@ -195,17 +195,17 @@ void CPlayer::Tick()
 	// 	m_ScoreFinishResult = nullptr;
 	// }
 
-	if(GetCharacter() && m_LastPlaytime < time_get() - time_freq() * 60)
+	if(GetCharacter() && m_LastPlaytime < time_get() - time_freq() * 180)
 	{
 		if(Server()->Tick() % 50 == 0)
 		{
 			char aMsg[32];
-			str_format(aMsg, 32, "afk in %li", (m_LastPlaytime-(time_get() - time_freq() * 65)) / time_freq());
+			str_format(aMsg, 32, "afk in %li", (m_LastPlaytime-(time_get() - time_freq() * 185)) / time_freq());
 			GameServer()->SendBroadcast(aMsg, m_ClientID, true);
 			GameServer()->SendChatTarget(m_ClientID, aMsg);
 		}
 
-		if(m_LastPlaytime < time_get() - time_freq() * 65)
+		if(m_LastPlaytime < time_get() - time_freq() * 185)
 			SetTeam(TEAM_SPECTATORS);
 	}
 
