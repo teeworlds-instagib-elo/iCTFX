@@ -492,7 +492,7 @@ void CGameControllerDDRace::Tick()
 		{
 			if(GameServer()->m_apPlayers[i] && GameServer()->GetLobby(i) == m_Lobby)
 			{
-				if(GameServer()->m_apPlayers[i]->GetTeam() >= TEAM_RED && GameServer()->m_apPlayers[i]->GetTeam() <= TEAM_BLUE)
+				if(GameServer()->m_apPlayers[i]->GetTeam() == TEAM_RED || GameServer()->m_apPlayers[i]->GetTeam() == TEAM_BLUE)
 					aNumplayers[GameServer()->m_apPlayers[i]->GetTeam()]++;
 			}
 		}
@@ -516,6 +516,37 @@ void CGameControllerDDRace::Tick()
 				delete m_apBots[i];
 			}
 		}
+
+		//balance bot teams
+		for(int i = 0; i < m_BotCount; i++)
+		{
+			aNumplayers[m_apBots[i]->m_Team]++;
+		}
+
+		if(abs(aNumplayers[0]-aNumplayers[1]) > 1)
+		{
+			for(int i = m_BotCount-1; i >= 0; i--)
+			{
+				if(aNumplayers[TEAM_RED] < aNumplayers[TEAM_BLUE] && m_apBots[i]->m_Team != TEAM_RED)
+				{
+					//move bot to team red
+					m_apBots[i]->m_Team = TEAM_RED;
+					aNumplayers[TEAM_RED]++;
+					aNumplayers[TEAM_BLUE]--;
+				}
+				else if(aNumplayers[TEAM_BLUE] < aNumplayers[TEAM_RED] && m_apBots[i]->m_Team != TEAM_BLUE)
+				{
+					//move bot to team red
+					m_apBots[i]->m_Team = TEAM_BLUE;
+					aNumplayers[TEAM_RED]--;
+					aNumplayers[TEAM_BLUE]++;
+				}
+
+				if(abs(aNumplayers[0]-aNumplayers[1]) <= 1)
+					break;
+			}
+		}
+
 		m_BotCount = wantedAmount;
 	}
 
