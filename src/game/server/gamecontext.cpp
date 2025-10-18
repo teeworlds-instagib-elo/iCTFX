@@ -3153,7 +3153,19 @@ void CGameContext::ConLobby(IConsole::IResult *pResult, void *pUserData)
 		pSelf->m_apPlayers[pResult->m_ClientID]->m_WallshotKills = 0;
 		pSelf->m_apPlayers[pResult->m_ClientID]->m_Suicides = 0;
 		
-		
+		int aNumplayers[2] = {0, 0};
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(pSelf->m_apPlayers[i] && pSelf->GetLobby(i) == lobby)
+			{
+				if(pSelf->m_apPlayers[i]->GetTeam() == TEAM_RED || pSelf->m_apPlayers[i]->GetTeam() == TEAM_BLUE)
+					aNumplayers[pSelf->m_apPlayers[i]->GetTeam()]++;
+			}
+		}
+
+		pSelf->m_apPlayers[pResult->m_ClientID]->SetTeam(TEAM_RED);
+		if (aNumplayers[TEAM_RED] > aNumplayers[TEAM_BLUE])
+			pSelf->m_apPlayers[pResult->m_ClientID]->SetTeam(TEAM_BLUE);
 		
 		if(pSelf->m_apController[lobby]->m_tourneyMode)
 			spec = true;
