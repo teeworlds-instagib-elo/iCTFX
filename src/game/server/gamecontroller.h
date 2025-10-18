@@ -67,6 +67,7 @@ public:
 	int m_aTeamscore[2];
 	class CFlag *m_apFlags[2];
 	int m_BotCount = 0;
+	int m_WantedBotAmount = 0;
 	class CBot *m_apBots[MAX_BOTS] = {0};
 	bool idm; //todo, not this shitty solution
 	bool m_tourneyMode = false;

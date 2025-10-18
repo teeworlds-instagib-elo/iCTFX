@@ -485,7 +485,7 @@ void CGameControllerDDRace::Tick()
 
 	IGameController::Tick();
 
-	if(m_Lobby == 0)
+	//spawn bots
 	{
 		int aNumplayers[2] = {0, 0};
 		for(int i = 0; i < MAX_CLIENTS; i++)
@@ -500,6 +500,9 @@ void CGameControllerDDRace::Tick()
 		int numPlayers = aNumplayers[0] + aNumplayers[1];
 
 		int wantedAmount = g_Config.m_SvBotAmount - numPlayers;
+
+		if(m_Lobby != 0)
+			wantedAmount = m_WantedBotAmount;		
 
 		if(!numPlayers)
 			wantedAmount = 0;
