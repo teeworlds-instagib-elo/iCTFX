@@ -402,7 +402,7 @@ void CGameContext::SendChatTeam(int Team, const char *pText)
 		SendChatTarget(i, pText);
 }
 
-void CGameContext::SendChat(int ChatterClientID, int Team, const char *pText, int SpamProtectionClientID, int Flags)
+void CGameContext::SendChat(int ChatterClientID, int Team, const char *pText, int SpamProtectionClientID, int Flags, int Lobby)
 {
 	if(SpamProtectionClientID >= 0 && SpamProtectionClientID < MAX_CLIENTS)
 		if(ProcessSpamProtection(SpamProtectionClientID))
@@ -443,9 +443,12 @@ void CGameContext::SendChat(int ChatterClientID, int Team, const char *pText, in
 			if(ChatterClientID >= 0 && m_apPlayers[ChatterClientID]->GetTeam() == TEAM_SPECTATORS && m_apPlayers[i]->m_muteSpec)
 				continue;
 			
+			if(Lobby != GetLobby(i) && Lobby != -1)
+				continue;
+
 			bool Send = (Server()->IsSixup(i) && (Flags & CHAT_SIXUP)) ||
 				    (!Server()->IsSixup(i) && (Flags & CHAT_SIX));
-			
+
 			CNetMsg_Sv_Chat Msg;
 			Msg.m_Team = 0;
 			Msg.m_ClientID = ChatterClientID;
@@ -2085,6 +2088,13 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					char aWhisperMsg[256];
 					str_copy(aWhisperMsg, pMsg->m_pMessage + 3, 256);
 					Whisper(pPlayer->GetCID(), aWhisperMsg);
+				}
+				else if(str_startswith(pMsg->m_pMessage + 1, "lc "))
+				{
+					char aMsg[256];
+					snprintf(aMsg, 256, "(Lobby): %s", pMsg->m_pMessage + 4);
+					int lobby = GetLobby(ClientID);
+					SendChat(ClientID, CHAT_ALL, aMsg, -1, 3, lobby);
 				}
 				else if(str_startswith(pMsg->m_pMessage + 1, "whisper "))
 				{
