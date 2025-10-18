@@ -497,6 +497,9 @@ void CGameControllerDDRace::Tick()
 			}
 		}
 
+		if(idm)
+			m_WantedBotAmount = 0;
+
 		int numPlayers = aNumplayers[0] + aNumplayers[1];
 
 		int wantedAmount = g_Config.m_SvBotAmount - numPlayers;
@@ -555,6 +558,7 @@ void CGameControllerDDRace::Tick()
 
 
 	if(!idm)
+	{
 		for(int fi = 0; fi < 2; fi++)
 		{
 			CFlag *F = m_apFlags[fi];
@@ -791,6 +795,7 @@ void CGameControllerDDRace::Tick()
 				}
 			}
 		}
+	}
 	
 	if(m_GameOverTick == -1 && !m_Warmup && !g_Config.m_SvSaveServer)
 	{
