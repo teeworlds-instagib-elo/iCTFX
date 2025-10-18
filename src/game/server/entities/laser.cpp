@@ -195,7 +195,7 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 	
 	if(m_pBot)
 	{
-		m_pBot->m_Difficulty -= 0.05;
+		m_pBot->m_Difficulty -= 0.03;
 	}
 	
 	m_From = From;
