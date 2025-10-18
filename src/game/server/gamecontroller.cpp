@@ -530,6 +530,13 @@ void IGameController::ChangeMap(const char *pToMap)
 		if(GameServer()->Kernel()->GetIMap(i) && GameServer()->Kernel()->GetIMap(i)->m_aCurrentMap[0] != 0 &&
 			str_comp(GameServer()->Kernel()->GetIMap(i)->m_aMapName, pToMap) == 0)
 		{
+			{
+				m_apFlags[0] = 0;
+				m_apFlags[1] = 0;
+
+				m_aTeamscore[0] = 0;
+				m_aTeamscore[1] = 0;
+			}
 			GameServer()->m_World[m_Lobby].DeleteAllEntities();
 			GameServer()->Layers(m_Lobby)->Init(GameServer()->Kernel(), i);
 			GameServer()->Collision(m_Lobby)->Init(GameServer()->Layers(m_Lobby));

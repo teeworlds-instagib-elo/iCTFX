@@ -857,15 +857,6 @@ void CGameControllerDDRace::ChangeMap(const char *pToMap)
 {
 	int Map = GameServer()->Layers(m_Lobby)->m_Map;
 
-	if(Map != GameServer()->Layers(m_Lobby)->m_Map || true) //map has reloaded
-	{
-		m_apFlags[0] = 0;
-		m_apFlags[1] = 0;
-
-		m_aTeamscore[0] = 0;
-		m_aTeamscore[1] = 0;
-	}
-
 	IGameController::ChangeMap(pToMap);
 
 	InitTeleporter();
