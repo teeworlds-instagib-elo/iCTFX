@@ -3166,7 +3166,7 @@ void CGameContext::ConLobby(IConsole::IResult *pResult, void *pUserData)
 		int aNumplayers[2] = {0, 0};
 		for(int i = 0; i < MAX_CLIENTS; i++)
 		{
-			if(pSelf->m_apPlayers[i] && pSelf->GetLobby(i) == lobby)
+			if(pSelf->m_apPlayers[i] && pSelf->GetLobby(i) == lobby && i != pResult->m_ClientID)
 			{
 				if(pSelf->m_apPlayers[i]->GetTeam() == TEAM_RED || pSelf->m_apPlayers[i]->GetTeam() == TEAM_BLUE)
 					aNumplayers[pSelf->m_apPlayers[i]->GetTeam()]++;
