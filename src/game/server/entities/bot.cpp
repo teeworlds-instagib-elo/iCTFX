@@ -97,6 +97,7 @@ void CBot::Tick()
 		{
 			vec2 pos;
 			m_pController->CanSpawn(m_Team, &pos, 0);
+			GameServer()->CreatePlayerSpawn(m_Lobby, pos, 0);
 
 			m_Alive = true;
 
