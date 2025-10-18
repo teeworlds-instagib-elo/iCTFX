@@ -34,6 +34,7 @@ void CBot::Reset()
 	m_Difficulty = 0.2f;
 	m_Alive = false;
 	m_HookedID = -1;
+	m_Score = 0;
 }
 
 void CBot::Die(int Killer)
@@ -59,7 +60,13 @@ void CBot::Die(int Killer)
 		Msg.m_Victim = m_ClientID;
 		Msg.m_Weapon = WEAPON_LASER;
 		Msg.m_ModeSpecial = 0;
-		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, -1);
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(!Server()->ClientIngame(i) || GameServer()->GetLobby(i) != m_Lobby)
+				continue;
+			
+			Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, i);
+		}
 	}
 
 	if(m_HookedID >= 0)
@@ -97,6 +104,7 @@ void CBot::Tick()
 		{
 			vec2 pos;
 			m_pController->CanSpawn(m_Team, &pos, 0);
+			GameServer()->CreatePlayerSpawn(m_Lobby, pos, 0);
 
 			m_Alive = true;
 
@@ -403,6 +411,7 @@ void CBot::Tick()
 				m_pController->m_apFlags[f]->m_AtStand = false;
 				m_pController->m_apFlags[f]->m_BotGrabbed = true;
 				m_pController->m_apFlags[f]->m_Bot = m_ClientID;
+				m_Score++;
 
 				for(int c = 0; c < MAX_CLIENTS; c++)
 				{
@@ -427,12 +436,16 @@ void CBot::Tick()
 				{
 					m_pController->m_apFlags[!f]->Reset();
 					m_pController->m_aTeamscore[f] += 100;
+					m_Score += 5;
 
 					GameServer()->CreateSoundGlobal(m_Lobby, SOUND_CTF_CAPTURE);
 
 					m_HasFlag = false;
 				}else if(!m_pController->m_apFlags[f]->m_AtStand)
+				{
 					GameServer()->CreateSoundGlobal(m_Lobby, SOUND_CTF_RETURN);
+					m_Score++;
+				}
 				m_pController->m_apFlags[f]->Reset();
 			}
 			
@@ -719,7 +732,7 @@ void CBot::Snap(int SnappingClient)
 	pPlayerInfo->m_ClientID = id;
 	pPlayerInfo->m_Local = false;
 	pPlayerInfo->m_Team = m_Team;
-	pPlayerInfo->m_Score = 0;
+	pPlayerInfo->m_Score = m_Score;
 	pPlayerInfo->m_Latency = 0;
 
 	if(NetworkClipped(SnappingClient))

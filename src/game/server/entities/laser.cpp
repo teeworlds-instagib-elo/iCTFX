@@ -195,13 +195,20 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 	
 	if(m_pBot)
 	{
-		m_pBot->m_Difficulty -= 0.05;
+		m_pBot->m_Difficulty -= 0.03;
 	}
 	
 	m_From = From;
 	m_Pos = At;
 	m_Energy = -1;
 	m_DidHit = true;
+
+	if(m_pBot && m_Team == pHit->m_pPlayer->GetTeam())
+		return true;
+	
+	if(m_pBot)
+		m_pBot->m_Score++;
+	
 	pHit->TakeDamage(vec2(0.f, 0.f), GameServer()->Tuning()->m_LaserDamage, m_Owner, WEAPON_LASER, m_StartTick);
 	return true;
 }

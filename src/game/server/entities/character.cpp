@@ -949,6 +949,7 @@ void CCharacter::Death()
 	if(m_pPlayer && m_pPlayer->m_Rollback && g_Config.m_SvRollback)
 		m_Pos = m_DeathPos;
 
+	//cancel deaths caused by player
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
 		if(!GameServer()->m_apPlayers[i])
@@ -1007,7 +1008,13 @@ void CCharacter::Death()
 		Msg.m_Victim = m_pPlayer->GetCID();
 		Msg.m_Weapon = Weapon;
 		Msg.m_ModeSpecial = ModeSpecial;
-		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, -1);
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(!Server()->ClientIngame(i) || GameServer()->GetLobby(i) != m_Lobby)
+				continue;
+			
+			Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, i);
+		}
 	}
 
 	// a nice sound

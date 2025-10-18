@@ -14,6 +14,7 @@
 // CONSOLE_COMMAND("removeweapon", "i[weapon-id]", CFGFLAG_SERVER | CMDFLAG_TEST, ConRemoveWeapon, this, "removes weapon with id i from you (all = -1, hammer = 0, gun = 1, shotgun = 2, grenade = 3, laser = 4, ninja = 5)")
 // CONSOLE_COMMAND("shotgun", "", CFGFLAG_SERVER | CMDFLAG_TEST, ConShotgun, this, "Gives a shotgun to you")
 CONSOLE_COMMAND("idm", "", CFGFLAG_SERVER, ConIDM, this, "makes lobby IDM")
+CONSOLE_COMMAND("bot_amount", "i[amount]", CFGFLAG_SERVER, ConBotAmount, this, "amount of bots in a lobby")
 CONSOLE_COMMAND("line_of_sight", "", CFGFLAG_SERVER, ConLOS, this, "makes lobby IDM")
 CONSOLE_COMMAND("grenade", "", CFGFLAG_SERVER, ConGrenade, this, "Gives lobby grenades")
 CONSOLE_COMMAND("tournament_mode", "", CFGFLAG_SERVER, ConTournamentMode, this, "makes lobby tournament mode")

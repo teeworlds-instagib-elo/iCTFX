@@ -350,7 +350,7 @@ void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 		GameServer()->SendChat(-1, CGameContext::CHAT_ALL, aBuf, -1, CGameContext::CHAT_SIX);
 
 		GameServer()->SendChatTarget(ClientID, "welcome to iCTFX!");
-		GameServer()->SendChatTarget(ClientID, "Version: 1.3");
+		GameServer()->SendChatTarget(ClientID, "Version: 1.4");
 		GameServer()->SendChatTarget(ClientID, "use /lobby to go to a different lobby");
 		GameServer()->SendChatTarget(ClientID, "lobby 0 cannot be changed");
 		GameServer()->SendChatTarget(ClientID, "use /list to list all players");
@@ -485,21 +485,27 @@ void CGameControllerDDRace::Tick()
 
 	IGameController::Tick();
 
-	if(m_Lobby == 0)
+	//spawn bots
 	{
 		int aNumplayers[2] = {0, 0};
 		for(int i = 0; i < MAX_CLIENTS; i++)
 		{
 			if(GameServer()->m_apPlayers[i] && GameServer()->GetLobby(i) == m_Lobby)
 			{
-				if(GameServer()->m_apPlayers[i]->GetTeam() >= TEAM_RED && GameServer()->m_apPlayers[i]->GetTeam() <= TEAM_BLUE)
+				if(GameServer()->m_apPlayers[i]->GetTeam() == TEAM_RED || GameServer()->m_apPlayers[i]->GetTeam() == TEAM_BLUE)
 					aNumplayers[GameServer()->m_apPlayers[i]->GetTeam()]++;
 			}
 		}
 
+		if(idm)
+			m_WantedBotAmount = 0;
+
 		int numPlayers = aNumplayers[0] + aNumplayers[1];
 
 		int wantedAmount = g_Config.m_SvBotAmount - numPlayers;
+
+		if(m_Lobby != 0)
+			wantedAmount = m_WantedBotAmount;		
 
 		if(!numPlayers)
 			wantedAmount = 0;
@@ -516,11 +522,42 @@ void CGameControllerDDRace::Tick()
 				delete m_apBots[i];
 			}
 		}
+		//balance bot teams
+		for(int i = 0; i < m_BotCount; i++)
+		{
+			aNumplayers[m_apBots[i]->m_Team]++;
+		}
+
+		if(abs(aNumplayers[0]-aNumplayers[1]) > 1)
+		{
+			for(int i = m_BotCount-1; i >= 0; i--)
+			{
+				if(aNumplayers[TEAM_RED] < aNumplayers[TEAM_BLUE] && m_apBots[i]->m_Team != TEAM_RED)
+				{
+					//move bot to team red
+					m_apBots[i]->m_Team = TEAM_RED;
+					aNumplayers[TEAM_RED]++;
+					aNumplayers[TEAM_BLUE]--;
+				}
+				else if(aNumplayers[TEAM_BLUE] < aNumplayers[TEAM_RED] && m_apBots[i]->m_Team != TEAM_BLUE)
+				{
+					//move bot to team red
+					m_apBots[i]->m_Team = TEAM_BLUE;
+					aNumplayers[TEAM_RED]--;
+					aNumplayers[TEAM_BLUE]++;
+				}
+
+				if(abs(aNumplayers[0]-aNumplayers[1]) <= 1)
+					break;
+			}
+		}
+
 		m_BotCount = wantedAmount;
 	}
 
 
 	if(!idm)
+	{
 		for(int fi = 0; fi < 2; fi++)
 		{
 			CFlag *F = m_apFlags[fi];
@@ -757,6 +794,7 @@ void CGameControllerDDRace::Tick()
 				}
 			}
 		}
+	}
 	
 	if(m_GameOverTick == -1 && !m_Warmup && !g_Config.m_SvSaveServer)
 	{
@@ -825,15 +863,6 @@ void CGameControllerDDRace::DoTeamChange(class CPlayer *pPlayer, int Team, bool 
 void CGameControllerDDRace::ChangeMap(const char *pToMap)
 {
 	int Map = GameServer()->Layers(m_Lobby)->m_Map;
-
-	if(Map != GameServer()->Layers(m_Lobby)->m_Map || true) //map has reloaded
-	{
-		m_apFlags[0] = 0;
-		m_apFlags[1] = 0;
-
-		m_aTeamscore[0] = 0;
-		m_aTeamscore[1] = 0;
-	}
 
 	IGameController::ChangeMap(pToMap);
 

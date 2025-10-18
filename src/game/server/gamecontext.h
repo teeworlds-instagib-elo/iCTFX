@@ -242,7 +242,7 @@ public:
 	void CallVote(int ClientID, const char *pDesc, const char *pCmd, const char *pReason, const char *pChatmsg, const char *pSixupDesc = 0);
 	void SendChatTarget(int To, const char *pText, int Flags = CHAT_SIX | CHAT_SIXUP);
 	void SendChatTeam(int Team, const char *pText);
-	void SendChat(int ClientID, int Team, const char *pText, int SpamProtectionClientID = -1, int Flags = CHAT_SIX | CHAT_SIXUP);
+	void SendChat(int ClientID, int Team, const char *pText, int SpamProtectionClientID = -1, int Flags = CHAT_SIX | CHAT_SIXUP, int Lobby = -1);
 	void SendGameMsg(int GameMsgID, int ParaI1, int ClientID);
 	void SendGameMsg(int GameMsgID, int ParaI1, int ParaI2, int ParaI3, int ClientID);
 	void SendStartWarning(int ClientID, const char *pMessage);
@@ -272,6 +272,7 @@ public:
 	virtual void OnMapChange(char *pNewMapName, int MapNameSize);
 	virtual void OnShutdown();
 
+	virtual void ResetAllGames();
 	virtual void OnTick();
 	virtual void OnPreSnap();
 	virtual void OnSnap(int ClientID);
@@ -336,6 +337,7 @@ private:
 	static void ConUnSuper(IConsole::IResult *pResult, void *pUserData);
 	static void ConShotgun(IConsole::IResult *pResult, void *pUserData);
 	static void ConIDM(IConsole::IResult *pResult, void *pUserData);
+	static void ConBotAmount(IConsole::IResult *pResult, void *pUserData);
 	static void ConLOS(IConsole::IResult *pResult, void *pUserData);
 	static void ConGrenade(IConsole::IResult *pResult, void *pUserData);
 	static void ConHammer(IConsole::IResult *pResult, void *pUserData);
