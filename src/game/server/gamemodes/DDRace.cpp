@@ -350,7 +350,7 @@ void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 		GameServer()->SendChat(-1, CGameContext::CHAT_ALL, aBuf, -1, CGameContext::CHAT_SIX);
 
 		GameServer()->SendChatTarget(ClientID, "welcome to iCTFX!");
-		GameServer()->SendChatTarget(ClientID, "Version: 1.3");
+		GameServer()->SendChatTarget(ClientID, "Version: 1.4");
 		GameServer()->SendChatTarget(ClientID, "use /lobby to go to a different lobby");
 		GameServer()->SendChatTarget(ClientID, "lobby 0 cannot be changed");
 		GameServer()->SendChatTarget(ClientID, "use /list to list all players");
