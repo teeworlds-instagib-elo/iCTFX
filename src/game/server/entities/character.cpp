@@ -1008,7 +1008,13 @@ void CCharacter::Death()
 		Msg.m_Victim = m_pPlayer->GetCID();
 		Msg.m_Weapon = Weapon;
 		Msg.m_ModeSpecial = ModeSpecial;
-		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, -1);
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(!Server()->ClientIngame(i) || GameServer()->GetLobby(i) != m_Lobby)
+				continue;
+			
+			Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, i);
+		}
 	}
 
 	// a nice sound
