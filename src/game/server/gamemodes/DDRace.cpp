@@ -354,6 +354,9 @@ void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 		GameServer()->SendChatTarget(ClientID, "use /lobby to go to a different lobby");
 		GameServer()->SendChatTarget(ClientID, "lobby 0 cannot be changed");
 		GameServer()->SendChatTarget(ClientID, "use /list to list all players");
+
+		char zeroChar = 0;
+		GameServer()->List(ClientID, &zeroChar);
 	}
 
 	pPlayer->m_Score = 0;

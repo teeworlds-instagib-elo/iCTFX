@@ -3173,11 +3173,16 @@ void CGameContext::ConLobby(IConsole::IResult *pResult, void *pUserData)
 			}
 		}
 
+		int totalPlayers = aNumplayers[0] + aNumplayers[1];
+		
 		pSelf->m_apPlayers[pResult->m_ClientID]->SetTeam(TEAM_RED);
 		if (aNumplayers[TEAM_RED] > aNumplayers[TEAM_BLUE])
 			pSelf->m_apPlayers[pResult->m_ClientID]->SetTeam(TEAM_BLUE);
 		
 		if(pSelf->m_apController[lobby]->m_tourneyMode)
+			spec = true;
+
+		if (totalPlayers >= g_Config.m_SvMaxClients - pSelf->m_apController[lobby]->m_SpectatorSlots)
 			spec = true;
 
 		if(spec)
