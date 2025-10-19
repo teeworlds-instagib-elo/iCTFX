@@ -504,6 +504,9 @@ void IGameController::StartRound()
 	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
 
 	for(int i = 0; i < MAX_CLIENTS; i++) {
+		if(GameServer()->GetLobby(i) != m_Lobby)
+			continue;
+
 		CPlayer* pPlayer = GameServer()->m_apPlayers[i];
 		if(pPlayer)
 		{
