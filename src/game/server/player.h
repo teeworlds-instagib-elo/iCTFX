@@ -125,16 +125,85 @@ public:
 
 	int m_DieTick;
 	int m_PreviousDieTick;
-	std::atomic<int> m_Score;
-	std::atomic<int> m_Kills;
-	std::atomic<int> m_Deaths;
-	std::atomic<int> m_Touches;
-	std::atomic<int> m_Captures;
-	std::atomic<int> m_Suicides;
-	std::atomic<int> m_FastestCapture; //in ms
-	std::atomic<int> m_Shots;
-	std::atomic<int> m_Wallshots;
-	std::atomic<int> m_WallshotKills;
+	
+	class CStats
+	{
+		public:
+		std::atomic<int> m_Score;
+		std::atomic<int> m_Kills;
+		std::atomic<int> m_Deaths;
+		std::atomic<int> m_Touches;
+		std::atomic<int> m_Captures;
+		std::atomic<int> m_Suicides;
+		std::atomic<int> m_FastestCapture; //in ms
+		std::atomic<int> m_Shots;
+		std::atomic<int> m_Wallshots;
+		std::atomic<int> m_WallshotKills;
+	};
+
+	CStats m_ShownStats;
+	CStats m_GlobalStats;
+
+	void Add_Score(int Score)
+	{
+		m_ShownStats.m_Score += Score;
+		m_GlobalStats.m_Score += Score;
+	}
+
+	void Add_Kills(int Kills)
+	{
+		m_ShownStats.m_Kills += Kills;
+		m_GlobalStats.m_Kills += Kills;
+	}
+
+	void Add_Deaths(int Deaths)
+	{
+		m_ShownStats.m_Deaths += Deaths;
+		m_GlobalStats.m_Deaths += Deaths;
+	}
+
+	void Add_Touches(int Touches)
+	{
+		m_ShownStats.m_Touches += Touches;
+		m_GlobalStats.m_Touches += Touches;
+	}
+
+	void Add_Captures(int Captures)
+	{
+		m_ShownStats.m_Captures += Captures;
+		m_GlobalStats.m_Captures += Captures;
+	}
+
+	void Add_Suicides(int Suicides)
+	{
+		m_ShownStats.m_Suicides += Suicides;
+		m_GlobalStats.m_Suicides += Suicides;
+	}
+
+	void Add_FastestCapture(int FastestCapture)
+	{
+		m_ShownStats.m_FastestCapture += FastestCapture; //in ms
+		m_GlobalStats.m_FastestCapture += FastestCapture;
+	}
+
+	void Add_Shots(int Shots)
+	{
+		m_ShownStats.m_Shots += Shots;
+		m_GlobalStats.m_Shots += Shots;
+	}
+
+	void Add_Wallshots(int Wallshots)
+	{
+		m_ShownStats.m_Wallshots += Wallshots;
+		m_GlobalStats.m_Wallshots += Wallshots;
+	}
+
+	void Add_WallshotKills(int WallshotKills)
+	{
+		m_ShownStats.m_WallshotKills += WallshotKills;
+		m_GlobalStats.m_WallshotKills += WallshotKills;
+	}
+
 	
 	int m_JoinTick;
 	bool m_ForceBalanced;

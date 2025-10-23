@@ -3154,16 +3154,16 @@ void CGameContext::ConLobby(IConsole::IResult *pResult, void *pUserData)
 
 		pSelf->m_apPlayers[pResult->m_ClientID]->KillCharacter();
 		((CServer*)pSelf->Server())->m_aClients[pResult->m_ClientID].m_Lobby = lobby;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_Score = 0;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_Kills = 0;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_Deaths = 0;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_Touches = 0;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_Captures = 0;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_FastestCapture = -1;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_Shots = 0;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_Wallshots = 0;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_WallshotKills = 0;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_Suicides = 0;
+		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_Score = 0;
+		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_Kills = 0;
+		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_Deaths = 0;
+		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_Touches = 0;
+		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_Captures = 0;
+		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_FastestCapture = -1;
+		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_Shots = 0;
+		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_Wallshots = 0;
+		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_WallshotKills = 0;
+		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_Suicides = 0;
 		
 		int aNumplayers[2] = {0, 0};
 		for(int i = 0; i < MAX_CLIENTS; i++)
@@ -3736,7 +3736,6 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 	// }
 
 	if(g_Config.m_SvSaveServer) {
-		printf("made unique sql_handler");
 		sql_handler = std::make_unique<SqlHandler>();
 	}
 

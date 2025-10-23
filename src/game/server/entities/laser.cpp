@@ -47,7 +47,7 @@ CLaser::CLaser(CGameWorld *pGameWorld, vec2 Pos, vec2 Direction, float StartEner
 	m_BelongsToPracticeTeam = false;
 	
 	if (pPlayer) {
-		pPlayer->m_Shots++;
+		pPlayer->Add_Shots(1);
 	}
 
 	m_DeathTick = 0;
@@ -67,10 +67,10 @@ CLaser::~CLaser() {
 			return;
 		}
 
-		pOwner->m_Wallshots++;
+		pOwner->Add_Wallshots(1);
 
 		if (m_DidHit) {
-			pOwner->m_WallshotKills++;
+			pOwner->Add_WallshotKills(1);
 		}
 	}
 }
@@ -114,7 +114,7 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 			if(m_Owner >= 0 && !m_pBot && GameServer()->m_apPlayers[m_Owner])
 			{
 				pHitBot->m_Difficulty += 0.025;
-				GameServer()->m_apPlayers[m_Owner]->m_Score++;
+				GameServer()->m_apPlayers[m_Owner]->Add_Score(1);
 
 				int Mask = CmaskOne(m_Owner);
 				for(int i = 0; i < MAX_CLIENTS; i++)

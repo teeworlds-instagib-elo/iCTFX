@@ -222,7 +222,7 @@ void CPlayer::Tick()
 	if(m_ChatScore > 0)
 		m_ChatScore--;
 
-	Server()->SetClientScore(m_ClientID, m_Score);
+	Server()->SetClientScore(m_ClientID, m_ShownStats.m_Score);
 
 	if(m_Moderating && m_Afk)
 	{
@@ -413,7 +413,7 @@ void CPlayer::Snap(int SnappingClient)
 
 	int SnappingClientVersion = SnappingClient != SERVER_DEMO_CLIENT ? GameServer()->GetClientVersion(SnappingClient) : CLIENT_VERSIONNR;
 	int Latency = SnappingClient == SERVER_DEMO_CLIENT ? m_Latency.m_Min : GameServer()->m_apPlayers[SnappingClient]->m_aCurLatency[m_ClientID];
-	int Score = m_Score;
+	int Score = m_ShownStats.m_Score;
 
 	// send 0 if times of others are not shown
 	if(SnappingClient != m_ClientID && g_Config.m_SvHideScore)

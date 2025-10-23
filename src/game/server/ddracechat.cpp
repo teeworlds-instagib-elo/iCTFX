@@ -888,32 +888,32 @@ void CGameContext::ConStats(IConsole::IResult *pResult, void *pUserData)
 		return;
 	char aBuf [128];
 	pSelf->SendChatTarget(ClientID, "Stats:");
-	str_format(aBuf, sizeof(aBuf), "shots: %i", pPlayer->m_Shots.load());
+	str_format(aBuf, sizeof(aBuf), "shots: %i", pPlayer->m_GlobalStats.m_Shots.load());
 	pSelf->SendChatTarget(ClientID, aBuf);
-	str_format(aBuf, sizeof(aBuf), "kills: %i", pPlayer->m_Kills.load());
+	str_format(aBuf, sizeof(aBuf), "kills: %i", pPlayer->m_GlobalStats.m_Kills.load());
 	pSelf->SendChatTarget(ClientID, aBuf);
-	str_format(aBuf, sizeof(aBuf), "hitrate: %.2f%%", rate(pPlayer->m_Kills.load(), pPlayer->m_Shots.load(), true));
+	str_format(aBuf, sizeof(aBuf), "hitrate: %.2f%%", rate(pPlayer->m_GlobalStats.m_Kills.load(), pPlayer->m_GlobalStats.m_Shots.load(), true));
 	pSelf->SendChatTarget(ClientID, aBuf);
-	str_format(aBuf, sizeof(aBuf), "wallshots: %i", pPlayer->m_Wallshots.load());
+	str_format(aBuf, sizeof(aBuf), "wallshots: %i", pPlayer->m_GlobalStats.m_Wallshots.load());
 	pSelf->SendChatTarget(ClientID, aBuf);
-	str_format(aBuf, sizeof(aBuf), "wallshot kills: %i", pPlayer->m_WallshotKills.load());
+	str_format(aBuf, sizeof(aBuf), "wallshot kills: %i", pPlayer->m_GlobalStats.m_WallshotKills.load());
 	pSelf->SendChatTarget(ClientID, aBuf);
-	str_format(aBuf, sizeof(aBuf), "wallshot hitrate: %.2f%%", rate(pPlayer->m_WallshotKills.load(), pPlayer->m_Wallshots.load(), true));
+	str_format(aBuf, sizeof(aBuf), "wallshot hitrate: %.2f%%", rate(pPlayer->m_GlobalStats.m_WallshotKills.load(), pPlayer->m_GlobalStats.m_Wallshots.load(), true));
 	pSelf->SendChatTarget(ClientID, aBuf);
-	str_format(aBuf, sizeof(aBuf), "deaths: %i", pPlayer->m_Deaths.load());
+	str_format(aBuf, sizeof(aBuf), "deaths: %i", pPlayer->m_GlobalStats.m_Deaths.load());
 	pSelf->SendChatTarget(ClientID, aBuf);
-	str_format(aBuf, sizeof(aBuf), "K/D: %.2f%%", rate(pPlayer->m_Kills.load(), pPlayer->m_Deaths.load(), false));
+	str_format(aBuf, sizeof(aBuf), "K/D: %.2f%%", rate(pPlayer->m_GlobalStats.m_Kills.load(), pPlayer->m_GlobalStats.m_Deaths.load(), false));
 	pSelf->SendChatTarget(ClientID, aBuf);
-	str_format(aBuf, sizeof(aBuf), "suicides: %i", pPlayer->m_Suicides.load());
+	str_format(aBuf, sizeof(aBuf), "suicides: %i", pPlayer->m_GlobalStats.m_Suicides.load());
 	pSelf->SendChatTarget(ClientID, aBuf);
-	str_format(aBuf, sizeof(aBuf), "touches: %i", pPlayer->m_Touches.load());
+	str_format(aBuf, sizeof(aBuf), "touches: %i", pPlayer->m_GlobalStats.m_Touches.load());
 	pSelf->SendChatTarget(ClientID, aBuf);
-	str_format(aBuf, sizeof(aBuf), "captures: %i", pPlayer->m_Captures.load());
+	str_format(aBuf, sizeof(aBuf), "captures: %i", pPlayer->m_GlobalStats.m_Captures.load());
 	pSelf->SendChatTarget(ClientID, aBuf);
-	str_format(aBuf, sizeof(aBuf), "capture per touch: %.2f%%", rate(pPlayer->m_Captures.load(), pPlayer->m_Touches.load(), true));
+	str_format(aBuf, sizeof(aBuf), "capture per touch: %.2f%%", rate(pPlayer->m_GlobalStats.m_Captures.load(), pPlayer->m_GlobalStats.m_Touches.load(), true));
 	pSelf->SendChatTarget(ClientID, aBuf);
-	if (pPlayer->m_FastestCapture > 0) {
-		str_format(aBuf, sizeof(aBuf), "fastest cap: %.3f", rate(pPlayer->m_FastestCapture.load(), 1000.0, false));
+	if (pPlayer->m_GlobalStats.m_FastestCapture > 0) {
+		str_format(aBuf, sizeof(aBuf), "fastest cap: %.3f", rate(pPlayer->m_GlobalStats.m_FastestCapture.load(), 1000.0, false));
 		pSelf->SendChatTarget(ClientID, aBuf);
 	}
 	

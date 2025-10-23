@@ -513,13 +513,13 @@ void IGameController::StartRound()
 			const int team = pPlayer->GetTeam();
 			if(!g_Config.m_SvSaveServer || m_Lobby != 0)
 			{
-				pPlayer->m_Score = 0;
-				pPlayer->m_Deaths = 0;
-				pPlayer->m_Kills = 0;
-				pPlayer->m_Captures = 0;
-				pPlayer->m_FastestCapture = 0;
-				pPlayer->m_Suicides = 0;
-				pPlayer->m_Touches = 0;
+				pPlayer->m_ShownStats.m_Score = 0;
+				pPlayer->m_ShownStats.m_Deaths = 0;
+				pPlayer->m_ShownStats.m_Kills = 0;
+				pPlayer->m_ShownStats.m_Captures = 0;
+				pPlayer->m_ShownStats.m_FastestCapture = 0;
+				pPlayer->m_ShownStats.m_Suicides = 0;
+				pPlayer->m_ShownStats.m_Touches = 0;
 			}
 		}
 	}
@@ -569,22 +569,22 @@ int IGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *
 	// do scoreing
 	if(!pKiller || Weapon == WEAPON_GAME)
 		return 0;
-	pVictim->GetPlayer()->m_Deaths++;
+	pVictim->GetPlayer()->Add_Deaths(1);
 	if(pKiller == pVictim->GetPlayer())
 	{
-		pVictim->GetPlayer()->m_Score--; // suicide
-		pVictim->GetPlayer()->m_Suicides++;
+		pVictim->GetPlayer()->Add_Score(-1); // suicide
+		pVictim->GetPlayer()->Add_Suicides(1);
 	}
 	else
 	{
 		if(IsTeamplay() && pVictim->GetPlayer()->GetTeam() == pKiller->GetTeam())
 		{
-			pKiller->m_Score--; // teamkill
+			pKiller->Add_Score(-1); // teamkill
 		}
 		else
 		{
-			pKiller->m_Score++; // normal kill
-			pKiller->m_Kills++;
+			pKiller->Add_Score(1); // normal kill
+			pKiller->Add_Kills(1);
 		}
 	}
 	pVictim->GetPlayer()->m_RespawnTick = Server()->Tick()+Server()->TickSpeed()*0.5f;
@@ -675,7 +675,7 @@ void IGameController::Tick()
 			if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetTeam() != TEAM_SPECTATORS)
 			{
 				aT[GameServer()->m_apPlayers[i]->GetTeam()]++;
-				aPScore[i] = GameServer()->m_apPlayers[i]->m_Score*Server()->TickSpeed()*60.0f;
+				aPScore[i] = GameServer()->m_apPlayers[i]->m_ShownStats.m_Score*Server()->TickSpeed()*60.0f;
 				aTScore[GameServer()->m_apPlayers[i]->GetTeam()] += aPScore[i];
 			}
 		}

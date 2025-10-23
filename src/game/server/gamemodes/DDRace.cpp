@@ -295,7 +295,7 @@ int CGameControllerDDRace::OnCharacterDeath(class CCharacter *pVictim, class CPl
 			{
 				// if(g_Config.m_SvLoltextShow)
 				// 	GameServer()->CreateLolText(pKiller->GetCharacter(), "+1");
-				pKiller->m_Score++;
+				pKiller->Add_Score(1);
 			}
 
 			HadFlag |= 1;
@@ -332,16 +332,27 @@ void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 		GameServer()->List(ClientID, &zeroChar);
 	}
 
-	pPlayer->m_Score = 0;
-	pPlayer->m_Kills = 0;
-	pPlayer->m_Deaths = 0;
-	pPlayer->m_Touches = 0;
-	pPlayer->m_Captures = 0;
-	pPlayer->m_FastestCapture = -1;
-	pPlayer->m_Shots = 0;
-	pPlayer->m_Wallshots = 0;
-	pPlayer->m_WallshotKills = 0;
-	pPlayer->m_Suicides = 0;
+	pPlayer->m_ShownStats.m_Score = 0;
+	pPlayer->m_ShownStats.m_Kills = 0;
+	pPlayer->m_ShownStats.m_Deaths = 0;
+	pPlayer->m_ShownStats.m_Touches = 0;
+	pPlayer->m_ShownStats.m_Captures = 0;
+	pPlayer->m_ShownStats.m_FastestCapture = -1;
+	pPlayer->m_ShownStats.m_Shots = 0;
+	pPlayer->m_ShownStats.m_Wallshots = 0;
+	pPlayer->m_ShownStats.m_WallshotKills = 0;
+	pPlayer->m_ShownStats.m_Suicides = 0;
+
+	pPlayer->m_GlobalStats.m_Score = 0;
+	pPlayer->m_GlobalStats.m_Kills = 0;
+	pPlayer->m_GlobalStats.m_Deaths = 0;
+	pPlayer->m_GlobalStats.m_Touches = 0;
+	pPlayer->m_GlobalStats.m_Captures = 0;
+	pPlayer->m_GlobalStats.m_FastestCapture = -1;
+	pPlayer->m_GlobalStats.m_Shots = 0;
+	pPlayer->m_GlobalStats.m_Wallshots = 0;
+	pPlayer->m_GlobalStats.m_WallshotKills = 0;
+	pPlayer->m_GlobalStats.m_Suicides = 0;
 
 	if(g_Config.m_SvSaveServer)
 	{
@@ -351,16 +362,27 @@ void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 
 void CGameControllerDDRace::OnPlayerNameChange(class CPlayer *pPlayer)
 {
-	pPlayer->m_Score = 0;
-	pPlayer->m_Kills = 0;
-	pPlayer->m_Deaths = 0;
-	pPlayer->m_Touches = 0;
-	pPlayer->m_Captures = 0;
-	pPlayer->m_FastestCapture = -1;
-	pPlayer->m_Shots = 0;
-	pPlayer->m_Wallshots = 0;
-	pPlayer->m_WallshotKills = 0;
-	pPlayer->m_Suicides = 0;
+	pPlayer->m_ShownStats.m_Score = 0;
+	pPlayer->m_ShownStats.m_Kills = 0;
+	pPlayer->m_ShownStats.m_Deaths = 0;
+	pPlayer->m_ShownStats.m_Touches = 0;
+	pPlayer->m_ShownStats.m_Captures = 0;
+	pPlayer->m_ShownStats.m_FastestCapture = -1;
+	pPlayer->m_ShownStats.m_Shots = 0;
+	pPlayer->m_ShownStats.m_Wallshots = 0;
+	pPlayer->m_ShownStats.m_WallshotKills = 0;
+	pPlayer->m_ShownStats.m_Suicides = 0;
+
+	pPlayer->m_GlobalStats.m_Score = 0;
+	pPlayer->m_GlobalStats.m_Kills = 0;
+	pPlayer->m_GlobalStats.m_Deaths = 0;
+	pPlayer->m_GlobalStats.m_Touches = 0;
+	pPlayer->m_GlobalStats.m_Captures = 0;
+	pPlayer->m_GlobalStats.m_FastestCapture = -1;
+	pPlayer->m_GlobalStats.m_Shots = 0;
+	pPlayer->m_GlobalStats.m_Wallshots = 0;
+	pPlayer->m_GlobalStats.m_WallshotKills = 0;
+	pPlayer->m_GlobalStats.m_Suicides = 0;
 
 	if(g_Config.m_SvSaveServer)
 	{
@@ -382,15 +404,15 @@ void CGameControllerDDRace::OnPlayerDisconnect(CPlayer *pPlayer, const char *pRe
 	{
 		//save score
 		Stats stats;
-		stats.kills = pPlayer->m_Kills;
-		stats.deaths = pPlayer->m_Deaths;
-		stats.touches = pPlayer->m_Touches;
-		stats.captures = pPlayer->m_Captures;
-		stats.fastest_capture = pPlayer->m_FastestCapture;
-		stats.shots = pPlayer->m_Shots;
-		stats.wallshots = pPlayer->m_Wallshots;
-		stats.wallshot_kills = pPlayer->m_WallshotKills;
-		stats.suicides = pPlayer->m_Suicides;
+		stats.kills = pPlayer->m_GlobalStats.m_Kills;
+		stats.deaths = pPlayer->m_GlobalStats.m_Deaths;
+		stats.touches = pPlayer->m_GlobalStats.m_Touches;
+		stats.captures = pPlayer->m_GlobalStats.m_Captures;
+		stats.fastest_capture = pPlayer->m_GlobalStats.m_FastestCapture;
+		stats.shots = pPlayer->m_GlobalStats.m_Shots;
+		stats.wallshots = pPlayer->m_GlobalStats.m_Wallshots;
+		stats.wallshot_kills = pPlayer->m_GlobalStats.m_WallshotKills;
+		stats.suicides = pPlayer->m_GlobalStats.m_Suicides;
 
 		GameServer()->sql_handler->set_stats(Server()->ClientName(pPlayer->GetCID()), stats);
 	}
@@ -565,7 +587,7 @@ void CGameControllerDDRace::Tick()
 						// CAPTURE! \o/
 						m_aTeamscore[fi^1] += 100;
 						UpdateServerStats();
-						F->m_pCarryingCharacter->GetPlayer()->m_Score += 5;
+						F->m_pCarryingCharacter->GetPlayer()->Add_Score(5);
 						int playerID = F->m_pCarryingCharacter->GetPlayer()->GetCID();
 
 						// if(fi^1 == 0)
@@ -593,12 +615,12 @@ void CGameControllerDDRace::Tick()
 
 						auto capture_time_millis = CaptureTime*1000;
 
-						if (F->m_pCarryingCharacter->GetPlayer()->m_FastestCapture < 0) {
-							F->m_pCarryingCharacter->GetPlayer()->m_FastestCapture = capture_time_millis;
-						} else if(F->m_pCarryingCharacter->GetPlayer()->m_FastestCapture > capture_time_millis) {
-							F->m_pCarryingCharacter->GetPlayer()->m_FastestCapture = capture_time_millis;
+						if (F->m_pCarryingCharacter->GetPlayer()->m_GlobalStats.m_FastestCapture < 0) {
+							F->m_pCarryingCharacter->GetPlayer()->m_GlobalStats.m_FastestCapture = capture_time_millis;
+						} else if(F->m_pCarryingCharacter->GetPlayer()->m_GlobalStats.m_FastestCapture > capture_time_millis) {
+							F->m_pCarryingCharacter->GetPlayer()->m_GlobalStats.m_FastestCapture = capture_time_millis;
 						}
-						F->m_pCarryingCharacter->GetPlayer()->m_Captures++;
+						F->m_pCarryingCharacter->GetPlayer()->Add_Captures(1);
 
 						for(int i = 0; i < 2; i++)
 							m_apFlags[i]->Reset();
@@ -655,7 +677,7 @@ void CGameControllerDDRace::Tick()
 						if(!F->m_AtStand && !F->m_BotGrabbed)
 						{
 							CCharacter *pChr = apCloseCCharacters[i];
-							pChr->GetPlayer()->m_Score += 1;
+							pChr->GetPlayer()->Add_Score(1);
 							
 
 							char aBuf[256];
@@ -695,8 +717,8 @@ void CGameControllerDDRace::Tick()
 
 						F->m_AtStand = 0;
 						F->m_pCarryingCharacter = apCloseCCharacters[i];
-						F->m_pCarryingCharacter->GetPlayer()->m_Score += 1;
-						F->m_pCarryingCharacter->GetPlayer()->m_Touches++;
+						F->m_pCarryingCharacter->GetPlayer()->Add_Score(1);
+						F->m_pCarryingCharacter->GetPlayer()->Add_Touches(1);
 						
 
 						char aBuf[256];
@@ -772,7 +794,7 @@ void CGameControllerDDRace::Tick()
 		}
 	}
 	
-	if(m_GameOverTick == -1 && !m_Warmup && !g_Config.m_SvSaveServer)
+	if(m_GameOverTick == -1 && !m_Warmup && !(g_Config.m_SvSaveServer && m_Lobby == 0))
 	{
 		// check score win condition
 		if(!idm && m_apFlags[0] && m_apFlags[0])
@@ -802,12 +824,12 @@ void CGameControllerDDRace::Tick()
 			{
 				if(GameServer()->m_apPlayers[i])
 				{
-					if(GameServer()->m_apPlayers[i]->m_Score > Topscore)
+					if(GameServer()->m_apPlayers[i]->m_ShownStats.m_Score > Topscore)
 					{
-						Topscore = GameServer()->m_apPlayers[i]->m_Score;
+						Topscore = GameServer()->m_apPlayers[i]->m_ShownStats.m_Score;
 						TopscoreCount = 1;
 					}
-					else if(GameServer()->m_apPlayers[i]->m_Score == Topscore)
+					else if(GameServer()->m_apPlayers[i]->m_ShownStats.m_Score == Topscore)
 						TopscoreCount++;
 				}
 			}
