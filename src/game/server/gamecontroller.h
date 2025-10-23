@@ -79,8 +79,6 @@ public:
 
 	void ResetGame();
 	
-	std::unique_ptr<SqlHandler> sql_handler;
-
 	IGameController(class CGameContext *pGameServer);
 	virtual ~IGameController();
 

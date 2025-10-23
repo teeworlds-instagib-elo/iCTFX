@@ -20,7 +20,7 @@
 #include "entities/bot.h"
 #include <game/layers.h>
 
-IGameController::IGameController(class CGameContext *pGameServer): sql_handler(std::make_unique<SqlHandler>())
+IGameController::IGameController(class CGameContext *pGameServer)
 {
 	m_pGameServer = pGameServer;
 	m_pConfig = m_pGameServer->Config();

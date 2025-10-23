@@ -35,30 +35,6 @@ CGameControllerDDRace::CGameControllerDDRace(class CGameContext *pGameServer, in
 
 	idm = false;
 	m_BotCount = 0;
-	
-	if(g_Config.m_SvSaveServer) {
-		auto database = CreateMysqlConnection(g_Config.m_SqlDatabase, g_Config.m_SqlPrefix, g_Config.m_SqlUser, g_Config.m_SqlPass, g_Config.m_SqlHost, g_Config.m_SqlPort, g_Config.m_SqlSetup);
-		if(database != nullptr)
-		{
-			char aError[256] = "error message not initialized";
-			if(database->Connect(aError, sizeof(aError)))
-			{
-				dbg_msg("sql", "failed connecting to db: %s", aError);
-				return;
-			}
-			//save score
-			ServerStats server_stats{};
-			char error[4096] = {};
-			if (!database->GetServerStats("save_server", server_stats, error, sizeof(error))) {
-				m_aTeamscore[TEAM_RED] = server_stats.score_red;
-				m_aTeamscore[TEAM_BLUE] = server_stats.score_blue;
-			} else {
-				dbg_msg("sql", "failed to read stats: %s", error);
-			}
-			database->Disconnect();
-		}
-		sql_handler->start();
-	}
 
 	int waypointAmount = 16;
 
@@ -192,13 +168,10 @@ CGameControllerDDRace::CGameControllerDDRace(class CGameContext *pGameServer, in
 }
 
 CGameControllerDDRace::~CGameControllerDDRace() {
-	if (g_Config.m_SvSaveServer) {
-		sql_handler->stop();
-	}
 };
 
 void CGameControllerDDRace::UpdateServerStats() {
-	if(g_Config.m_SvSaveServer)
+	if(g_Config.m_SvSaveServer && m_Lobby == 0)
 	{
 		//save score
 		ServerStats server_stats{
@@ -206,7 +179,7 @@ void CGameControllerDDRace::UpdateServerStats() {
 			m_aTeamscore[TEAM_BLUE]
 		};
 
-		sql_handler->set_server_stats(server_stats);
+		GameServer()->sql_handler->set_server_stats(server_stats);
 	}
 }
 
@@ -372,7 +345,7 @@ void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 
 	if(g_Config.m_SvSaveServer)
 	{
-		sql_handler->get_player_stats(pPlayer, Server()->ClientName(pPlayer->GetCID()));
+		GameServer()->sql_handler->get_player_stats(pPlayer, Server()->ClientName(pPlayer->GetCID()));
 	}
 }
 
@@ -391,7 +364,7 @@ void CGameControllerDDRace::OnPlayerNameChange(class CPlayer *pPlayer)
 
 	if(g_Config.m_SvSaveServer)
 	{
-		sql_handler->get_player_stats(pPlayer, Server()->ClientName(pPlayer->GetCID()));
+		GameServer()->sql_handler->get_player_stats(pPlayer, Server()->ClientName(pPlayer->GetCID()));
 	}
 }
 
@@ -419,7 +392,7 @@ void CGameControllerDDRace::OnPlayerDisconnect(CPlayer *pPlayer, const char *pRe
 		stats.wallshot_kills = pPlayer->m_WallshotKills;
 		stats.suicides = pPlayer->m_Suicides;
 
-		sql_handler->set_stats(Server()->ClientName(pPlayer->GetCID()), stats);
+		GameServer()->sql_handler->set_stats(Server()->ClientName(pPlayer->GetCID()), stats);
 	}
 }
 

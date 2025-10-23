@@ -94,6 +94,8 @@ CGameContext::CGameContext(int Reset)
 
 CGameContext::~CGameContext()
 {
+	if(g_Config.m_SvSaveServer && sql_handler)
+		sql_handler->stop();
 	Destruct(m_Resetting ? RESET : NO_RESET);
 }
 
@@ -3733,13 +3735,40 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 	// 	}
 	// }
 
+	if(g_Config.m_SvSaveServer) {
+		printf("made unique sql_handler");
+		sql_handler = std::make_unique<SqlHandler>();
+	}
+
 	LobbyCount = 0;
 	for(auto &pController : m_apController)
 	{
 		pController = new CGameControllerDDRace(this, LobbyCount);
-		// pController->idm = !str_comp_nocase(g_Config.m_SvGametype, "idm") || !str_comp_nocase(g_Config.m_SvGametype, "idm+");
-
 		LobbyCount++;
+	}
+
+	if(g_Config.m_SvSaveServer) {
+		auto database = CreateMysqlConnection(g_Config.m_SqlDatabase, g_Config.m_SqlPrefix, g_Config.m_SqlUser, g_Config.m_SqlPass, g_Config.m_SqlHost, g_Config.m_SqlPort, g_Config.m_SqlSetup);
+		if(database != nullptr)
+		{
+			char aError[256] = "error message not initialized";
+			if(database->Connect(aError, sizeof(aError)))
+			{
+				dbg_msg("sql", "failed connecting to db: %s", aError);
+				return;
+			}
+			//save score
+			ServerStats server_stats{};
+			char error[4096] = {};
+			if (!database->GetServerStats("save_server", server_stats, error, sizeof(error))) {
+				m_apController[0]->m_aTeamscore[TEAM_RED] = server_stats.score_red;
+				m_apController[0]->m_aTeamscore[TEAM_BLUE] = server_stats.score_blue;
+			} else {
+				dbg_msg("sql", "failed to read stats: %s", error);
+			}
+			database->Disconnect();
+		}
+		sql_handler->start();
 	}
 
 	const char *pCensorFilename = "censorlist.txt";
