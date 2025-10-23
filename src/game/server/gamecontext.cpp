@@ -2008,7 +2008,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 			if(Length >= 2 && Length <= 3 && str_endswith_nocase(pMsg->m_pMessage, "go") != 0)
 			{
-				if(!g_Config.m_SvSaveServer) {
+				if(Lobby != 0) {
 					if(pPlayer->GetTeam() != TEAM_SPECTATORS)
 					{
 						char aBuf[32];
@@ -2028,7 +2028,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 			if(Length >= 4 && Length <= 5 && str_endswith_nocase(pMsg->m_pMessage, "stop") != 0)
 			{
-				if(!g_Config.m_SvSaveServer) {
+				if(Lobby != 0) {
 					if(pPlayer->GetTeam() != TEAM_SPECTATORS)
 					{
 						CConsole::CResult Result;
@@ -2043,7 +2043,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 			if(Length == 6 && str_endswith_nocase(pMsg->m_pMessage, "reset") != 0)
 			{
-				if(!g_Config.m_SvSaveServer) {
+				if(Lobby != 0) {
 					if(pPlayer->GetTeam() != TEAM_SPECTATORS)
 					{
 						char aBuf[32];
@@ -2063,7 +2063,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 			if(Length == 8 && str_endswith_nocase(pMsg->m_pMessage, "restart") != 0)
 			{
-				if(!g_Config.m_SvSaveServer) {
+				if(Lobby != 0) {
 					if(pPlayer->GetTeam() != TEAM_SPECTATORS)
 					{
 						char aBuf[32];
@@ -2114,7 +2114,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_copy(aWhisperMsg, pMsg->m_pMessage + 10, 256);
 					Converse(pPlayer->GetCID(), aWhisperMsg);
 				}
-				else if(str_startswith(pMsg->m_pMessage + 2, "on") && !g_Config.m_SvSaveServer)
+				else if(str_startswith(pMsg->m_pMessage + 2, "on") && Lobby != 0)
 				{
 					if(pPlayer->GetTeam() != TEAM_SPECTATORS)
 					{
@@ -2133,7 +2133,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						SendChat(ClientID, Team, pMsg->m_pMessage, ClientID);
 					}
 				}
-				else if(str_startswith(pMsg->m_pMessage + 1, "rollbackshadow") && !g_Config.m_SvSaveServer)
+				else if(str_startswith(pMsg->m_pMessage + 1, "rollbackshadow"))
 				{
 					pPlayer->m_ShowRollbackShadow = !pPlayer->m_ShowRollbackShadow;
 					if(pPlayer->m_ShowRollbackShadow)
@@ -2142,7 +2142,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					if(!pPlayer->m_ShowRollbackShadow)
 						SendChatTarget(ClientID, "Rollback Shadow disabled");
 				}
-				else if(str_startswith(pMsg->m_pMessage + 1, "rollback_prediction") && !g_Config.m_SvSaveServer)
+				else if(str_startswith(pMsg->m_pMessage + 1, "rollback_prediction"))
 				{
 					pPlayer->m_RollbackPrediction = !pPlayer->m_RollbackPrediction;
 
@@ -2155,7 +2155,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					if(!g_Config.m_SvRollback)
 						SendChatTarget(ClientID, "Rollback disabled by server vote");
 				}
-				else if(str_startswith(pMsg->m_pMessage + 1, "rollback") && !g_Config.m_SvSaveServer)
+				else if(str_startswith(pMsg->m_pMessage + 1, "rollback"))
 				{
 					bool disabled = pPlayer->m_Rollback;
 
@@ -2185,7 +2185,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					if(pPlayer->m_Rollback)
 						SendChatTarget(ClientID, str);
 				}
-				else if(str_startswith(pMsg->m_pMessage + 1, "runahead") && !g_Config.m_SvSaveServer)
+				else if(str_startswith(pMsg->m_pMessage + 1, "runahead"))
 				{
 					if(str_startswith(pMsg->m_pMessage + 1, "runahead ") && str_length(pMsg->m_pMessage+1) >= 10)
 					{

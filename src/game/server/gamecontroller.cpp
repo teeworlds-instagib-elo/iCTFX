@@ -463,7 +463,7 @@ void IGameController::ResetGame()
 {
 	GameServer()->m_World[m_Lobby].m_ResetRequested = true;
 
-	if(!g_Config.m_SvSaveServer) {
+	if(!g_Config.m_SvSaveServer || m_Lobby != 0) {
 		m_aTeamscore[TEAM_RED] =  0;
 		m_aTeamscore[TEAM_BLUE] = 0;
 	}
@@ -475,7 +475,7 @@ void IGameController::ResetGame()
 	m_ForceBalanced = false;
 
 
-	if(!g_Config.m_SvSaveServer) {
+	if(!g_Config.m_SvSaveServer || m_Lobby != 0) {
 		m_aTeamscore[TEAM_RED] =  0;
 		m_aTeamscore[TEAM_BLUE] = 0;
 	}
@@ -511,7 +511,7 @@ void IGameController::StartRound()
 		if(pPlayer)
 		{
 			const int team = pPlayer->GetTeam();
-			if(!g_Config.m_SvSaveServer)
+			if(!g_Config.m_SvSaveServer || m_Lobby != 0)
 			{
 				pPlayer->m_Score = 0;
 				pPlayer->m_Deaths = 0;
