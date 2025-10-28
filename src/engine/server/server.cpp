@@ -282,6 +282,7 @@ void CServer::CClient::Reset()
 		Input.m_GameTick = -1;
 	m_CurrentInput = 0;
 	mem_zero(&m_LatestInput, sizeof(m_LatestInput));
+	mem_zero(&m_LastPreInput, sizeof(m_LastPreInput));
 
 	m_Snapshots.PurgeAll();
 	m_LastAckedSnapshot = -1;
@@ -1572,6 +1573,46 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 
 			for(int i = 0; i < Size / 4; i++)
 				pInput->m_aData[i] = Unpacker.GetInt();
+
+			if(g_Config.m_SvPreInput)
+			{
+				// send preinputs of ClientId to valid clients
+				bool aPreInputClients[MAX_CLIENTS] = {};
+				GameServer()->PreInputClients(ClientID, aPreInputClients);
+
+				CNetMsg_Sv_PreInput PreInput = {};
+				mem_zero(&PreInput, sizeof(PreInput));
+				CNetObj_PlayerInput *pInputData = (CNetObj_PlayerInput *)&pInput->m_aData;
+
+				PreInput.m_Direction = pInputData->m_Direction;
+				PreInput.m_Jump = pInputData->m_Jump;
+				PreInput.m_Fire = pInputData->m_Fire;
+				PreInput.m_Hook = pInputData->m_Hook;
+				PreInput.m_WantedWeapon = pInputData->m_WantedWeapon;
+				PreInput.m_NextWeapon = pInputData->m_NextWeapon;
+				PreInput.m_PrevWeapon = pInputData->m_PrevWeapon;
+
+				if(mem_comp(&m_aClients[ClientID].m_LastPreInput, &PreInput, sizeof(CNetMsg_Sv_PreInput)) != 0)
+				{
+					m_aClients[ClientID].m_LastPreInput = PreInput;
+
+					PreInput.m_Owner = ClientID;
+					PreInput.m_IntendedTick = IntendedTick;
+
+					// target angle isn't updated all the time to save bandwidth
+					PreInput.m_TargetX = pInputData->m_TargetX;
+					PreInput.m_TargetY = pInputData->m_TargetY;
+
+					for(int Id = 0; Id < MAX_CLIENTS; Id++)
+					{
+						if(!aPreInputClients[Id])
+							continue;
+
+						SendPackMsg(&PreInput, MSGFLAG_VITAL | MSGFLAG_NORECORD, Id);
+					}
+				}
+			}
+
 
 			mem_copy(m_aClients[ClientID].m_LatestInput.m_aData, pInput->m_aData, MAX_INPUT_SIZE * sizeof(int));
 

@@ -290,6 +290,8 @@ public:
 	virtual void OnClientPredictedInput(int ClientID, void *pInput, int tick);
 	virtual void OnClientPredictedEarlyInput(int ClientID, void *pInput);
 
+	void PreInputClients(int ClientId, bool *pClients) override;
+
 	virtual void OnClientEngineJoin(int ClientID, bool Sixup);
 	virtual void OnClientEngineDrop(int ClientID, const char *pReason);
 
