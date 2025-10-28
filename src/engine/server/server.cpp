@@ -1962,7 +1962,7 @@ void CServer::CacheServerInfo(CCache *pCache, int Type, bool SendClients)
 
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
-		if(m_aClients[i].m_State != CClient::STATE_EMPTY)
+		if(m_aClients[i].m_State != CClient::STATE_EMPTY && m_aClients[i].m_State != CClient::STATE_BOT)
 		{
 			if(Remaining == 0)
 			{
@@ -2063,7 +2063,7 @@ void CServer::CacheServerInfoSixup(CCache *pCache, bool SendClients)
 	{
 		for(int i = 0; i < MAX_CLIENTS; i++)
 		{
-			if(m_aClients[i].m_State != CClient::STATE_EMPTY)
+			if(m_aClients[i].m_State != CClient::STATE_EMPTY && m_aClients[i].m_State != CClient::STATE_BOT)
 			{
 				Packer.AddString(ClientName(i), MAX_NAME_LENGTH); // client name
 				Packer.AddString(ClientClan(i), MAX_CLAN_LENGTH); // client clan
