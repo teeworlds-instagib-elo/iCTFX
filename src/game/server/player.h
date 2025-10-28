@@ -139,6 +139,8 @@ public:
 		std::atomic<int> m_Shots;
 		std::atomic<int> m_Wallshots;
 		std::atomic<int> m_WallshotKills;
+		std::atomic<int> m_Wins;
+		std::atomic<int> m_Week;
 	};
 
 	CStats m_ShownStats;

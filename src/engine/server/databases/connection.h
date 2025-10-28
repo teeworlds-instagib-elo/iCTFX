@@ -19,6 +19,8 @@ struct Stats {
 	int shots;
 	int wallshots;
 	int wallshot_kills;
+	int wins_week;	//wins this week
+	int wins_week_date;	//Unix week timestamp to know what week wins_week is about 
 };
 
 struct PlayerWithScore {

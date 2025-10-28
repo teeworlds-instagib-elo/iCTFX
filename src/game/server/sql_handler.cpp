@@ -38,6 +38,8 @@ void SqlHandler::get_player_stats_handler(void *ev)
 		pPlayer->Add_WallshotKills(stats.wallshot_kills);
 		pPlayer->Add_Suicides(stats.suicides);
 		pPlayer->Add_Score(pPlayer->m_GlobalStats.m_Captures * 5 + pPlayer->m_GlobalStats.m_Touches + pPlayer->m_GlobalStats.m_Kills - pPlayer->m_GlobalStats.m_Suicides);
+		pPlayer->m_GlobalStats.m_Wins = stats.wins_week;
+		pPlayer->m_GlobalStats.m_Week = stats.wins_week_date;
 
 		int target_value = stats.fastest_capture;
 		int snapped_x;

@@ -916,6 +916,9 @@ void CGameContext::ConStats(IConsole::IResult *pResult, void *pUserData)
 		str_format(aBuf, sizeof(aBuf), "fastest cap: %.3f", rate(pPlayer->m_GlobalStats.m_FastestCapture.load(), 1000.0, false));
 		pSelf->SendChatTarget(ClientID, aBuf);
 	}
+
+	str_format(aBuf, sizeof(aBuf), "wins this week: %i", pPlayer->m_GlobalStats.m_Wins.load());
+	pSelf->SendChatTarget(ClientID, aBuf);
 	
 }
 

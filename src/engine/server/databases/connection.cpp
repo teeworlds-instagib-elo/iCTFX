@@ -15,7 +15,10 @@ void IDbConnection::FormatCreateUsers(char *aBuf, unsigned int BufferSize)
 			"`suicides` int,"
 			"`shots` int,"
 			"`wallshots` int,"
-			"`wallshot_kills` int"
+			"`wallshot_kills` int,"
+			"`wins_week` int,"
+			"`wins_week_date` int,"
+			"`weeks_won` int"
 		");"
 		);
 }
