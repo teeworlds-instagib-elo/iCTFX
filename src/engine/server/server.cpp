@@ -598,6 +598,10 @@ const char *CServer::ClientName(int ClientID) const
 {
 	if(ClientID < 0 || ClientID >= MAX_CLIENTS || m_aClients[ClientID].m_State == CServer::CClient::STATE_EMPTY)
 		return "(invalid)";
+	
+	if(m_aClients[ClientID].m_State == CServer::CClient::STATE_BOT)
+		return "Bot";
+	
 	if(m_aClients[ClientID].m_State == CServer::CClient::STATE_INGAME)
 		return m_aClients[ClientID].m_aName;
 	else

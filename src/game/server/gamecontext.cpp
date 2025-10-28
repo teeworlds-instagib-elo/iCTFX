@@ -995,8 +995,28 @@ void CGameContext::OnTick()
 	}
 
 	//if(world.paused) // make sure that the game object always updates
+	int lobbiesUsed[MAX_LOBBIES] = {0};
+
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(!Server()->ClientIngame(i) || !m_apPlayers[i] || m_apPlayers[i]->GetTeam() == TEAM_SPECTATORS)
+			continue;
+
+		int lobby = GetLobby(i);
+
+		if(lobby < 0)
+			continue;
+		
+		lobbiesUsed[lobby]++;
+	}
+
 	for(auto &pController : m_apController)
+	{
+		if(lobbiesUsed[pController->m_Lobby] == 0)
+			continue;
+		
 		pController->Tick();
+	}
 
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
