@@ -9,6 +9,7 @@
 #include <atomic>
 #include <memory>
 #include <vector>
+#include <time.h>
 
 enum
 {
@@ -683,15 +684,18 @@ const char *CMysqlConnection::MedianMapTime(char *pBuffer, int BufferSize) const
 
 bool CMysqlConnection::AddStats(char const* pPlayer, Stats const& stats, char *pError, int ErrorSize)
 {
-	auto aBuf = "INSERT INTO stats(name, kills, deaths, touches, captures, fastest_capture, suicides, shots, wallshots, wallshot_kills) "
-	"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
+	auto aBuf = "INSERT INTO stats(name, kills, deaths, touches, captures, fastest_capture, suicides, shots, wallshots, wallshot_kills, wins_week, wins_week_date, weeks_won) "
+	"VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?) "
 	"ON DUPLICATE KEY UPDATE "
 	"kills=?, deaths=?, touches=?, "
-	"captures=?, fastest_capture=?, suicides=?, shots=?, wallshots=?, wallshot_kills=?";
+	"captures=?, fastest_capture=?, suicides=?, shots=?, wallshots=?,"
+	"wallshot_kills=?, wins_week=?, wins_week_date=?, weeks_won=?";
 	if(PrepareStatement(aBuf, pError, ErrorSize))
 	{
 		return true;
 	}
+	int week = time(NULL) / 60 / 60 / 24 / 7;
+
 	BindString(1, pPlayer);
 	BindInt(2, stats.kills);
 	BindInt(3, stats.deaths);
@@ -702,15 +706,22 @@ bool CMysqlConnection::AddStats(char const* pPlayer, Stats const& stats, char *p
 	BindInt(8, stats.shots);
 	BindInt(9, stats.wallshots);
 	BindInt(10, stats.wallshot_kills);
-	BindInt(11, stats.kills);
-	BindInt(12, stats.deaths);
-	BindInt(13, stats.touches);
-	BindInt(14, stats.captures);
-	BindInt(15, stats.fastest_capture);
-	BindInt(16, stats.suicides);
-	BindInt(17, stats.shots);
-	BindInt(18, stats.wallshots);
-	BindInt(19, stats.wallshot_kills);
+	BindInt(11, stats.wins_week);
+	BindInt(12, week);
+	BindInt(13, 0);
+
+	BindInt(14, stats.kills);
+	BindInt(15, stats.deaths);
+	BindInt(16, stats.touches);
+	BindInt(17, stats.captures);
+	BindInt(18, stats.fastest_capture);
+	BindInt(19, stats.suicides);
+	BindInt(20, stats.shots);
+	BindInt(21, stats.wallshots);
+	BindInt(22, stats.wallshot_kills);
+	BindInt(23, stats.wins_week);
+	BindInt(24, week);
+	BindInt(25, 0);
 	int NumUpdated;
 	if(ExecuteUpdate(&NumUpdated, pError, ErrorSize))
 	{
@@ -723,7 +734,7 @@ bool CMysqlConnection::AddStats(char const* pPlayer, Stats const& stats, char *p
 bool CMysqlConnection::GetStats(char const* pPlayer, Stats& stats, char *pError, int ErrorSize) {
 	char aBuf[4096];
 	str_format(aBuf, sizeof(aBuf),
-		"SELECT kills, deaths, touches, captures, fastest_capture, suicides, shots, wallshots, wallshot_kills FROM stats WHERE name = ?");
+		"SELECT kills, deaths, touches, captures, fastest_capture, suicides, shots, wallshots, wallshot_kills, wins_week, wins_week_date FROM stats WHERE name = ?");
 	if(PrepareStatement(aBuf, pError, ErrorSize))
 	{
 		return true;
@@ -746,26 +757,54 @@ bool CMysqlConnection::GetStats(char const* pPlayer, Stats& stats, char *pError,
 		stats.shots = GetInt(7);
 		stats.wallshots = GetInt(8);
 		stats.wallshot_kills = GetInt(9);
+		stats.wins_week = GetInt(10);
+		stats.wins_week_date = GetInt(11);
+
+		int week = time(NULL) / 60 / 60 / 24 / 7;
+
+		if(stats.wins_week_date != week)
+			stats.wins_week = 0;
 	}
 	return false;
 }
 
 bool CMysqlConnection::GetRank(char const* pPlayer, int &rank, char *pError, int ErrorSize) {
 	char aBuf[4096];
+// 	str_format(aBuf, sizeof(aBuf),
+// " WITH scores AS ("
+// "   SELECT"
+// "     name,"
+// "     captures,"
+// "     touches,"
+// "     kills,"
+// "     suicides,"
+// "     captures * 5 + touches + kills - suicides AS score,"
+// "     RANK() OVER (ORDER BY score DESC) AS rank"
+// "   FROM"
+// "     stats"
+// "   ORDER BY"
+// "     score DESC"
+// " )"
+// " SELECT"
+// "   rank"
+// " FROM"
+// "   scores"
+// " WHERE"
+// "   name = ?;");
+
 	str_format(aBuf, sizeof(aBuf),
 " WITH scores AS ("
 "   SELECT"
 "     name,"
-"     captures,"
-"     touches,"
-"     kills,"
-"     suicides,"
-"     captures * 5 + touches + kills - suicides AS score,"
-"     RANK() OVER (ORDER BY score DESC) AS rank"
+"     wins_week,"
+"	  wins_week_date,"
+"     RANK() OVER (ORDER BY wins_week DESC) AS rank"
 "   FROM"
 "     stats"
+"	WHERE"
+"	  wins_week_date = ?"
 "   ORDER BY"
-"     score DESC"
+"     wins_week"
 " )"
 " SELECT"
 "   rank"
@@ -777,7 +816,11 @@ bool CMysqlConnection::GetRank(char const* pPlayer, int &rank, char *pError, int
 	{
 		return true;
 	}
-	BindString(1, pPlayer);
+
+	int week = time(NULL) / 60 / 60 / 24 / 7;
+
+	BindInt(1, week);
+	BindString(2, pPlayer);
 	bool Last;
 	if(Step(&Last, pError, ErrorSize))
 	{
@@ -797,27 +840,30 @@ bool CMysqlConnection::GetTop5(std::vector<PlayerWithScore> &top5, char* pError,
 " WITH scores AS ("
 "   SELECT"
 "     name,"
-"     captures,"
-"     touches,"
-"     kills,"
-"     suicides,"
-"     captures * 5 + touches + kills - suicides AS score"
+"     wins_week,"
+"	  wins_week_date"
 "   FROM"
 "     stats"
+"	WHERE"
+"	  wins_week_date = ?"
 " )"
 " SELECT"
 "   name,"
-"   score"
+"   wins_week"
 " FROM"
 "   scores"
 " ORDER BY"
-"   score DESC"
+"   wins_week DESC"
 " LIMIT 5;"
 );
 	if(PrepareStatement(aBuf, pError, ErrorSize))
 	{
 		return true;
 	}
+	int week = time(NULL) / 60 / 60 / 24 / 7;
+
+	BindInt(1, week);
+
 	bool Last;
 	for (;;) {
 		if(Step(&Last, pError, ErrorSize))

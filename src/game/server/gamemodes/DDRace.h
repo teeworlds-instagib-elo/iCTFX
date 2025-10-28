@@ -9,8 +9,6 @@
 #include <map>
 #include <vector>
 
-#include <game/server/sql_handler.h>
-
 class CGameControllerDDRace : public IGameController
 {
 public:

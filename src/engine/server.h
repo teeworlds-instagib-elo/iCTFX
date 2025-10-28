@@ -4,6 +4,7 @@
 #define ENGINE_SERVER_H
 
 #include <type_traits>
+#include <memory>
 
 #include <base/hash.h>
 #include <base/math.h>
@@ -268,6 +269,8 @@ public:
 	virtual bool IsSixup(int ClientID) const = 0;
 };
 
+class SqlHandler;
+
 class IGameServer : public IInterface
 {
 	MACRO_INTERFACE("gameserver", 0)
@@ -311,6 +314,8 @@ public:
 	virtual void OnClientPredictedInput(int ClientID, void *pInput, int tick) = 0;
 	virtual void OnClientPredictedEarlyInput(int ClientID, void *pInput) = 0;
 
+	virtual void PreInputClients(int ClientId, bool *pClients) = 0;
+
 	virtual bool IsClientReady(int ClientID) const = 0;
 	virtual bool IsClientPlayer(int ClientID) const = 0;
 
@@ -333,6 +338,8 @@ public:
 
 	virtual void OnClientEngineJoin(int ClientID, bool Sixup) = 0;
 	virtual void OnClientEngineDrop(int ClientID, const char *pReason) = 0;
+
+	std::unique_ptr<SqlHandler> sql_handler;
 };
 
 extern IGameServer *CreateGameServer();

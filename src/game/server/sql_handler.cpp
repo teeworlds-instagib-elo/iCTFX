@@ -29,26 +29,28 @@ void SqlHandler::get_player_stats_handler(void *ev)
 	char error[4096] = {};
 	if(!database->GetStats(player_name.c_str(), stats, error, sizeof(error)))
 	{
-		pPlayer->m_Kills += stats.kills;
-		pPlayer->m_Deaths += stats.deaths;
-		pPlayer->m_Touches += stats.touches;
-		pPlayer->m_Captures += stats.captures;
-		pPlayer->m_Shots += stats.shots;
-		pPlayer->m_Wallshots += stats.wallshots;
-		pPlayer->m_WallshotKills += stats.wallshot_kills;
-		pPlayer->m_Suicides += stats.suicides;
-		pPlayer->m_Score = pPlayer->m_Captures * 5 + pPlayer->m_Touches + pPlayer->m_Kills - pPlayer->m_Suicides;
+		pPlayer->Add_Kills(stats.kills);
+		pPlayer->Add_Deaths(stats.deaths);
+		pPlayer->Add_Touches(stats.touches);
+		pPlayer->Add_Captures(stats.captures);
+		pPlayer->Add_Shots(stats.shots);
+		pPlayer->Add_Wallshots(stats.wallshots);
+		pPlayer->Add_WallshotKills(stats.wallshot_kills);
+		pPlayer->Add_Suicides(stats.suicides);
+		pPlayer->Add_Score(pPlayer->m_GlobalStats.m_Captures * 5 + pPlayer->m_GlobalStats.m_Touches + pPlayer->m_GlobalStats.m_Kills - pPlayer->m_GlobalStats.m_Suicides);
+		pPlayer->m_GlobalStats.m_Wins = stats.wins_week;
+		pPlayer->m_GlobalStats.m_Week = stats.wins_week_date;
 
 		int target_value = stats.fastest_capture;
 		int snapped_x;
 		do
 		{
-			snapped_x = pPlayer->m_FastestCapture;
+			snapped_x = pPlayer->m_GlobalStats.m_FastestCapture;
 			if(snapped_x > target_value)
 			{
 				break;
 			}
-		} while(!pPlayer->m_FastestCapture.compare_exchange_strong(snapped_x, target_value));
+		} while(!pPlayer->m_GlobalStats.m_FastestCapture.compare_exchange_strong(snapped_x, target_value));
 	}
 	else
 	{

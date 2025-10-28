@@ -11,6 +11,7 @@
 #include <engine/server.h>
 #include <game/version.h>
 #include <game/server/entities/flag.h>
+#include <time.h>
 
 #include <algorithm>
 
@@ -35,30 +36,6 @@ CGameControllerDDRace::CGameControllerDDRace(class CGameContext *pGameServer, in
 
 	idm = false;
 	m_BotCount = 0;
-	
-	if(g_Config.m_SvSaveServer) {
-		auto database = CreateMysqlConnection(g_Config.m_SqlDatabase, g_Config.m_SqlPrefix, g_Config.m_SqlUser, g_Config.m_SqlPass, g_Config.m_SqlHost, g_Config.m_SqlPort, g_Config.m_SqlSetup);
-		if(database != nullptr)
-		{
-			char aError[256] = "error message not initialized";
-			if(database->Connect(aError, sizeof(aError)))
-			{
-				dbg_msg("sql", "failed connecting to db: %s", aError);
-				return;
-			}
-			//save score
-			ServerStats server_stats{};
-			char error[4096] = {};
-			if (!database->GetServerStats("save_server", server_stats, error, sizeof(error))) {
-				m_aTeamscore[TEAM_RED] = server_stats.score_red;
-				m_aTeamscore[TEAM_BLUE] = server_stats.score_blue;
-			} else {
-				dbg_msg("sql", "failed to read stats: %s", error);
-			}
-			database->Disconnect();
-		}
-		sql_handler->start();
-	}
 
 	int waypointAmount = 16;
 
@@ -192,13 +169,10 @@ CGameControllerDDRace::CGameControllerDDRace(class CGameContext *pGameServer, in
 }
 
 CGameControllerDDRace::~CGameControllerDDRace() {
-	if (g_Config.m_SvSaveServer) {
-		sql_handler->stop();
-	}
 };
 
 void CGameControllerDDRace::UpdateServerStats() {
-	if(g_Config.m_SvSaveServer)
+	if(g_Config.m_SvSaveServer && m_Lobby == 0)
 	{
 		//save score
 		ServerStats server_stats{
@@ -206,7 +180,7 @@ void CGameControllerDDRace::UpdateServerStats() {
 			m_aTeamscore[TEAM_BLUE]
 		};
 
-		sql_handler->set_server_stats(server_stats);
+		GameServer()->sql_handler->set_server_stats(server_stats);
 	}
 }
 
@@ -322,7 +296,7 @@ int CGameControllerDDRace::OnCharacterDeath(class CCharacter *pVictim, class CPl
 			{
 				// if(g_Config.m_SvLoltextShow)
 				// 	GameServer()->CreateLolText(pKiller->GetCharacter(), "+1");
-				pKiller->m_Score++;
+				pKiller->Add_Score(1);
 			}
 
 			HadFlag |= 1;
@@ -337,6 +311,29 @@ int CGameControllerDDRace::OnCharacterDeath(class CCharacter *pVictim, class CPl
 #include "../../../engine/server.h"
 #include <string>
 using namespace std;
+
+void ResetPlayerStats(CPlayer::CStats * stats)
+{
+	stats->m_Score = 0;
+	stats->m_Kills = 0;
+	stats->m_Deaths = 0;
+	stats->m_Touches = 0;
+	stats->m_Captures = 0;
+	stats->m_FastestCapture = -1;
+	stats->m_Shots = 0;
+	stats->m_Wallshots = 0;
+	stats->m_WallshotKills = 0;
+	stats->m_Suicides = 0;
+	stats->m_Week = 0;
+	stats->m_Wins = 0;
+}
+
+void ResetPlayerStatsAll(CPlayer *pPlayer)
+{
+	ResetPlayerStats(&pPlayer->m_ShownStats);
+	ResetPlayerStats(&pPlayer->m_GlobalStats);
+}
+
 
 void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 {
@@ -359,39 +356,21 @@ void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 		GameServer()->List(ClientID, &zeroChar);
 	}
 
-	pPlayer->m_Score = 0;
-	pPlayer->m_Kills = 0;
-	pPlayer->m_Deaths = 0;
-	pPlayer->m_Touches = 0;
-	pPlayer->m_Captures = 0;
-	pPlayer->m_FastestCapture = -1;
-	pPlayer->m_Shots = 0;
-	pPlayer->m_Wallshots = 0;
-	pPlayer->m_WallshotKills = 0;
-	pPlayer->m_Suicides = 0;
+	ResetPlayerStatsAll(pPlayer);
 
 	if(g_Config.m_SvSaveServer)
 	{
-		sql_handler->get_player_stats(pPlayer, Server()->ClientName(pPlayer->GetCID()));
+		GameServer()->sql_handler->get_player_stats(pPlayer, Server()->ClientName(pPlayer->GetCID()));
 	}
 }
 
 void CGameControllerDDRace::OnPlayerNameChange(class CPlayer *pPlayer)
 {
-	pPlayer->m_Score = 0;
-	pPlayer->m_Kills = 0;
-	pPlayer->m_Deaths = 0;
-	pPlayer->m_Touches = 0;
-	pPlayer->m_Captures = 0;
-	pPlayer->m_FastestCapture = -1;
-	pPlayer->m_Shots = 0;
-	pPlayer->m_Wallshots = 0;
-	pPlayer->m_WallshotKills = 0;
-	pPlayer->m_Suicides = 0;
+	ResetPlayerStatsAll(pPlayer);
 
 	if(g_Config.m_SvSaveServer)
 	{
-		sql_handler->get_player_stats(pPlayer, Server()->ClientName(pPlayer->GetCID()));
+		GameServer()->sql_handler->get_player_stats(pPlayer, Server()->ClientName(pPlayer->GetCID()));
 	}
 }
 
@@ -409,17 +388,19 @@ void CGameControllerDDRace::OnPlayerDisconnect(CPlayer *pPlayer, const char *pRe
 	{
 		//save score
 		Stats stats;
-		stats.kills = pPlayer->m_Kills;
-		stats.deaths = pPlayer->m_Deaths;
-		stats.touches = pPlayer->m_Touches;
-		stats.captures = pPlayer->m_Captures;
-		stats.fastest_capture = pPlayer->m_FastestCapture;
-		stats.shots = pPlayer->m_Shots;
-		stats.wallshots = pPlayer->m_Wallshots;
-		stats.wallshot_kills = pPlayer->m_WallshotKills;
-		stats.suicides = pPlayer->m_Suicides;
+		stats.kills = pPlayer->m_GlobalStats.m_Kills;
+		stats.deaths = pPlayer->m_GlobalStats.m_Deaths;
+		stats.touches = pPlayer->m_GlobalStats.m_Touches;
+		stats.captures = pPlayer->m_GlobalStats.m_Captures;
+		stats.fastest_capture = pPlayer->m_GlobalStats.m_FastestCapture;
+		stats.shots = pPlayer->m_GlobalStats.m_Shots;
+		stats.wallshots = pPlayer->m_GlobalStats.m_Wallshots;
+		stats.wallshot_kills = pPlayer->m_GlobalStats.m_WallshotKills;
+		stats.suicides = pPlayer->m_GlobalStats.m_Suicides;
+		stats.wins_week = pPlayer->m_GlobalStats.m_Wins;
+		stats.wins_week_date = pPlayer->m_GlobalStats.m_Week;
 
-		sql_handler->set_stats(Server()->ClientName(pPlayer->GetCID()), stats);
+		GameServer()->sql_handler->set_stats(Server()->ClientName(pPlayer->GetCID()), stats);
 	}
 }
 
@@ -592,7 +573,7 @@ void CGameControllerDDRace::Tick()
 						// CAPTURE! \o/
 						m_aTeamscore[fi^1] += 100;
 						UpdateServerStats();
-						F->m_pCarryingCharacter->GetPlayer()->m_Score += 5;
+						F->m_pCarryingCharacter->GetPlayer()->Add_Score(5);
 						int playerID = F->m_pCarryingCharacter->GetPlayer()->GetCID();
 
 						// if(fi^1 == 0)
@@ -620,12 +601,12 @@ void CGameControllerDDRace::Tick()
 
 						auto capture_time_millis = CaptureTime*1000;
 
-						if (F->m_pCarryingCharacter->GetPlayer()->m_FastestCapture < 0) {
-							F->m_pCarryingCharacter->GetPlayer()->m_FastestCapture = capture_time_millis;
-						} else if(F->m_pCarryingCharacter->GetPlayer()->m_FastestCapture > capture_time_millis) {
-							F->m_pCarryingCharacter->GetPlayer()->m_FastestCapture = capture_time_millis;
+						if (F->m_pCarryingCharacter->GetPlayer()->m_GlobalStats.m_FastestCapture < 0) {
+							F->m_pCarryingCharacter->GetPlayer()->m_GlobalStats.m_FastestCapture = capture_time_millis;
+						} else if(F->m_pCarryingCharacter->GetPlayer()->m_GlobalStats.m_FastestCapture > capture_time_millis) {
+							F->m_pCarryingCharacter->GetPlayer()->m_GlobalStats.m_FastestCapture = capture_time_millis;
 						}
-						F->m_pCarryingCharacter->GetPlayer()->m_Captures++;
+						F->m_pCarryingCharacter->GetPlayer()->Add_Captures(1);
 
 						for(int i = 0; i < 2; i++)
 							m_apFlags[i]->Reset();
@@ -682,7 +663,7 @@ void CGameControllerDDRace::Tick()
 						if(!F->m_AtStand && !F->m_BotGrabbed)
 						{
 							CCharacter *pChr = apCloseCCharacters[i];
-							pChr->GetPlayer()->m_Score += 1;
+							pChr->GetPlayer()->Add_Score(1);
 							
 
 							char aBuf[256];
@@ -722,8 +703,8 @@ void CGameControllerDDRace::Tick()
 
 						F->m_AtStand = 0;
 						F->m_pCarryingCharacter = apCloseCCharacters[i];
-						F->m_pCarryingCharacter->GetPlayer()->m_Score += 1;
-						F->m_pCarryingCharacter->GetPlayer()->m_Touches++;
+						F->m_pCarryingCharacter->GetPlayer()->Add_Score(1);
+						F->m_pCarryingCharacter->GetPlayer()->Add_Touches(1);
 						
 
 						char aBuf[256];
@@ -799,7 +780,7 @@ void CGameControllerDDRace::Tick()
 		}
 	}
 	
-	if(m_GameOverTick == -1 && !m_Warmup && !g_Config.m_SvSaveServer)
+	if(m_GameOverTick == -1 && !m_Warmup && !(g_Config.m_SvSaveServer && m_Lobby == 0))
 	{
 		// check score win condition
 		if(!idm && m_apFlags[0] && m_apFlags[0])
@@ -807,17 +788,58 @@ void CGameControllerDDRace::Tick()
 			if((m_ScoreLimit > 0 && (m_aTeamscore[TEAM_RED] >= m_ScoreLimit || m_aTeamscore[TEAM_BLUE] >= m_ScoreLimit)) ||
 				(m_TimeLimit > 0 && (Server()->Tick()-m_RoundStartTick) >= m_TimeLimit*Server()->TickSpeed()*60))
 			{
+				bool endround = false;
 				if(m_SuddenDeath)
 				{
 					if(m_aTeamscore[TEAM_RED]/100 != m_aTeamscore[TEAM_BLUE]/100)
-						EndRound();
+						endround = true;
 				}
 				else
 				{
 					if(m_aTeamscore[TEAM_RED] != m_aTeamscore[TEAM_BLUE])
-						EndRound();
+						endround = true;
 					else
 						m_SuddenDeath = 1;
+				}
+
+				if(endround)
+				{
+					int team = TEAM_BLUE;
+					
+					if (m_aTeamscore[TEAM_RED] > m_aTeamscore[TEAM_BLUE])
+						team = TEAM_RED;
+
+					if(m_aTeamscore[TEAM_RED] != m_aTeamscore[TEAM_BLUE])
+					{
+						int playerCount = 0;
+						int kills = 0;
+
+						for(int i = 0; i < MAX_CLIENTS; i++)
+						{
+							if(!GameServer()->m_apPlayers[i] && GameServer()->GetLobby(i) != m_Lobby)
+								continue;
+							
+							if(GameServer()->m_apPlayers[i]->GetTeam() == TEAM_SPECTATORS)
+								continue;
+							
+							playerCount++;
+							kills += GameServer()->m_apPlayers[i]->m_ShownStats.m_Kills;
+						}
+
+						if(playerCount >= 2 && kills > 10)
+						{
+							for(int i = 0; i < MAX_CLIENTS; i++)
+							{
+								if(!GameServer()->m_apPlayers[i] && GameServer()->GetLobby(i) != m_Lobby)
+									continue;
+								
+								if(GameServer()->m_apPlayers[i]->GetTeam() == team)
+									GameServer()->m_apPlayers[i]->m_GlobalStats.m_Wins++;
+							}
+						}
+					}
+
+					EndRound();
 				}
 			}
 		} else
@@ -829,12 +851,12 @@ void CGameControllerDDRace::Tick()
 			{
 				if(GameServer()->m_apPlayers[i])
 				{
-					if(GameServer()->m_apPlayers[i]->m_Score > Topscore)
+					if(GameServer()->m_apPlayers[i]->m_ShownStats.m_Score > Topscore)
 					{
-						Topscore = GameServer()->m_apPlayers[i]->m_Score;
+						Topscore = GameServer()->m_apPlayers[i]->m_ShownStats.m_Score;
 						TopscoreCount = 1;
 					}
-					else if(GameServer()->m_apPlayers[i]->m_Score == Topscore)
+					else if(GameServer()->m_apPlayers[i]->m_ShownStats.m_Score == Topscore)
 						TopscoreCount++;
 				}
 			}

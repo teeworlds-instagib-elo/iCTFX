@@ -1221,6 +1221,8 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 		AmmoCount = 10;
 	}
 
+	AmmoCount = 10;
+
 	if(m_pPlayer->GetCID() == SnappingClient || SnappingClient == SERVER_DEMO_CLIENT ||
 		(!g_Config.m_SvStrictSpectateMode && m_pPlayer->GetCID() == GameServer()->m_apPlayers[SnappingClient]->m_SpectatorID))
 	{

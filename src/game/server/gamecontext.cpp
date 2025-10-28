@@ -94,6 +94,8 @@ CGameContext::CGameContext(int Reset)
 
 CGameContext::~CGameContext()
 {
+	if(g_Config.m_SvSaveServer && sql_handler)
+		sql_handler->stop();
 	Destruct(m_Resetting ? RESET : NO_RESET);
 }
 
@@ -934,6 +936,10 @@ void CGameContext::OnTick()
 			if(!PlayerExists(i) || GetLobby(i) != 0)
 				continue;
 			
+			if(m_apPlayers[i]->m_lobbyReminderCount > 3)
+				continue;
+			
+			m_apPlayers[i]->m_lobbyReminderCount++;
 			SendChatTarget(i, "Don't forget you can change lobby with /lobby 1");
 		}
 	}
@@ -989,8 +995,28 @@ void CGameContext::OnTick()
 	}
 
 	//if(world.paused) // make sure that the game object always updates
+	int lobbiesUsed[MAX_LOBBIES] = {0};
+
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(!Server()->ClientIngame(i) || !m_apPlayers[i] || m_apPlayers[i]->GetTeam() == TEAM_SPECTATORS)
+			continue;
+
+		int lobby = GetLobby(i);
+
+		if(lobby < 0)
+			continue;
+		
+		lobbiesUsed[lobby]++;
+	}
+
 	for(auto &pController : m_apController)
+	{
+		if(lobbiesUsed[pController->m_Lobby] == 0)
+			continue;
+		
 		pController->Tick();
+	}
 
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
@@ -1263,6 +1289,41 @@ void CGameContext::OnTick()
 	}
 	// Warning: do not put code in this function directly above or below this comment
 }
+
+void CGameContext::PreInputClients(int ClientId, bool *pClients)
+{
+	if(!pClients || !m_apPlayers[ClientId])
+		return;
+
+	if(m_apPlayers[ClientId]->GetTeam() == TEAM_SPECTATORS || !m_apPlayers[ClientId]->GetCharacter())
+		return;
+
+	for(int Id = 0; Id < MAX_CLIENTS; Id++)
+	{
+		if(ClientId == Id)
+			continue;
+
+		CPlayer *pPlayer = m_apPlayers[Id];
+		if(!pPlayer)
+			continue;
+
+		if(Server()->GetClientVersion(Id) < VERSION_DDNET_PREINPUT)
+			continue;
+
+		if(pPlayer->GetTeam() == TEAM_SPECTATORS)
+			continue;
+
+		CCharacter *pChr = pPlayer->GetCharacter();
+		if(!pChr)
+			continue;
+
+		if(!pChr->CanSnapCharacter(ClientId) || pChr->NetworkClipped(ClientId))
+			continue;
+
+		pClients[Id] = true;
+	}
+}
+
 
 // Server hooks
 void CGameContext::OnClientDirectInput(int ClientID, void *pInput)
@@ -2008,7 +2069,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 			if(Length >= 2 && Length <= 3 && str_endswith_nocase(pMsg->m_pMessage, "go") != 0)
 			{
-				if(!g_Config.m_SvSaveServer) {
+				if(Lobby != 0) {
 					if(pPlayer->GetTeam() != TEAM_SPECTATORS)
 					{
 						char aBuf[32];
@@ -2028,7 +2089,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 			if(Length >= 4 && Length <= 5 && str_endswith_nocase(pMsg->m_pMessage, "stop") != 0)
 			{
-				if(!g_Config.m_SvSaveServer) {
+				if(Lobby != 0) {
 					if(pPlayer->GetTeam() != TEAM_SPECTATORS)
 					{
 						CConsole::CResult Result;
@@ -2043,7 +2104,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 			if(Length == 6 && str_endswith_nocase(pMsg->m_pMessage, "reset") != 0)
 			{
-				if(!g_Config.m_SvSaveServer) {
+				if(Lobby != 0) {
 					if(pPlayer->GetTeam() != TEAM_SPECTATORS)
 					{
 						char aBuf[32];
@@ -2063,7 +2124,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 
 			if(Length == 8 && str_endswith_nocase(pMsg->m_pMessage, "restart") != 0)
 			{
-				if(!g_Config.m_SvSaveServer) {
+				if(Lobby != 0) {
 					if(pPlayer->GetTeam() != TEAM_SPECTATORS)
 					{
 						char aBuf[32];
@@ -2114,7 +2175,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_copy(aWhisperMsg, pMsg->m_pMessage + 10, 256);
 					Converse(pPlayer->GetCID(), aWhisperMsg);
 				}
-				else if(str_startswith(pMsg->m_pMessage + 2, "on") && !g_Config.m_SvSaveServer)
+				else if(str_startswith(pMsg->m_pMessage + 2, "on") && Lobby != 0)
 				{
 					if(pPlayer->GetTeam() != TEAM_SPECTATORS)
 					{
@@ -2133,7 +2194,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						SendChat(ClientID, Team, pMsg->m_pMessage, ClientID);
 					}
 				}
-				else if(str_startswith(pMsg->m_pMessage + 1, "rollbackshadow") && !g_Config.m_SvSaveServer)
+				else if(str_startswith(pMsg->m_pMessage + 1, "rollbackshadow"))
 				{
 					pPlayer->m_ShowRollbackShadow = !pPlayer->m_ShowRollbackShadow;
 					if(pPlayer->m_ShowRollbackShadow)
@@ -2142,7 +2203,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					if(!pPlayer->m_ShowRollbackShadow)
 						SendChatTarget(ClientID, "Rollback Shadow disabled");
 				}
-				else if(str_startswith(pMsg->m_pMessage + 1, "rollback_prediction") && !g_Config.m_SvSaveServer)
+				else if(str_startswith(pMsg->m_pMessage + 1, "rollback_prediction"))
 				{
 					pPlayer->m_RollbackPrediction = !pPlayer->m_RollbackPrediction;
 
@@ -2155,7 +2216,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					if(!g_Config.m_SvRollback)
 						SendChatTarget(ClientID, "Rollback disabled by server vote");
 				}
-				else if(str_startswith(pMsg->m_pMessage + 1, "rollback") && !g_Config.m_SvSaveServer)
+				else if(str_startswith(pMsg->m_pMessage + 1, "rollback"))
 				{
 					bool disabled = pPlayer->m_Rollback;
 
@@ -2185,7 +2246,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					if(pPlayer->m_Rollback)
 						SendChatTarget(ClientID, str);
 				}
-				else if(str_startswith(pMsg->m_pMessage + 1, "runahead") && !g_Config.m_SvSaveServer)
+				else if(str_startswith(pMsg->m_pMessage + 1, "runahead"))
 				{
 					if(str_startswith(pMsg->m_pMessage + 1, "runahead ") && str_length(pMsg->m_pMessage+1) >= 10)
 					{
@@ -3152,16 +3213,16 @@ void CGameContext::ConLobby(IConsole::IResult *pResult, void *pUserData)
 
 		pSelf->m_apPlayers[pResult->m_ClientID]->KillCharacter();
 		((CServer*)pSelf->Server())->m_aClients[pResult->m_ClientID].m_Lobby = lobby;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_Score = 0;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_Kills = 0;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_Deaths = 0;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_Touches = 0;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_Captures = 0;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_FastestCapture = -1;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_Shots = 0;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_Wallshots = 0;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_WallshotKills = 0;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_Suicides = 0;
+		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_Score = 0;
+		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_Kills = 0;
+		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_Deaths = 0;
+		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_Touches = 0;
+		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_Captures = 0;
+		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_FastestCapture = -1;
+		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_Shots = 0;
+		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_Wallshots = 0;
+		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_WallshotKills = 0;
+		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_Suicides = 0;
 		
 		int aNumplayers[2] = {0, 0};
 		for(int i = 0; i < MAX_CLIENTS; i++)
@@ -3733,13 +3794,39 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 	// 	}
 	// }
 
+	if(g_Config.m_SvSaveServer) {
+		sql_handler = std::make_unique<SqlHandler>();
+	}
+
 	LobbyCount = 0;
 	for(auto &pController : m_apController)
 	{
 		pController = new CGameControllerDDRace(this, LobbyCount);
-		// pController->idm = !str_comp_nocase(g_Config.m_SvGametype, "idm") || !str_comp_nocase(g_Config.m_SvGametype, "idm+");
-
 		LobbyCount++;
+	}
+
+	if(g_Config.m_SvSaveServer) {
+		auto database = CreateMysqlConnection(g_Config.m_SqlDatabase, g_Config.m_SqlPrefix, g_Config.m_SqlUser, g_Config.m_SqlPass, g_Config.m_SqlHost, g_Config.m_SqlPort, g_Config.m_SqlSetup);
+		if(database != nullptr)
+		{
+			char aError[256] = "error message not initialized";
+			if(database->Connect(aError, sizeof(aError)))
+			{
+				dbg_msg("sql", "failed connecting to db: %s", aError);
+				return;
+			}
+			//save score
+			ServerStats server_stats{};
+			char error[4096] = {};
+			if (!database->GetServerStats("save_server", server_stats, error, sizeof(error))) {
+				m_apController[0]->m_aTeamscore[TEAM_RED] = server_stats.score_red;
+				m_apController[0]->m_aTeamscore[TEAM_BLUE] = server_stats.score_blue;
+			} else {
+				dbg_msg("sql", "failed to read stats: %s", error);
+			}
+			database->Disconnect();
+		}
+		sql_handler->start();
 	}
 
 	const char *pCensorFilename = "censorlist.txt";
