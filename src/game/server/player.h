@@ -287,6 +287,8 @@ public:
 	bool m_muteSpec = false;
 	bool m_muteLobbies = false;
 
+	int m_lobbyReminderCount = 0;
+
 	int m_ChatScore;
 
 	bool m_Moderating;

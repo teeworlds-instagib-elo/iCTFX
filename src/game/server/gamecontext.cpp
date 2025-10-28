@@ -936,6 +936,10 @@ void CGameContext::OnTick()
 			if(!PlayerExists(i) || GetLobby(i) != 0)
 				continue;
 			
+			if(m_apPlayers[i]->m_lobbyReminderCount > 3)
+				continue;
+			
+			m_apPlayers[i]->m_lobbyReminderCount++;
 			SendChatTarget(i, "Don't forget you can change lobby with /lobby 1");
 		}
 	}
