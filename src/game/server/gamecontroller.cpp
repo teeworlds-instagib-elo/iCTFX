@@ -194,9 +194,10 @@ bool IGameController::CanSpawn(int Team, vec2 *pOutPos, int DDTeam)
 	}
 	else
 	{
+		bool randomTeam = rand() % 2;
 		EvaluateSpawnType(&Eval, 0, DDTeam);
-		EvaluateSpawnType(&Eval, 1, DDTeam);
-		EvaluateSpawnType(&Eval, 2, DDTeam);
+		EvaluateSpawnType(&Eval, 1+randomTeam, DDTeam);
+		EvaluateSpawnType(&Eval, 1+!randomTeam, DDTeam);
 	}
 
 	*pOutPos = Eval.m_Pos;
@@ -561,7 +562,9 @@ void IGameController::OnReset()
 
 bool IGameController::IsTeamplay() const
 {
-	return m_GameFlags&GAMEFLAG_TEAMS;
+	if (idm) return false;
+	return true;
+	// return m_GameFlags&GAMEFLAG_TEAMS;
 }
 
 int IGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int Weapon)
