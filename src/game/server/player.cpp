@@ -54,6 +54,7 @@ void CPlayer::Reset()
 	pIdMap[0] = m_ClientID;
 
 	m_Rollback = false;
+	m_Rollback_old = false;
 	m_Rollback_partial = 1;
 	m_ShowRollbackShadow = g_Config.m_SvRollbackShadow;
 	m_RollbackPrediction = true;

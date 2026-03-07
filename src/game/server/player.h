@@ -104,6 +104,7 @@ public:
 	int m_Spree;
 
 	bool m_Rollback;
+	bool m_Rollback_old;
 	bool m_RollbackPrediction;
 	bool m_ShowRollbackShadow;
 	float m_Rollback_partial;

@@ -67,6 +67,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_Core.Reset();
 	m_Core.Init(&GameServer()->m_World[m_Lobby].m_Core, GameServer()->Collision(m_Lobby), nullptr, this);
 	m_Core.m_ActiveWeapon = WEAPON_LASER;
+	m_aWeapons[WEAPON_GRENADE].m_Ammo = 4;
 	m_Core.m_Pos = m_Pos;
 	GameServer()->m_World[m_Lobby].m_Core.m_apCharacters[m_pPlayer->GetCID()] = &m_Core;
 
@@ -401,8 +402,10 @@ void CCharacter::FireWeapon()
 	if(m_Core.m_ActiveWeapon == WEAPON_GRENADE && !m_aWeapons[m_Core.m_ActiveWeapon].m_Ammo)
 	{
 		// 125ms is a magical limit of how fast a human can click
+		if(Server()->Tick()-m_AttackTick < ReloadTimer)
+			GameServer()->CreateSound(m_Lobby, m_Pos, SOUND_WEAPON_NOAMMO);
 		m_ReloadTimer = 125 * Server()->TickSpeed() / 1000;
-		GameServer()->CreateSound(m_Lobby, m_Pos, SOUND_WEAPON_NOAMMO);
+		m_AttackTick = Server()->Tick();
 		return;
 	}
 
@@ -1231,6 +1234,9 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 
 	AmmoCount = 10;
 
+	if(Weapon == WEAPON_GRENADE)
+		AmmoCount = m_aWeapons[Weapon].m_Ammo;
+
 	if(m_pPlayer->GetCID() == SnappingClient || SnappingClient == SERVER_DEMO_CLIENT ||
 		(!g_Config.m_SvStrictSpectateMode && m_pPlayer->GetCID() == GameServer()->m_apPlayers[SnappingClient]->m_SpectatorID))
 	{
@@ -1323,10 +1329,11 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 
 		bool latest_target = false;
 
-		if(SnappingClient >= 0 && m_pPlayer->GetCID() != SnappingClient && GameServer()->m_apPlayers[SnappingClient]->m_Rollback && Server()->GetClientVersion(SnappingClient) >= VERSION_DDNET_PREINPUT)
+		if(SnappingClient >= 0 &&  m_pPlayer->GetCID() != SnappingClient && GameServer()->m_apPlayers[SnappingClient]->m_Rollback
+			&& !GameServer()->m_apPlayers[SnappingClient]->m_Rollback_old && Server()->GetClientVersion(SnappingClient) >= VERSION_DDNET_PREINPUT)
 		{
 			// seePrediction = Server()->Tick() - GameServer()->m_apPlayers[SnappingClient]->m_LAS_leftover;
-			seePrediction = GameServer()->m_apPlayers[SnappingClient]->m_LastAckedSnapshot;
+			seePrediction = GameServer()->m_apPlayers[SnappingClient]->m_LastAckedSnapshot+1;
 			*pCharacter = m_PastCharacters[seePrediction % POSITION_HISTORY];
 			latest_target = true;
 		}
