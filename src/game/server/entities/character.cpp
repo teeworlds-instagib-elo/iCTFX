@@ -57,11 +57,6 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_pPlayer = pPlayer;
 	m_Pos = Pos;
 
-	for(int i = 0; i < POSITION_HISTORY; i++)
-	{
-		m_Positions[i] = Pos;
-	}
-
 	mem_zero(&m_LatestPrevPrevInput, sizeof(m_LatestPrevPrevInput));
 	m_LatestPrevPrevInput.m_TargetY = -1;
 	m_NumInputs = 0;
@@ -96,6 +91,16 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 
 	m_Health = pPlayer->m_HitPoints;
 	ResetPickups();
+
+	CNetObj_Character character = {0};
+	m_Core.Write(&character);
+	character.m_Weapon = WEAPON_LASER;
+
+	for(int i = 0; i < POSITION_HISTORY; i++)
+	{
+		m_Positions[i] = Pos;
+		m_PastCharacters[i] = character;
+	}
 
 	return true;
 }
@@ -801,6 +806,9 @@ void CCharacter::TickDefered()
 
 	int position_index = Server()->Tick() % POSITION_HISTORY;
 	m_Positions[position_index] = m_Pos;
+	m_Core.Write(&m_PastCharacters[position_index]);
+	m_PastCharacters[position_index].m_Weapon = m_Core.m_ActiveWeapon;
+	
 	if(m_pPlayer)
 	{
 		m_pPlayer->m_LastAckedSnapshot++;
@@ -1286,13 +1294,6 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 
 		pCore->Write(pCharacter);
 
-		
-
-		if(seePrediction)
-		{
-			*pCharacter = m_pPlayer->m_CoreAheads[seePrediction % POSITION_HISTORY];
-		}
-
 		if(SnappingClient == m_Killer && m_DeathTick != -1)
 		{
 			pCharacter->m_X = m_DeathPos.x;
@@ -1320,7 +1321,17 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 		pCharacter->m_Armor = Armor;
 		pCharacter->m_PlayerFlags = GetPlayer()->m_PlayerFlags;
 
-		if(g_Config.m_SvLatestTarget)
+		bool latest_target = false;
+
+		if(SnappingClient >= 0 && m_pPlayer->GetCID() != SnappingClient && GameServer()->m_apPlayers[SnappingClient]->m_Rollback && Server()->GetClientVersion(SnappingClient) >= VERSION_DDNET_PREINPUT)
+		{
+			// seePrediction = Server()->Tick() - GameServer()->m_apPlayers[SnappingClient]->m_LAS_leftover;
+			seePrediction = GameServer()->m_apPlayers[SnappingClient]->m_LastAckedSnapshot;
+			*pCharacter = m_PastCharacters[seePrediction % POSITION_HISTORY];
+			latest_target = true;
+		}
+
+		if(g_Config.m_SvLatestTarget || latest_target)
 		{
 			float tmp_angle = atan2f(m_pPlayer->m_LatestTargetY, m_pPlayer->m_LatestTargetX);
 			if(tmp_angle < -(pi / 2.0f))
@@ -1332,6 +1343,8 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 				pCharacter->m_Angle = (int)(tmp_angle * 256.0f);
 			}
 		}
+
+		
 	}
 	else
 	{

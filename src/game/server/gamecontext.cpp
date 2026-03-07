@@ -1324,6 +1324,14 @@ void CGameContext::PreInputClients(int ClientId, bool *pClients)
 	}
 }
 
+int CGameContext::GetClient_LAS(int ClientId)
+{
+	// return m_apPlayers[ClientId]->m_LAS_leftover;
+	if (m_apPlayers[ClientId]->m_Rollback)
+		return m_apPlayers[ClientId]->m_LastAckedSnapshot;
+	return 0;
+}
+
 
 // Server hooks
 void CGameContext::OnClientDirectInput(int ClientID, void *pInput)

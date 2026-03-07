@@ -1608,6 +1608,12 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 						if(!aPreInputClients[Id])
 							continue;
 
+						PreInput.m_IntendedTick = IntendedTick;
+						if(GameServer()->GetClient_LAS(Id) && GetClientVersion(Id) >= VERSION_DDNET_PREINPUT)
+						{
+							PreInput.m_IntendedTick = Tick() + Tick() - GameServer()->GetClient_LAS(Id) + 1;
+						}
+
 						SendPackMsg(&PreInput, MSGFLAG_VITAL | MSGFLAG_NORECORD, Id);
 					}
 				}
