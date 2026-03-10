@@ -291,6 +291,7 @@ public:
 	virtual void OnClientPredictedEarlyInput(int ClientID, void *pInput);
 
 	void PreInputClients(int ClientId, bool *pClients) override;
+	int GetClient_LAS(int ClientId) override;
 
 	virtual void OnClientEngineJoin(int ClientID, bool Sixup);
 	virtual void OnClientEngineDrop(int ClientID, const char *pReason);

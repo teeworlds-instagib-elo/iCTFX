@@ -28,6 +28,7 @@ class CCharacter : public CEntity
 
 public:
 	vec2 m_Positions[POSITION_HISTORY];
+	CNetObj_Character m_PastCharacters[POSITION_HISTORY];
 	//character's size
 	static const int ms_PhysSize = 28;
 

@@ -291,7 +291,7 @@ void CServer::CClient::Reset()
 	// m_Score = 0;
 	m_NextMapChunk = 0;
 	m_Flags = 0;
-	m_Lobby = 0;
+	m_Lobby = g_Config.m_SvDefaultLobby;
 }
 
 CServer::CServer() :
@@ -1607,6 +1607,12 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 					{
 						if(!aPreInputClients[Id])
 							continue;
+
+						PreInput.m_IntendedTick = IntendedTick;
+						if(GameServer()->GetClient_LAS(Id) && GetClientVersion(Id) >= VERSION_DDNET_PREINPUT)
+						{
+							PreInput.m_IntendedTick = Tick() + Tick() - GameServer()->GetClient_LAS(Id);
+						}
 
 						SendPackMsg(&PreInput, MSGFLAG_VITAL | MSGFLAG_NORECORD, Id);
 					}

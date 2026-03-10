@@ -1324,6 +1324,14 @@ void CGameContext::PreInputClients(int ClientId, bool *pClients)
 	}
 }
 
+int CGameContext::GetClient_LAS(int ClientId)
+{
+	// return m_apPlayers[ClientId]->m_LAS_leftover;
+	if (m_apPlayers[ClientId]->m_Rollback && !m_apPlayers[ClientId]->m_Rollback_old)
+		return m_apPlayers[ClientId]->m_LastAckedSnapshot;
+	return 0;
+}
+
 
 // Server hooks
 void CGameContext::OnClientDirectInput(int ClientID, void *pInput)
@@ -1669,7 +1677,13 @@ void CGameContext::OnClientConnected(int ClientID, void *pData)
 	}
 
 	// Check which team the player should be on
-	const int StartTeam = (Spec || g_Config.m_SvTournamentMode) ? TEAM_SPECTATORS : m_apController[0]->GetAutoTeam(ClientID);
+	const int StartTeam = (Spec || g_Config.m_SvTournamentMode) ? TEAM_SPECTATORS : m_apController[g_Config.m_SvDefaultLobby]->GetAutoTeam(ClientID);
+
+	if (StartTeam == TEAM_SPECTATORS)
+	{
+		SendChatTarget(ClientID, "This lobby is locked, but there are still other lobbies available");
+		SendChatTarget(ClientID, "Switch lobby with /lobby 2");
+	}
 
 	if(m_apPlayers[ClientID])
 		delete m_apPlayers[ClientID];
@@ -2245,6 +2259,23 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					str_format(str, sizeof(str), "Rollback enabled (%i%)", (int)(pPlayer->m_Rollback_partial*100));
 					if(pPlayer->m_Rollback)
 						SendChatTarget(ClientID, str);
+				}
+				else if(str_startswith(pMsg->m_pMessage + 1, "rollback_old"))
+				{
+					bool disabled = pPlayer->m_Rollback_old;
+
+					if(!g_Config.m_SvRollback)
+						pPlayer->m_Rollback_old = false;
+
+					pPlayer->m_Rollback_old = !disabled;
+
+					if(disabled)
+						SendChatTarget(ClientID, "Rollback old disabled");
+					else
+						SendChatTarget(ClientID, "Rollback old enabled");
+					
+					if(!g_Config.m_SvRollback)
+						SendChatTarget(ClientID, "Rollback disabled by server vote");
 				}
 				else if(str_startswith(pMsg->m_pMessage + 1, "runahead"))
 				{
@@ -3270,6 +3301,7 @@ void CGameContext::ConLobby(IConsole::IResult *pResult, void *pUserData)
 		char aBuf[256];
 		str_format(aBuf, 256, "You are in lobby %i", ((CServer*)pSelf->Server())->m_aClients[pResult->m_ClientID].m_Lobby);
 		pSelf->SendChatTarget(pResult->m_ClientID, aBuf);
+		pSelf->List(pResult->m_ClientID, pResult->GetString(0));
 	}
 }
 
@@ -4715,7 +4747,7 @@ void CGameContext::List(int ClientID, const char *pFilter)
 	for(int lobby = 0; lobby < MAX_LOBBIES; lobby++)
 	{
 		bool lobbyText = true;
-		str_format(aBuf, 256, "Lobby %i: %s %s", lobby, Kernel()->GetIMap(m_Layers[lobby].m_Map)->m_aMapName,
+		str_format(aBuf, 256, "Lobby %i %s: %s %s", lobby, lobby==0 ? "(bot lobby)" : "", Kernel()->GetIMap(m_Layers[lobby].m_Map)->m_aMapName,
 			m_apController[lobby]->idm ? "IDM " : "");
 		
 		for(int i = 0; i < MAX_CLIENTS; i++)

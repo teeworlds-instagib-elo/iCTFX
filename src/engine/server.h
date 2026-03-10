@@ -315,6 +315,7 @@ public:
 	virtual void OnClientPredictedEarlyInput(int ClientID, void *pInput) = 0;
 
 	virtual void PreInputClients(int ClientId, bool *pClients) = 0;
+	virtual int GetClient_LAS(int ClientId) = 0;
 
 	virtual bool IsClientReady(int ClientID) const = 0;
 	virtual bool IsClientPlayer(int ClientID) const = 0;
