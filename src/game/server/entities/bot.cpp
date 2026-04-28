@@ -17,6 +17,7 @@ CBot::CBot(CGameWorld *pGameWorld, CGameControllerDDRace * pController, int Team
 	m_Team = Team;
 	m_ProximityRadius = 28;
 	m_RespawnTimer = - rand() % 50;
+	m_Difficulty = 0.2f;
 	Reset();
 
 	m_ClientID = Server()->GetBotID();
@@ -31,7 +32,6 @@ CBot::~CBot()
 
 void CBot::Reset()
 {
-	m_Difficulty = 0.2f;
 	m_Alive = false;
 	m_HookedID = -1;
 	m_Score = 0;
@@ -50,6 +50,8 @@ void CBot::Die(int Killer)
 		m_pController->m_apFlags[!m_Team]->m_DropTick = Server()->Tick();
 		m_HasFlag = false;
 		m_Pos = vec2(0,0);
+		m_AvoidCharge = 0;
+		m_AvoidCooldown = 0;
 	}
 
 	if(Killer >= 0 && m_ClientID >= 0)
@@ -85,8 +87,8 @@ void CBot::Die(int Killer)
 
 void CBot::Tick()
 {
-	if(m_Difficulty > 1)
-		m_Difficulty = 1;
+	if(m_Difficulty > 1.5)
+		m_Difficulty = 1.5;
 	
 	if(m_Difficulty < 0)
 		m_Difficulty = 0;
@@ -111,6 +113,8 @@ void CBot::Tick()
 			m_Chase = !m_Team-2;	//goto enemy team flag
 
 			m_Pos = pos;
+			m_Accel = vec2(0,0);
+			m_Vel = vec2(0,0);
 			m_Waypoint = -1;
 			m_PreviousWaypoint = -1;
 			m_ReloadTimer = 0;
@@ -123,6 +127,20 @@ void CBot::Tick()
 			}
 		}
 		return;
+	}
+
+	{
+		float accel_length = length(m_Accel);
+		
+		if(accel_length > 0)
+		{
+			accel_length = fabs(accel_length);
+			accel_length -= 0.3;
+			if(accel_length < 0)
+				accel_length = 0;
+						
+			m_Accel = normalize(m_Accel) * accel_length;
+		}
 	}
 
 	if(m_Waypoint >= 0)
@@ -148,23 +166,51 @@ void CBot::Tick()
 	m_ReloadTimer++;
 	m_ShootTimer++;
 
-	int SvBotReactionTime = mix(g_Config.m_SvBotReactionTime_easy, g_Config.m_SvBotReactionTime_hard, m_Difficulty);
-	int SvBotChargeTime = mix(g_Config.m_SvBotChargeTime_easy, g_Config.m_SvBotChargeTime_hard, m_Difficulty);
-	int SvBotReactionTimeRandom = mix(g_Config.m_SvBotReactionTimeRandom_easy, g_Config.m_SvBotReactionTimeRandom_hard, m_Difficulty);
-	int SvBotAvoidAimCharge = mix(g_Config.m_SvBotAvoidAimCharge_easy, g_Config.m_SvBotAvoidAimCharge_hard, m_Difficulty);
+	int diff = m_pController->m_aTeamscore[1-m_Team] - m_pController->m_aTeamscore[m_Team];
+	if (diff < 0)
+		diff = 0;
+	float difficulty = m_Difficulty + ((m_Difficulty+0.5)/1.5*(m_pController->m_aTeamscore[1-m_Team]+diff)/100.0/3.0);
 
-	float speedDiff = sqrtf(clamp(m_Difficulty, 0.1f, 1.0f));
-	int SvBotSpeed = mix(g_Config.m_SvBotSpeed_easy, g_Config.m_SvBotSpeed_hard, m_Difficulty);
-	int SvBotAimRandom = mix(g_Config.m_SvBotAimRandom_easy, g_Config.m_SvBotAimRandom_hard, m_Difficulty);
-	int SvBotAimDistanceFalloff = mix(g_Config.m_SvBotAimDistanceFalloff_easy, g_Config.m_SvBotAimDistanceFalloff_hard, m_Difficulty);
+
+	int SvBotReactionTime = mix(g_Config.m_SvBotReactionTime_easy, g_Config.m_SvBotReactionTime_hard, difficulty);
+	if (SvBotReactionTime < 4)
+		SvBotReactionTime = 4;
+	int SvBotChargeTime = mix(g_Config.m_SvBotChargeTime_easy, g_Config.m_SvBotChargeTime_hard, difficulty);
+	if (SvBotChargeTime < 4)
+		SvBotChargeTime = 4;
+	int SvBotReactionTimeRandom = mix(g_Config.m_SvBotReactionTimeRandom_easy, g_Config.m_SvBotReactionTimeRandom_hard, difficulty);
+	if (SvBotReactionTimeRandom < 2)
+		SvBotReactionTimeRandom = 2;
+	int SvBotAvoidAimCharge = mix(g_Config.m_SvBotAvoidAimCharge_easy, g_Config.m_SvBotAvoidAimCharge_hard, difficulty);
+	if (SvBotAvoidAimCharge < 3)
+		SvBotAvoidAimCharge = 3;
+
+	float speedDiff = sqrtf(clamp(difficulty, 0.1f, 1.0f));
+	int SvBotSpeed = mix(g_Config.m_SvBotSpeed_easy, g_Config.m_SvBotSpeed_hard, difficulty+0.5f);
+	if (SvBotSpeed < 2)
+		SvBotSpeed = 2;
+	if(SvBotSpeed > 26)
+		SvBotSpeed = 26;
+	int SvBotAimRandom = mix(g_Config.m_SvBotAimRandom_easy, g_Config.m_SvBotAimRandom_hard, difficulty);
+	if (SvBotAimRandom < 10)
+		SvBotAimRandom = 10;
+	int SvBotAimDistanceFalloff = mix(g_Config.m_SvBotAimDistanceFalloff_easy, g_Config.m_SvBotAimDistanceFalloff_hard, difficulty);
+	if (SvBotAimDistanceFalloff < 2)
+		SvBotAimDistanceFalloff = 2;
 
 	int shootDelay = SvBotReactionTime;
+	if (shootDelay < 0)
+		shootDelay = 0;
+	
 	
 	int avoidAimTime = 10;
 
 	m_LookAt = m_TargetPos;
 
 	bool seeNobody = true;
+	// m_ReloadTimer = -100;
+
+	m_AvoidCooldown++;
 
 	if(true)
 	{
@@ -190,7 +236,20 @@ void CBot::Tick()
 			//enemy
 
 			//chase enemy
-			if(rand() % 60 == 0)
+			int chase_player_chance = 1;
+
+			if(m_pController->m_apFlags[!m_Team]->m_pCarryingCharacter == pChar)
+				chase_player_chance *= 10;
+			
+			if(m_HasFlag)
+				chase_player_chance /= 2;
+			
+			if(m_pController->m_apFlags[m_Team]->m_AtStand && distance(pChar->m_Pos, m_pController->m_apFlags[m_Team]->m_Pos) < 32*50)
+			{
+				chase_player_chance *= 5;
+			}
+			
+			if(rand() % 100 < chase_player_chance)
 			{
 				m_Chase = pChar->m_Core.m_Id;
 			}
@@ -223,7 +282,9 @@ void CBot::Tick()
 					{
 						m_ShootChargeUp = 0;
 						m_ReloadTimer = 0;
-						m_ShootTimer = - (rand() % SvBotReactionTimeRandom);
+						m_ShootTimer = -1;
+						if (SvBotReactionTimeRandom > 0.0f)
+							m_ShootTimer = - (rand() % SvBotReactionTimeRandom);
 						m_ShootTimer -= shootDelay - delay;	//delay shooting for higher ping players
 						m_ShootTarget = To;
 					}
@@ -235,42 +296,63 @@ void CBot::Tick()
 			//avoid players aim
 			if(pChar->m_ReloadTimer - avoidAimTime <= 0)
 			{
-				
-				vec2 PredPos = m_Pos + normalize(m_MoveTo-m_Pos)*SvBotSpeed*avoidAimTime;
+				vec2 PredPos = m_Pos + m_Vel*SvBotAvoidAimCharge; // + normalize(m_MoveTo-m_Pos)*SvBotSpeed*avoidAimTime;
 				vec2 Direction = normalize(vec2(pChar->m_Input.m_TargetX, pChar->m_Input.m_TargetY));
+				int reactionDelay = SvBotAvoidAimCharge;
+				int reactionTick = (Server()->TickSpeed()+Server()->Tick() - reactionDelay) % POSITION_HISTORY;
+				Direction = pChar->m_AimHistory[reactionTick];
+
+
+				CCharacterCore tmpCore;
+				tmpCore.Read(&pChar->m_PastCharacters[reactionTick]);
+				vec2 playerPos = tmpCore.m_Pos + tmpCore.m_Vel*reactionDelay;
+
+				playerPos.x = pChar->m_pPlayer->m_CoreAheads[reactionTick].m_X;
+				playerPos.y = pChar->m_pPlayer->m_CoreAheads[reactionTick].m_Y;
 
 				vec2 To = PredPos;
-				GameServer()->Collision(m_Lobby)->IntersectLine(pChar->m_Pos, pChar->m_Pos+normalize(To-pChar->m_Pos)*950, 0, &To);
+				GameServer()->Collision(m_Lobby)->IntersectLine(playerPos, playerPos+normalize(To-playerPos)*950, 0, &To);
 				
-				float distancePlayer = distance(pChar->m_Pos, PredPos);
-				float distanceSight = distance(pChar->m_Pos, To);
+				float distancePlayer = distance(playerPos, PredPos);
+				float distanceSight = distance(playerPos, To);
+
+				bool isAimingAtUs = false;
+				bool aimMovingCloser = false;
 
 				//player can straight aim to us
-				if(distancePlayer < distanceSight && rand() % 12 < 4)
+				if(distancePlayer < distanceSight)
 				{
+					//slow down bot somewhat
+					SvBotSpeed *= 0.75;
 
+					vec2 Direction_old = pChar->m_AimHistory[(reactionTick+Server()->TickSpeed()-5) % POSITION_HISTORY];
 					
-					//does player aim straight at us
+					if(distance(playerPos+Direction_old, m_Pos) - 0.2 > distance(playerPos+Direction, m_Pos))
+						aimMovingCloser = true;
 
-					vec2 sight = pChar->m_Pos + Direction * distancePlayer;
-
-					//if aim is less than 6 tiles away
-					if(distance(sight, PredPos) < 4*32)
-					{
-						//avoid aim
-
-						m_AvoidCharge += 2;
-
-						if(m_AvoidCharge >= SvBotAvoidAimCharge)
-							m_Vel = (m_Vel - normalize(sight-m_Pos)*SvBotSpeed*2) / 2;
-					}else
-					{
-						m_AvoidCharge--;
-					}
+					vec2 sight = playerPos + Direction * distancePlayer;
+					//if aim is less than 3 tiles away
+					isAimingAtUs = distance(sight, PredPos) < 2*32+SvBotAvoidAimCharge*16;
 				}
-				else
+
+				if(aimMovingCloser || isAimingAtUs)
 				{
-					m_AvoidCharge--;
+					//avoid aim
+					m_AvoidCharge += 2;
+
+					// if(m_AvoidCharge >= SvBotAvoidAimCharge && m_AvoidCooldown > 0)
+					if(m_AvoidCooldown > 0)
+					{
+						vec2 dir = m_Pos-playerPos;
+						float angle = 20;
+						if(rand() % 2)
+							angle = -angle;
+						
+						dir = rotate(dir, angle);
+						m_Accel = normalize((dir+playerPos)-m_Pos) * SvBotSpeed / 20 * 7.5;
+						m_AvoidCooldown = -300/20;
+						m_AvoidCharge = 0;
+					}
 				}
 			}else
 			{
@@ -317,9 +399,10 @@ void CBot::Tick()
 					float LaserReach;
 					LaserReach = GameServer()->Tuning()->m_LaserReach;
 
+					int randomness = SvBotAimRandom + distance(To, m_Pos)/SvBotAimDistanceFalloff;
 					vec2 dir = normalize(To-m_Pos);
-					if(SvBotAimRandom > 1)
-						dir += vec2(rand() % SvBotAimRandom * (rand() % 2 == 1 ? 1 : -1), rand() % SvBotAimRandom * (rand() % 2 == 1 ? 1 : -1)) / 100.0;
+					if(randomness > 1)
+						dir += vec2(rand() % randomness * (rand() % 2 == 1 ? 1 : -1), rand() % randomness * (rand() % 2 == 1 ? 1 : -1)) / 100.0;
 
 					CLaser * pLaser = new CLaser(&GameServer()->m_World[m_Lobby], m_Pos, dir, LaserReach, 0, WEAPON_LASER, this, m_Team);
 					GameServer()->CreateSound(m_Lobby, m_Pos, SOUND_LASER_FIRE, 0);
@@ -509,15 +592,40 @@ void CBot::Tick()
 
 		if(m_Chase >= 0)
 		{
-			if(!GameServer()->PlayerExists(m_Chase) || !GameServer()->m_apPlayers[m_Chase]->GetCharacter() || rand() % 120 == 0)
+			if(!GameServer()->PlayerExists(m_Chase) || !GameServer()->m_apPlayers[m_Chase]->GetCharacter() || rand() % 200 == 0)
 				m_Chase = !m_Team-2;
 		}
 
-		float distanceChasePlayer = 99999;
+		float distanceChasePlayer = 999999;
 		if(m_Chase >= 0 && GameServer()->PlayerExists(m_Chase) && GameServer()->m_apPlayers[m_Chase]->GetCharacter())
 		{
 			distanceChasePlayer = distance(GameServer()->m_apPlayers[m_Chase]->GetCharacter()->m_Pos, m_Pos);
 			m_TargetPos = GameServer()->m_apPlayers[m_Chase]->GetCharacter()->m_Pos;
+
+			if (GameServer()->m_apPlayers[m_Chase]->GetTeam() != m_Team)
+			{
+				int dist = 0;
+				if(GameServer()->m_apPlayers[m_Chase]->GetCharacter()->m_ReloadTimer <= 10)
+					dist = 8;
+				
+				if(m_ReloadTimer < 0)
+					dist += 7;
+				
+				if(!m_pController->m_apFlags[!m_Team]->m_AtStand && !m_HasFlag)
+					dist /= 2;
+				
+				if(m_HasFlag)
+					dist += 3;
+
+				m_TargetPos += normalize(m_Pos - m_TargetPos)*32*dist;
+				
+				//we wanna look at the player we're chasing, except for when charging a shot
+				int delayed_reaction_tick = (Server()->Tick() + Server()->TickSpeed()-SvBotReactionTime) % POSITION_HISTORY;
+				if(m_ShootTimer > 10)
+					m_LookAt = GameServer()->m_apPlayers[m_Chase]->GetCharacter()->m_Positions[delayed_reaction_tick];
+			}
+			
+
 
 			m_Chase_Direction = GameServer()->m_apPlayers[m_Chase]->GetCharacter()->m_Input.m_Direction;
 		}
@@ -525,31 +633,53 @@ void CBot::Tick()
 
 		//defend
 		//when closer to own flag and flag not at stand
-		if(distanceChasePlayer > dist[m_Team] && dist[m_Team] < dist[!m_Team] && ((!m_pController->m_apFlags[m_Team]->m_AtStand && GetID() % 4 != 0) || dist[m_Team] > closestDistFlag) || m_HasFlag ||
-			((m_pController->m_apFlags[!m_Team]->m_BotGrabbed && GetID() % 3 != 0) || m_pController->m_apFlags[!m_Team]->m_pCarryingCharacter))
-		{
-			if(m_Chase != m_Team-2 && rand() % 3 == 0 && closestPlayerFlag >= 0)
-			{
-				m_Chase = closestPlayerFlag;
-			}
+		bool own_flag_safe = m_pController->m_apFlags[m_Team]->m_AtStand;
+		// if(distanceChasePlayer > dist[m_Team] && dist[m_Team] < dist[!m_Team] && ((!own_flag_safe) || dist[m_Team] > closestDistFlag) || m_HasFlag ||
+			// ((m_pController->m_apFlags[!m_Team]->m_BotGrabbed) || m_pController->m_apFlags[!m_Team]->m_pCarryingCharacter))
+		
+		//defend
+		//when enemy flag taken
+		//when enemy and me close
 
-			if(rand() % 40 == 0 && closestDistFlag < 70*32 || m_HasFlag)
-				m_Chase = m_Team-2;
-			
-			//cut off flag
-			if(!m_pController->m_apFlags[m_Team]->m_AtStand)
-				m_Chase_Direction = (!m_Team)*2-1;	//goto enemy team (team 0 is left: direction 0, etc)
-		}
-		//attack when closer to enemy flag
-		else if(distanceChasePlayer > dist[!m_Team])
+		bool teammate_has_enemy_flag = (m_pController->m_apFlags[!m_Team]->m_pCarryingCharacter || m_pController->m_apFlags[!m_Team]->m_BotGrabbed);
+
+		bool our_flag_was_dropped = !m_pController->m_apFlags[m_Team]->m_AtStand && !m_pController->m_apFlags[m_Team]->m_pCarryingCharacter
+			&& !m_pController->m_apFlags[m_Team]->m_BotGrabbed;
+
+		if(m_Chase < 0 || rand() % 50 == 0)
 		{
-			m_Chase_Direction = 0;
-			if(rand() % 40 == 0)
-				m_Chase = !m_Team-2;
+			if(teammate_has_enemy_flag || our_flag_was_dropped)
+			{
+				if(m_Chase != m_Team-2 && rand() % 3 == 0 && closestPlayerFlag >= 0)
+				{
+					m_Chase = closestPlayerFlag;
+				}
+
+				m_Chase = m_Team-2;
+				if((rand() % 40 == 0 && closestDistFlag < 140*32 && own_flag_safe))
+					m_Chase = (!m_Team)-2;
+				
+				//cut off flag
+				if(!own_flag_safe)
+					m_Chase_Direction = (!m_Team)*2-1;	//goto enemy team (team 0 is left: direction 0, etc)
+			}
+			//attack when closer to enemy flag
+			else if(distanceChasePlayer > dist[!m_Team])
+			{
+				m_Chase_Direction = 0;
+				if(rand() % 40 == 0)
+					m_Chase = !m_Team-2;
+			}
 		}
 
 		if(m_Chase < 0)
+		{
 			m_TargetPos = m_pController->m_apFlags[m_Chase+2]->m_Pos;
+			if(m_Chase+2 == m_Team && own_flag_safe)
+			{
+				m_TargetPos = m_TargetPos + vec2(32, 0) + rotate(vec2(1,0), Server()->Tick()*3)*32*3;
+			}
+		}
 	}
 
 	if(rand() % 600 == 0)
@@ -603,14 +733,14 @@ void CBot::Tick()
 				}
 			}
 
-			if(score < lowestScore && rand() % 4 != 1 || distance1 < 5*32)
+			if(score < lowestScore && rand() % 3 != 0 || distance1 < 5*32)
 			{
 				lowestScore = score;
 				bestWaypoint = waypoint;
 			}
 
 			//make bots choose a more random route
-			if(currentDistance > distance1 && rand() % (1+m_pController->m_aWaypoints[m_Waypoint].connectionAmount) == 0)
+			if(currentDistance > distance1 && (rand() % (1+m_pController->m_aWaypoints[m_Waypoint].connectionAmount) == 0 || rand() % 3 == 0))
 			{
 				lowestScore = score;
 				bestWaypoint = waypoint;
@@ -647,7 +777,9 @@ void CBot::Tick()
 	if(m_ShootTimer < shootDelay*2 || m_ShootChargeUp < SvBotChargeTime)
 		multiplier *= 0.5;
 
-	m_Vel = (m_Vel * 4 + direction*SvBotSpeed*multiplier) / 5.0;
+	m_Vel += m_Accel;
+	int smoothing = 3;
+	m_Vel = (m_Vel * smoothing + direction*SvBotSpeed*multiplier) / (float)(smoothing+1);
 	vec2 normalVel = normalize(m_Vel);
 
 	normalVel.y += sin(Server()->Tick() / 10.0) * 0.1;

@@ -101,6 +101,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	{
 		m_Positions[i] = Pos;
 		m_PastCharacters[i] = character;
+		m_AimHistory[i] = vec2(0,0);
 	}
 
 	return true;
@@ -809,6 +810,7 @@ void CCharacter::TickDefered()
 
 	int position_index = Server()->Tick() % POSITION_HISTORY;
 	m_Positions[position_index] = m_Pos;
+	m_AimHistory[position_index] = normalize(vec2(m_Input.m_TargetX, m_Input.m_TargetY));
 	m_Core.Write(&m_PastCharacters[position_index]);
 	m_PastCharacters[position_index].m_Weapon = m_Core.m_ActiveWeapon;
 	
