@@ -113,7 +113,7 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 
 			if(m_Owner >= 0 && !m_pBot && GameServer()->m_apPlayers[m_Owner])
 			{
-				pHitBot->m_Difficulty += 0.025;
+				pHitBot->m_Difficulty += 0.05;
 				GameServer()->m_apPlayers[m_Owner]->Add_Score(1);
 
 				int Mask = CmaskOne(m_Owner);
@@ -195,7 +195,7 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 	
 	if(m_pBot)
 	{
-		m_pBot->m_Difficulty -= 0.03;
+		m_pBot->m_Difficulty -= 0.05;
 	}
 	
 	m_From = From;

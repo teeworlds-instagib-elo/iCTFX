@@ -26,9 +26,11 @@ public:
 	int m_HookedID;
 
 	int m_AvoidCharge;
+	int m_AvoidCooldown;
 	int m_Score;
 
 	vec2 m_Vel;
+	vec2 m_Accel;
 	int m_Chase;
 	int m_Chase_Direction;
 	vec2 m_TargetPos;
