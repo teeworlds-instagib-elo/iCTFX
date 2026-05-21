@@ -3673,7 +3673,7 @@ void CGameContext::OnConsoleInit()
 	Console()->Register("restart", "?i[seconds]", CFGFLAG_SERVER | CFGFLAG_STORE, ConRestart, this, "Restart in x seconds (0 = abort)");
 	Console()->Register("timelimit", "i[minutes]", CFGFLAG_SERVER | CFGFLAG_STORE, ConTimeLimit, this, "Set in game timelimit (0 = none)");
 	Console()->Register("scorelimit", "i[score]", CFGFLAG_SERVER | CFGFLAG_STORE, ConScoreLimit, this, "Set in game scorelimit (0 = none)");
-	Console()->Register("spectator_slots", "i[slots]", CFGFLAG_SERVER | CFGFLAG_STORE, ConScoreLimit, this, "Set in game scorelimit (0 = none)");
+	Console()->Register("spectator_slots", "i[slots]", CFGFLAG_SERVER | CFGFLAG_STORE, ConSpectatorSlots, this, "Set in game scorelimit (0 = none)");
 	Console()->Register("broadcast", "r[message]", CFGFLAG_SERVER, ConBroadcast, this, "Broadcast message");
 	Console()->Register("say", "r[message]", CFGFLAG_SERVER, ConSay, this, "Say in chat");
 	Console()->Register("set_team", "i[id] i[team-id] ?i[delay in minutes]", CFGFLAG_SERVER, ConSetTeam, this, "Set team of player to team");
