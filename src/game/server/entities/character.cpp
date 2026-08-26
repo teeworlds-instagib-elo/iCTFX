@@ -371,6 +371,9 @@ void CCharacter::FireWeapon()
 		return;
 	}
 
+	if(m_Core.m_ActiveWeapon == WEAPON_SHOTGUN)
+		return;
+
 	m_ReloadTimer = 0;
 
 	DoWeaponSwitch();
@@ -1203,6 +1206,23 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 			Weapon = WEAPON_NINJA;
 	}
 
+	if(m_Core.m_ActiveWeapon == WEAPON_SHOTGUN)
+	{
+		vec2 dir = normalize(vec2(m_LatestInput.m_TargetX, m_LatestInput.m_TargetY));
+		int Size = Server()->IsSixup(SnappingClient) ? 3 * 4 : sizeof(CNetObj_Pickup);
+		for(int i = 0; i < 5; i++)
+		{
+			CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, GetID()*10+i, Size));
+			if(!pP)
+				return;
+
+			vec2 pos = m_Pos + rotate(dir, (i-2)*pi*4.6) * m_ProximityRadius * 3;
+			pP->m_X = (int)pos.x;
+			pP->m_Y = (int)pos.y;
+			pP->m_Type = POWERUP_ARMOR;
+		}
+	}
+
 	// This could probably happen when m_Jetpack changes instead
 	// jetpack and ninjajetpack prediction
 	if(m_pPlayer->GetCID() == SnappingClient)
@@ -1238,6 +1258,9 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 
 	if(Weapon == WEAPON_GRENADE)
 		AmmoCount = m_aWeapons[Weapon].m_Ammo;
+	
+	if(Weapon == WEAPON_SHOTGUN)
+		AmmoCount = 0;
 
 	if(m_pPlayer->GetCID() == SnappingClient || SnappingClient == SERVER_DEMO_CLIENT ||
 		(!g_Config.m_SvStrictSpectateMode && m_pPlayer->GetCID() == GameServer()->m_apPlayers[SnappingClient]->m_SpectatorID))
@@ -2480,6 +2503,12 @@ void CCharacter::ResetPickups()
 	{
 		m_aWeapons[WEAPON_GRENADE].m_Got = true;
 		m_Core.m_ActiveWeapon = WEAPON_GRENADE;
+	}
+
+	if(GameWorld()->m_shield)
+	{
+		m_aWeapons[WEAPON_SHOTGUN].m_Got = true;
+		m_Core.m_ActiveWeapon = WEAPON_SHOTGUN;
 	}
 
 	if(GameWorld()->m_laser)

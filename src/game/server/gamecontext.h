@@ -343,6 +343,7 @@ private:
 	static void ConBotAmount(IConsole::IResult *pResult, void *pUserData);
 	static void ConLOS(IConsole::IResult *pResult, void *pUserData);
 	static void ConGrenade(IConsole::IResult *pResult, void *pUserData);
+	static void ConShield(IConsole::IResult *pResult, void *pUserData);
 	static void ConHammer(IConsole::IResult *pResult, void *pUserData);
 	static void ConTournamentMode(IConsole::IResult *pResult, void *pUserData);
 	static void ConLaser(IConsole::IResult *pResult, void *pUserData);

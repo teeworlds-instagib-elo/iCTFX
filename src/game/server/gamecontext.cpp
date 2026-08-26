@@ -304,6 +304,8 @@ bool CGameContext::CheckSightVisibility(int Lobby, CCharacter * pChar, vec2 Pos,
 	if(Lobby < 0)
 		return true;
 	
+	bool shield;
+	
 	for(int x = -1; x < 2; x+=2)
 	{
 		for(int y = -1; y < 2; y+=2)
@@ -320,7 +322,7 @@ bool CGameContext::CheckSightVisibility(int Lobby, CCharacter * pChar, vec2 Pos,
 					vec2 From = pChar->m_Pos + offset1;
 					To += offset2;
 					Collision(Lobby)->IntersectLine(From, To, &To, 0);
-					if(m_World[Lobby].IntersectCharacter(From, To, 0.f, At, pChar, -1, pCharTarget, -1))
+					if(m_World[Lobby].IntersectCharacter(From, To, 0.f, At, shield, pChar, -1, pCharTarget, -1))
 						return true;
 				}
 			}
@@ -332,7 +334,7 @@ bool CGameContext::CheckSightVisibility(int Lobby, CCharacter * pChar, vec2 Pos,
 
 	vec2 From = pChar->m_Pos;
 	Collision(Lobby)->IntersectLine(From, To, &To, 0);
-	if(m_World[Lobby].IntersectCharacter(From, To, 0.f, At, pChar, -1, pCharTarget, -1))
+	if(m_World[Lobby].IntersectCharacter(From, To, 0.f, At, shield, pChar, -1, pCharTarget, -1))
 		return true;
 
 	return false;

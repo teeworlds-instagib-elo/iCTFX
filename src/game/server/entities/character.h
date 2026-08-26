@@ -130,7 +130,7 @@ private:
 	// these are non-heldback inputs
 	CNetObj_PlayerInput m_LatestPrevPrevInput;
 	CNetObj_PlayerInput m_LatestPrevInput;
-	CNetObj_PlayerInput m_LatestInput;
+	public: CNetObj_PlayerInput m_LatestInput;
 
 	// input
 	CNetObj_PlayerInput m_PrevInput;
