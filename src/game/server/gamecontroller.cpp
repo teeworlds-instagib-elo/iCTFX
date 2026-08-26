@@ -1005,7 +1005,8 @@ int IGameController::GetAutoTeam(int NotThisID)
 bool IGameController::CanJoinTeam(int Team, int NotThisID)
 {
 	if(Team == TEAM_SPECTATORS || (GameServer()->m_apPlayers[NotThisID]
-		&& GameServer()->m_apPlayers[NotThisID]->GetLobby() == m_Lobby && GameServer()->m_apPlayers[NotThisID]->GetTeam() != TEAM_SPECTATORS))
+		&& GameServer()->m_apPlayers[NotThisID]->GetLobby() == m_Lobby && GameServer()->m_apPlayers[NotThisID]->GetCharacter() &&
+		GameServer()->m_apPlayers[NotThisID]->GetTeam() != TEAM_SPECTATORS))
 		return true;
 
 	int aNumplayers[2] = {0, 0};

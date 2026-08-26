@@ -3236,12 +3236,7 @@ void CGameContext::ConLobby(IConsole::IResult *pResult, void *pUserData)
 	{
 		int lobby = clamp(pResult->GetInteger(0), 0, MAX_LOBBIES-1);
 
-		bool spec = false;
-
-		if(!pSelf->m_apController[lobby]->CanJoinTeam(pSelf->m_apPlayers[pResult->m_ClientID]->GetTeam(), pResult->m_ClientID))
-		{
-			spec = true;
-		}
+		bool spec = pSelf->m_apPlayers[pResult->m_ClientID]->GetTeam() == TEAM_SPECTATORS;
 
 		pSelf->m_apPlayers[pResult->m_ClientID]->KillCharacter();
 		((CServer*)pSelf->Server())->m_aClients[pResult->m_ClientID].m_Lobby = lobby;
@@ -3255,31 +3250,17 @@ void CGameContext::ConLobby(IConsole::IResult *pResult, void *pUserData)
 		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_Wallshots = 0;
 		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_WallshotKills = 0;
 		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_Suicides = 0;
+	
+		int team = pSelf->m_apController[lobby]->GetAutoTeam(pResult->m_ClientID);
 		
-		int aNumplayers[2] = {0, 0};
-		for(int i = 0; i < MAX_CLIENTS; i++)
-		{
-			if(pSelf->m_apPlayers[i] && pSelf->GetLobby(i) == lobby && i != pResult->m_ClientID)
-			{
-				if(pSelf->m_apPlayers[i]->GetTeam() == TEAM_RED || pSelf->m_apPlayers[i]->GetTeam() == TEAM_BLUE)
-					aNumplayers[pSelf->m_apPlayers[i]->GetTeam()]++;
-			}
-		}
 
-		int totalPlayers = aNumplayers[0] + aNumplayers[1];
-		
-		pSelf->m_apPlayers[pResult->m_ClientID]->SetTeam(TEAM_RED);
-		if (aNumplayers[TEAM_RED] > aNumplayers[TEAM_BLUE])
-			pSelf->m_apPlayers[pResult->m_ClientID]->SetTeam(TEAM_BLUE);
-		
 		if(pSelf->m_apController[lobby]->m_tourneyMode)
 			spec = true;
 
-		if (totalPlayers >= g_Config.m_SvMaxClients - pSelf->m_apController[lobby]->m_SpectatorSlots)
-			spec = true;
-
 		if(spec)
-			pSelf->m_apPlayers[pResult->m_ClientID]->SetTeam(TEAM_SPECTATORS);
+			team = TEAM_SPECTATORS;
+		
+		pSelf->m_apPlayers[pResult->m_ClientID]->SetTeam(team);
 
 		for(int i = 0; i < MAX_CLIENTS; i++)
 		{
