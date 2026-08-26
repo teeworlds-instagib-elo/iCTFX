@@ -657,7 +657,7 @@ void IGameController::Tick()
 		if(!m_FakeWarmup && GameServer()->m_World[m_Lobby].m_Paused)
 		{
 			GameServer()->m_World[m_Lobby].m_Paused = false;
-			GameServer()->SendChat(-1, CGameContext::CHAT_ALL, "Game started");
+			GameServer()->SendChat(-1, CGameContext::CHAT_ALL, "Game started", -1 , 3, m_Lobby);
 		}
 	}
 

@@ -551,7 +551,7 @@ void CGameContext::SendSettings(int ClientID)
 	}
 }
 
-void CGameContext::SendBroadcast(const char *pText, int ClientID, bool IsImportant)
+void CGameContext::SendBroadcast(const char *pText, int ClientID, int lobby, bool IsImportant)
 {
 	CNetMsg_Sv_Broadcast Msg;
 	Msg.m_pMessage = pText;
@@ -559,12 +559,13 @@ void CGameContext::SendBroadcast(const char *pText, int ClientID, bool IsImporta
 	if(ClientID == -1)
 	{
 		dbg_assert(IsImportant, "broadcast messages to all players must be important");
-		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, ClientID);
+		
 
 		for(auto &pPlayer : m_apPlayers)
 		{
-			if(pPlayer)
+			if(pPlayer && (pPlayer->GetLobby() == lobby || lobby == -1))
 			{
+				Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, pPlayer->GetCID());
 				pPlayer->m_LastBroadcastImportance = true;
 				pPlayer->m_LastBroadcast = Server()->Tick();
 			}
@@ -962,7 +963,7 @@ void CGameContext::OnTick()
 			m_apPlayers[i]->m_OldLobby = ((CServer*)Server())->m_aClients[i].m_Lobby;
 			char aBuf[128];
 			str_format(aBuf, 128, "Lobby %i", m_apPlayers[i]->m_OldLobby);
-			SendBroadcast(aBuf, i, true);
+			SendBroadcast(aBuf, i, -1, true);
 		}
 	}
 
@@ -1793,10 +1794,10 @@ bool CGameContext::OnClientDDNetVersionKnown(int ClientID)
 
 	// Tell old clients to update.
 	if(ClientVersion < VERSION_DDNET_UPDATER_FIXED && g_Config.m_SvClientSuggestionOld[0] != '\0')
-		SendBroadcast(g_Config.m_SvClientSuggestionOld, ClientID);
+		SendBroadcast(g_Config.m_SvClientSuggestionOld, ClientID, -1);
 	// Tell known bot clients that they're botting and we know it.
 	if(((ClientVersion >= 15 && ClientVersion < 100) || ClientVersion == 502) && g_Config.m_SvClientSuggestionBot[0] != '\0')
-		SendBroadcast(g_Config.m_SvClientSuggestionBot, ClientID);
+		SendBroadcast(g_Config.m_SvClientSuggestionBot, ClientID, -1);
 
 	return false;
 }
@@ -2645,7 +2646,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				str_time((int64_t)TimeLeft * 100, TIME_HOURS, aTime, sizeof(aTime));
 				char aBuf[128];
 				str_format(aBuf, sizeof(aBuf), "Time to wait before changing team: %s", aTime);
-				SendBroadcast(aBuf, ClientID);
+				SendBroadcast(aBuf, ClientID, -1);
 				return;
 			}
 			
@@ -2666,7 +2667,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			{
 				char aBuf[128];
 				str_format(aBuf, sizeof(aBuf), "Only %d active players are allowed", Server()->MaxClients() - m_apController[Lobby]->m_SpectatorSlots);
-				SendBroadcast(aBuf, ClientID);
+				SendBroadcast(aBuf, ClientID, -1);
 			}
 		}
 		else if(MsgID == NETMSGTYPE_CL_ISDDNETLEGACY)
@@ -3347,7 +3348,7 @@ void CGameContext::ConBroadcast(IConsole::IResult *pResult, void *pUserData)
 	}
 	aBuf[j] = '\0';
 
-	pSelf->SendBroadcast(aBuf, -1);
+	pSelf->SendBroadcast(aBuf, -1, -1);
 }
 
 void CGameContext::ConSay(IConsole::IResult *pResult, void *pUserData)

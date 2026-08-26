@@ -250,7 +250,7 @@ public:
 	void SendWeaponPickup(int ClientID, int Weapon);
 	void SendMotd(int ClientID);
 	void SendSettings(int ClientID);
-	void SendBroadcast(const char *pText, int ClientID, bool IsImportant = true);
+	void SendBroadcast(const char *pText, int ClientID, int lobby, bool IsImportant = true);
 
 	void List(int ClientID, const char *filter);
 

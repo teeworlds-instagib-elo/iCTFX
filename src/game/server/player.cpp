@@ -202,7 +202,7 @@ void CPlayer::Tick()
 		{
 			char aMsg[32];
 			str_format(aMsg, 32, "afk in %li", (m_LastPlaytime-(time_get() - time_freq() * 185)) / time_freq());
-			GameServer()->SendBroadcast(aMsg, m_ClientID, true);
+			GameServer()->SendBroadcast(aMsg, m_ClientID, -1, true);
 			GameServer()->SendChatTarget(m_ClientID, aMsg);
 		}
 
@@ -587,9 +587,9 @@ void CPlayer::OnPredictedInput(CNetObj_PlayerInput *NewInput)
 
 	// Magic number when we can hope that client has successfully identified itself
 	if(m_NumInputs == 20 && g_Config.m_SvClientSuggestion[0] != '\0' && GetClientVersion() <= VERSION_DDNET_OLD)
-		GameServer()->SendBroadcast(g_Config.m_SvClientSuggestion, m_ClientID);
+		GameServer()->SendBroadcast(g_Config.m_SvClientSuggestion, m_ClientID, -1);
 	else if(m_NumInputs == 200 && Server()->IsSixup(m_ClientID))
-		GameServer()->SendBroadcast("This server uses an experimental translation from Teeworlds 0.7 to 0.6. Please report bugs on ddnet.tw/discord", m_ClientID);
+		GameServer()->SendBroadcast("This server uses an experimental translation from Teeworlds 0.7 to 0.6. Please report bugs on ddnet.tw/discord", m_ClientID, -1);
 }
 
 void CPlayer::OnDirectInput(CNetObj_PlayerInput *NewInput)

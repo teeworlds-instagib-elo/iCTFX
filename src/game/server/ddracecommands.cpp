@@ -959,8 +959,8 @@ void CGameContext::ConStop(IConsole::IResult *pResult, void *pUserData)
 		}
 		return;
 	}
-	pSelf->m_World[pResult->m_Lobby].m_Paused = true;
-	pSelf->SendChat(-1, CHAT_ALL, "Server paused");
+	pSelf->m_World[Lobby].m_Paused = true;
+	pSelf->SendChat(-1, CHAT_ALL, "Server paused", -1, 3, Lobby);
 }
 
 void CGameContext::ConGo(IConsole::IResult *pResult, void *pUserData)
@@ -974,8 +974,8 @@ void CGameContext::ConGo(IConsole::IResult *pResult, void *pUserData)
 	if (Lobby == 0)
 		return;
 	
-	pSelf->m_apController[pResult->m_Lobby]->m_FakeWarmup = pSelf->Server()->TickSpeed() * g_Config.m_SvGoTime;
-	pSelf->SendChat(-1, CHAT_ALL, "Server continuing");
+	pSelf->m_apController[Lobby]->m_FakeWarmup = pSelf->Server()->TickSpeed() * g_Config.m_SvGoTime;
+	pSelf->SendChat(-1, CHAT_ALL, "Server continuing", -1, 3, Lobby);
 }
 
 
@@ -1004,10 +1004,10 @@ void CGameContext::ConXonX(IConsole::IResult *pResult, void *pUserData)
 	char aBuf[128];
 
 	str_format(aBuf, sizeof(aBuf), "Upcoming %don%d! Please stay on spectator", Mode, Mode);
-	pSelf->SendBroadcast(aBuf, -1);
+	pSelf->SendBroadcast(aBuf, -1, Lobby);
 
 	str_format(aBuf, sizeof(aBuf), "The %don%d will start in %d seconds!", Mode, Mode, g_Config.m_SvWarTime);
-	pSelf->SendChat(-1, CHAT_ALL, aBuf);
+	pSelf->SendChat(-1, CHAT_ALL, aBuf, -1, 3, Lobby);
 }
 
 void CGameContext::ConReset(IConsole::IResult *pResult, void *pUserData)
@@ -1022,7 +1022,7 @@ void CGameContext::ConReset(IConsole::IResult *pResult, void *pUserData)
 
 	CGameContext *pSelf = (CGameContext *)pUserData;
 	pSelf->m_apController[pResult->m_Lobby]->m_SpectatorSlots = 0;
-	pSelf->SendChat(-1, CHAT_ALL, "Reset spectator slots");
+	pSelf->SendChat(-1, CHAT_ALL, "Reset spectator slots", -1, 3, Lobby);
 
 }
 
