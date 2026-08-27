@@ -223,6 +223,64 @@ void CGameContext::ConIDM(IConsole::IResult *pResult, void *pUserData)
 	}
 }
 
+void CGameContext::ConFNG(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	int Lobby = pResult->m_Lobby;
+	if(Lobby == 0)	//Lobby 0 is save server
+	{
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+				continue;
+			
+			pSelf->SendChatTarget(i, "You cannot change settings in lobby 0, got a different lobby");
+		}
+		return;
+	}
+
+	pSelf->m_apController[pResult->m_Lobby]->m_fng = !pSelf->m_apController[pResult->m_Lobby]->m_fng;
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+			continue;
+		
+		char aBuf[256];
+		str_format(aBuf, 256, "FNG is %s", pSelf->m_apController[pResult->m_Lobby]->m_fng ? "enabled" : "disabled");
+
+		pSelf->SendChatTarget(i, aBuf);
+	}
+}
+
+void CGameContext::ConFlagReset(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	int Lobby = pResult->m_Lobby;
+	if(Lobby == 0)	//Lobby 0 is save server
+	{
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+				continue;
+			
+			pSelf->SendChatTarget(i, "You cannot change settings in lobby 0, got a different lobby");
+		}
+		return;
+	}
+
+	pSelf->m_apController[pResult->m_Lobby]->m_flag_resetting = !pSelf->m_apController[pResult->m_Lobby]->m_flag_resetting;
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+			continue;
+		
+		char aBuf[256];
+		str_format(aBuf, 256, "Flag resetting is %s", pSelf->m_apController[pResult->m_Lobby]->m_flag_resetting ? "enabled" : "disabled");
+
+		pSelf->SendChatTarget(i, aBuf);
+	}
+}
+
 void CGameContext::ConBotAmount(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
@@ -337,6 +395,35 @@ void CGameContext::ConGrenade(IConsole::IResult *pResult, void *pUserData)
 		
 		char aBuf[256];
 		str_format(aBuf, 256, "grenade is %s", pSelf->m_World[pResult->m_Lobby].m_grenade ? "enabled" : "disabled");
+
+		pSelf->SendChatTarget(i, aBuf);
+	}
+}
+
+void CGameContext::ConShield(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	int Lobby = pResult->m_Lobby;
+	if(Lobby == 0)	//Lobby 0 is save server
+	{
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+				continue;
+			
+			pSelf->SendChatTarget(i, "You cannot change settings in lobby 0, got a different lobby");
+		}
+		return;
+	}
+
+	pSelf->m_World[pResult->m_Lobby].m_shield = !pSelf->m_World[pResult->m_Lobby].m_shield;
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+			continue;
+		
+		char aBuf[256];
+		str_format(aBuf, 256, "shield is %s", pSelf->m_World[pResult->m_Lobby].m_shield ? "enabled" : "disabled");
 
 		pSelf->SendChatTarget(i, aBuf);
 	}
@@ -959,8 +1046,8 @@ void CGameContext::ConStop(IConsole::IResult *pResult, void *pUserData)
 		}
 		return;
 	}
-	pSelf->m_World[pResult->m_Lobby].m_Paused = true;
-	pSelf->SendChat(-1, CHAT_ALL, "Server paused");
+	pSelf->m_World[Lobby].m_Paused = true;
+	pSelf->SendChat(-1, CHAT_ALL, "Server paused", -1, 3, Lobby);
 }
 
 void CGameContext::ConGo(IConsole::IResult *pResult, void *pUserData)
@@ -974,8 +1061,8 @@ void CGameContext::ConGo(IConsole::IResult *pResult, void *pUserData)
 	if (Lobby == 0)
 		return;
 	
-	pSelf->m_apController[pResult->m_Lobby]->m_FakeWarmup = pSelf->Server()->TickSpeed() * g_Config.m_SvGoTime;
-	pSelf->SendChat(-1, CHAT_ALL, "Server continuing");
+	pSelf->m_apController[Lobby]->m_FakeWarmup = pSelf->Server()->TickSpeed() * g_Config.m_SvGoTime;
+	pSelf->SendChat(-1, CHAT_ALL, "Server continuing", -1, 3, Lobby);
 }
 
 
@@ -1004,10 +1091,10 @@ void CGameContext::ConXonX(IConsole::IResult *pResult, void *pUserData)
 	char aBuf[128];
 
 	str_format(aBuf, sizeof(aBuf), "Upcoming %don%d! Please stay on spectator", Mode, Mode);
-	pSelf->SendBroadcast(aBuf, -1);
+	pSelf->SendBroadcast(aBuf, -1, Lobby);
 
 	str_format(aBuf, sizeof(aBuf), "The %don%d will start in %d seconds!", Mode, Mode, g_Config.m_SvWarTime);
-	pSelf->SendChat(-1, CHAT_ALL, aBuf);
+	pSelf->SendChat(-1, CHAT_ALL, aBuf, -1, 3, Lobby);
 }
 
 void CGameContext::ConReset(IConsole::IResult *pResult, void *pUserData)
@@ -1022,7 +1109,7 @@ void CGameContext::ConReset(IConsole::IResult *pResult, void *pUserData)
 
 	CGameContext *pSelf = (CGameContext *)pUserData;
 	pSelf->m_apController[pResult->m_Lobby]->m_SpectatorSlots = 0;
-	pSelf->SendChat(-1, CHAT_ALL, "Reset spectator slots");
+	pSelf->SendChat(-1, CHAT_ALL, "Reset spectator slots", -1, 3, Lobby);
 
 }
 

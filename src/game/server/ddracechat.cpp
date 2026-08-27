@@ -750,7 +750,7 @@ void CGameContext::ConTime(IConsole::IResult *pResult, void *pUserData)
 	int64_t Time = (int64_t)100 * (float)(pSelf->Server()->Tick() - pChr->m_StartTime) / ((float)pSelf->Server()->TickSpeed());
 	str_time(Time, TIME_HOURS, aBufTime, sizeof(aBufTime));
 	str_format(aBuf, sizeof(aBuf), "Your time is %s", aBufTime);
-	pSelf->SendBroadcast(aBuf, pResult->m_ClientID);
+	pSelf->SendBroadcast(aBuf, pResult->m_ClientID, -1);
 }
 
 static const char s_aaMsg[4][128] = {"game/round timer.", "broadcast.", "both game/round timer and broadcast.", "racetime."};
@@ -796,7 +796,7 @@ void CGameContext::ConSetTimerType(IConsole::IResult *pResult, void *pUserData)
 		}
 
 		if((OldType == CPlayer::TIMERTYPE_BROADCAST || OldType == CPlayer::TIMERTYPE_GAMETIMER_AND_BROADCAST) && (pPlayer->m_TimerType == CPlayer::TIMERTYPE_GAMETIMER || pPlayer->m_TimerType == CPlayer::TIMERTYPE_NONE))
-			pSelf->SendBroadcast("", pResult->m_ClientID);
+			pSelf->SendBroadcast("", pResult->m_ClientID, -1);
 	}
 
 	if(pPlayer->m_TimerType <= CPlayer::TIMERTYPE_SIXUP && pPlayer->m_TimerType >= CPlayer::TIMERTYPE_GAMETIMER)

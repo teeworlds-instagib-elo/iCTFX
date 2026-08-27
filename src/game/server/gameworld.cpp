@@ -35,6 +35,15 @@ CGameWorld::~CGameWorld()
 			delete pFirstEntityType;
 }
 
+void CGameWorld::SetSettings()
+{
+	m_grenade = g_Config.m_SvWeaponGrenade;
+	m_shield = g_Config.m_SvWeaponShield;
+	m_hammer = g_Config.m_SvWeaponHammer;
+	m_laser = g_Config.m_SvWeaponLaser;
+	m_lineOfSight = false;
+}
+
 void CGameWorld::DeleteAllEntities()
 {
 	// delete all entities
@@ -53,10 +62,7 @@ void CGameWorld::DeleteAllEntities()
 	for(auto &pFirstEntityType : m_apFirstEntityTypes)
 		pFirstEntityType = 0;
 	
-	m_grenade = false;
-	m_hammer = false;
-	m_laser = true;
-	m_lineOfSight = false;
+	SetSettings();
 }
 
 void CGameWorld::SetGameServer(CGameContext *pGameServer)
@@ -169,6 +175,7 @@ void CGameWorld::Reset()
 	RemoveEntities();
 
 	m_ResetRequested = false;
+	SetSettings();
 }
 
 void CGameWorld::RemoveEntities()
@@ -346,7 +353,7 @@ void CGameWorld::SwapClients(int Client1, int Client2)
 
 // TODO: should be more general
 //CCharacter *CGameWorld::IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, vec2& NewPos, CEntity *pNotThis)
-CCharacter *CGameWorld::IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, CCharacter *pNotThis, int CollideWith, class CCharacter *pThisOnly, int tick)
+CCharacter *CGameWorld::IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, bool &shield, CCharacter *pNotThis, int CollideWith, class CCharacter *pThisOnly, int tick)
 {
 	// Find other players
 	float ClosestLen = distance(Pos0, Pos1) * 100.0f;
@@ -375,14 +382,38 @@ CCharacter *CGameWorld::IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, v
 		if(closest_point_on_line(Pos0, Pos1, pos, IntersectPos))
 		{
 			float Len = distance(pos, IntersectPos);
-			if(Len < p->m_ProximityRadius + Radius)
+			if(Len < p->m_ProximityRadius * 3 + Radius)
 			{
-				Len = distance(Pos0, IntersectPos);
-				if(Len < ClosestLen)
+				if(p->m_Core.m_ActiveWeapon == WEAPON_SHOTGUN && distance(normalize(vec2(p->m_LatestInput.m_TargetX, p->m_LatestInput.m_TargetY)), normalize(Pos0-pos)) < 0.5)
 				{
-					NewPos = IntersectPos;
-					ClosestLen = Len;
-					pClosest = p;
+					vec2 dir = normalize(Pos0-Pos1);
+					for(int i = 0; i < 20; i++)
+					{
+						IntersectPos += dir*10;
+
+						if(distance(IntersectPos, pos) > p->m_ProximityRadius * 3 + Radius)
+							break;
+					}
+
+					Len = distance(Pos0, IntersectPos);
+					if(Len < ClosestLen)
+					{
+						NewPos = IntersectPos;
+						ClosestLen = Len;
+						pClosest = p;
+						shield = true;
+					}
+				}
+				else if(Len < p->m_ProximityRadius + Radius)
+				{
+					Len = distance(Pos0, IntersectPos);
+					if(Len < ClosestLen)
+					{
+						NewPos = IntersectPos;
+						ClosestLen = Len;
+						pClosest = p;
+						shield = false;
+					}
 				}
 			}
 		}

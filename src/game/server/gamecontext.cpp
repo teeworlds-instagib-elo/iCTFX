@@ -304,6 +304,8 @@ bool CGameContext::CheckSightVisibility(int Lobby, CCharacter * pChar, vec2 Pos,
 	if(Lobby < 0)
 		return true;
 	
+	bool shield;
+	
 	for(int x = -1; x < 2; x+=2)
 	{
 		for(int y = -1; y < 2; y+=2)
@@ -320,7 +322,7 @@ bool CGameContext::CheckSightVisibility(int Lobby, CCharacter * pChar, vec2 Pos,
 					vec2 From = pChar->m_Pos + offset1;
 					To += offset2;
 					Collision(Lobby)->IntersectLine(From, To, &To, 0);
-					if(m_World[Lobby].IntersectCharacter(From, To, 0.f, At, pChar, -1, pCharTarget, -1))
+					if(m_World[Lobby].IntersectCharacter(From, To, 0.f, At, shield, pChar, -1, pCharTarget, -1))
 						return true;
 				}
 			}
@@ -332,7 +334,7 @@ bool CGameContext::CheckSightVisibility(int Lobby, CCharacter * pChar, vec2 Pos,
 
 	vec2 From = pChar->m_Pos;
 	Collision(Lobby)->IntersectLine(From, To, &To, 0);
-	if(m_World[Lobby].IntersectCharacter(From, To, 0.f, At, pChar, -1, pCharTarget, -1))
+	if(m_World[Lobby].IntersectCharacter(From, To, 0.f, At, shield, pChar, -1, pCharTarget, -1))
 		return true;
 
 	return false;
@@ -551,7 +553,7 @@ void CGameContext::SendSettings(int ClientID)
 	}
 }
 
-void CGameContext::SendBroadcast(const char *pText, int ClientID, bool IsImportant)
+void CGameContext::SendBroadcast(const char *pText, int ClientID, int lobby, bool IsImportant)
 {
 	CNetMsg_Sv_Broadcast Msg;
 	Msg.m_pMessage = pText;
@@ -559,12 +561,13 @@ void CGameContext::SendBroadcast(const char *pText, int ClientID, bool IsImporta
 	if(ClientID == -1)
 	{
 		dbg_assert(IsImportant, "broadcast messages to all players must be important");
-		Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, ClientID);
+		
 
 		for(auto &pPlayer : m_apPlayers)
 		{
-			if(pPlayer)
+			if(pPlayer && (pPlayer->GetLobby() == lobby || lobby == -1))
 			{
+				Server()->SendPackMsg(&Msg, MSGFLAG_VITAL, pPlayer->GetCID());
 				pPlayer->m_LastBroadcastImportance = true;
 				pPlayer->m_LastBroadcast = Server()->Tick();
 			}
@@ -962,7 +965,7 @@ void CGameContext::OnTick()
 			m_apPlayers[i]->m_OldLobby = ((CServer*)Server())->m_aClients[i].m_Lobby;
 			char aBuf[128];
 			str_format(aBuf, 128, "Lobby %i", m_apPlayers[i]->m_OldLobby);
-			SendBroadcast(aBuf, i, true);
+			SendBroadcast(aBuf, i, -1, true);
 		}
 	}
 
@@ -1793,10 +1796,10 @@ bool CGameContext::OnClientDDNetVersionKnown(int ClientID)
 
 	// Tell old clients to update.
 	if(ClientVersion < VERSION_DDNET_UPDATER_FIXED && g_Config.m_SvClientSuggestionOld[0] != '\0')
-		SendBroadcast(g_Config.m_SvClientSuggestionOld, ClientID);
+		SendBroadcast(g_Config.m_SvClientSuggestionOld, ClientID, -1);
 	// Tell known bot clients that they're botting and we know it.
 	if(((ClientVersion >= 15 && ClientVersion < 100) || ClientVersion == 502) && g_Config.m_SvClientSuggestionBot[0] != '\0')
-		SendBroadcast(g_Config.m_SvClientSuggestionBot, ClientID);
+		SendBroadcast(g_Config.m_SvClientSuggestionBot, ClientID, -1);
 
 	return false;
 }
@@ -2645,7 +2648,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				str_time((int64_t)TimeLeft * 100, TIME_HOURS, aTime, sizeof(aTime));
 				char aBuf[128];
 				str_format(aBuf, sizeof(aBuf), "Time to wait before changing team: %s", aTime);
-				SendBroadcast(aBuf, ClientID);
+				SendBroadcast(aBuf, ClientID, -1);
 				return;
 			}
 			
@@ -2666,7 +2669,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 			{
 				char aBuf[128];
 				str_format(aBuf, sizeof(aBuf), "Only %d active players are allowed", Server()->MaxClients() - m_apController[Lobby]->m_SpectatorSlots);
-				SendBroadcast(aBuf, ClientID);
+				SendBroadcast(aBuf, ClientID, -1);
 			}
 		}
 		else if(MsgID == NETMSGTYPE_CL_ISDDNETLEGACY)
@@ -3235,12 +3238,7 @@ void CGameContext::ConLobby(IConsole::IResult *pResult, void *pUserData)
 	{
 		int lobby = clamp(pResult->GetInteger(0), 0, MAX_LOBBIES-1);
 
-		bool spec = false;
-
-		if(!pSelf->m_apController[lobby]->CanJoinTeam(pSelf->m_apPlayers[pResult->m_ClientID]->GetTeam(), pResult->m_ClientID))
-		{
-			spec = true;
-		}
+		bool spec = pSelf->m_apPlayers[pResult->m_ClientID]->GetTeam() == TEAM_SPECTATORS;
 
 		pSelf->m_apPlayers[pResult->m_ClientID]->KillCharacter();
 		((CServer*)pSelf->Server())->m_aClients[pResult->m_ClientID].m_Lobby = lobby;
@@ -3254,31 +3252,17 @@ void CGameContext::ConLobby(IConsole::IResult *pResult, void *pUserData)
 		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_Wallshots = 0;
 		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_WallshotKills = 0;
 		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_Suicides = 0;
+	
+		int team = pSelf->m_apController[lobby]->GetAutoTeam(pResult->m_ClientID);
 		
-		int aNumplayers[2] = {0, 0};
-		for(int i = 0; i < MAX_CLIENTS; i++)
-		{
-			if(pSelf->m_apPlayers[i] && pSelf->GetLobby(i) == lobby && i != pResult->m_ClientID)
-			{
-				if(pSelf->m_apPlayers[i]->GetTeam() == TEAM_RED || pSelf->m_apPlayers[i]->GetTeam() == TEAM_BLUE)
-					aNumplayers[pSelf->m_apPlayers[i]->GetTeam()]++;
-			}
-		}
 
-		int totalPlayers = aNumplayers[0] + aNumplayers[1];
-		
-		pSelf->m_apPlayers[pResult->m_ClientID]->SetTeam(TEAM_RED);
-		if (aNumplayers[TEAM_RED] > aNumplayers[TEAM_BLUE])
-			pSelf->m_apPlayers[pResult->m_ClientID]->SetTeam(TEAM_BLUE);
-		
 		if(pSelf->m_apController[lobby]->m_tourneyMode)
 			spec = true;
 
-		if (totalPlayers >= g_Config.m_SvMaxClients - pSelf->m_apController[lobby]->m_SpectatorSlots)
-			spec = true;
-
 		if(spec)
-			pSelf->m_apPlayers[pResult->m_ClientID]->SetTeam(TEAM_SPECTATORS);
+			team = TEAM_SPECTATORS;
+		
+		pSelf->m_apPlayers[pResult->m_ClientID]->SetTeam(team);
 
 		for(int i = 0; i < MAX_CLIENTS; i++)
 		{
@@ -3347,7 +3331,7 @@ void CGameContext::ConBroadcast(IConsole::IResult *pResult, void *pUserData)
 	}
 	aBuf[j] = '\0';
 
-	pSelf->SendBroadcast(aBuf, -1);
+	pSelf->SendBroadcast(aBuf, -1, -1);
 }
 
 void CGameContext::ConSay(IConsole::IResult *pResult, void *pUserData)
@@ -3983,9 +3967,9 @@ void CGameContext::CreateMapEntities(int Lobby)
 	CTile *pFront = 0;
 	CSwitchTile *pSwitch = 0;
 	if(m_Layers[Lobby].FrontLayer())
-		pFront = (CTile *)Kernel()->GetIMap(Lobby)->GetData(m_Layers[Lobby].FrontLayer()->m_Front);
+		pFront = (CTile *)Kernel()->GetIMap(m_Layers[Lobby].m_Map)->GetData(m_Layers[Lobby].FrontLayer()->m_Front);
 	if(m_Layers[Lobby].SwitchLayer())
-		pSwitch = (CSwitchTile *)Kernel()->GetIMap(Lobby)->GetData(m_Layers[Lobby].SwitchLayer()->m_Switch);
+		pSwitch = (CSwitchTile *)Kernel()->GetIMap(m_Layers[Lobby].m_Map)->GetData(m_Layers[Lobby].SwitchLayer()->m_Switch);
 
 	for(int y = 0; y < pTileMap->m_Height; y++)
 	{

@@ -657,7 +657,7 @@ void IGameController::Tick()
 		if(!m_FakeWarmup && GameServer()->m_World[m_Lobby].m_Paused)
 		{
 			GameServer()->m_World[m_Lobby].m_Paused = false;
-			GameServer()->SendChat(-1, CGameContext::CHAT_ALL, "Game started");
+			GameServer()->SendChat(-1, CGameContext::CHAT_ALL, "Game started", -1 , 3, m_Lobby);
 		}
 	}
 
@@ -1005,7 +1005,8 @@ int IGameController::GetAutoTeam(int NotThisID)
 bool IGameController::CanJoinTeam(int Team, int NotThisID)
 {
 	if(Team == TEAM_SPECTATORS || (GameServer()->m_apPlayers[NotThisID]
-		&& GameServer()->m_apPlayers[NotThisID]->GetLobby() == m_Lobby && GameServer()->m_apPlayers[NotThisID]->GetTeam() != TEAM_SPECTATORS))
+		&& GameServer()->m_apPlayers[NotThisID]->GetLobby() == m_Lobby && GameServer()->m_apPlayers[NotThisID]->GetCharacter() &&
+		GameServer()->m_apPlayers[NotThisID]->GetTeam() != TEAM_SPECTATORS))
 		return true;
 
 	int aNumplayers[2] = {0, 0};

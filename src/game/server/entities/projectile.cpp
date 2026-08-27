@@ -124,8 +124,9 @@ void CProjectile::Tick()
 
 	CCharacter *pTargetChr = 0;
 
+	bool shield = false;
 	if(pOwnerChar ? !(pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_GRENADE) : g_Config.m_SvHit)
-		pTargetChr = GameServer()->m_World[m_Lobby].IntersectCharacter(PrevPos, ColPos, m_Freeze ? 1.0f : 6.0f, ColPos, pOwnerChar, m_Owner);
+		pTargetChr = GameServer()->m_World[m_Lobby].IntersectCharacter(PrevPos, ColPos, m_Freeze ? 1.0f : 6.0f, ColPos, shield, pOwnerChar, m_Owner);
 
 	if(m_LifeSpan > -1)
 		m_LifeSpan--;

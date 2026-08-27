@@ -93,10 +93,21 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 	shots[shot_index].to = To;
 	shot_index++;
 
+	bool shield = false;
+
 	if(pOwnerChar ? (!(pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_LASER) && m_Type == WEAPON_LASER) || (!(pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_SHOTGUN) && m_Type == WEAPON_SHOTGUN) : g_Config.m_SvHit)
-		pHit = GameServer()->m_World[m_Lobby].IntersectCharacter(m_Pos, To, 0.f, At, pOwnerChar, m_Owner, nullptr, tick);
+		pHit = GameServer()->m_World[m_Lobby].IntersectCharacter(m_Pos, To, 0.f, At, shield, pOwnerChar, m_Owner, nullptr, tick);
 	else
-		pHit = GameServer()->m_World[m_Lobby].IntersectCharacter(m_Pos, To, 0.f, At, pOwnerChar, m_Owner, pOwnerChar, tick);
+		pHit = GameServer()->m_World[m_Lobby].IntersectCharacter(m_Pos, To, 0.f, At, shield, pOwnerChar, m_Owner, pOwnerChar, tick);
+	
+	if(shield)
+	{
+		m_From = From;
+		m_Pos = At;
+		m_Energy = -1;
+		m_DidHit = true;
+		return true;
+	}
 	
 	vec2 AtBot;
 	CBot * pHitBot = GameServer()->m_World[m_Lobby].IntersectBot(m_Pos, To, 0.f, AtBot, m_pBot, m_Owner, nullptr, tick);
@@ -338,11 +349,17 @@ void CLaser::Tick()
 
 			CCharacter *pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
 
-			CCharacter *pHit = GameServer()->m_World[m_Lobby].IntersectCharacter(shots[shot].from, shots[shot].to, 0.f, At, pOwnerChar, -1, GameServer()->m_apPlayers[player]->GetCharacter(), tick);
+			bool shield = false;
+			CCharacter *pHit = GameServer()->m_World[m_Lobby].IntersectCharacter(shots[shot].from, shots[shot].to, 0.f, At, shield, pOwnerChar, -1, GameServer()->m_apPlayers[player]->GetCharacter(), tick);
 			if(pHit)
 			{
-				pHit->TakeDamage(vec2(0.f, 0.f), GameServer()->Tuning()->m_LaserDamage, m_Owner, WEAPON_LASER, m_StartTick);
-				pHit->m_DeathTick = Server()->Tick() + (pHit->m_DeathTick-Server()->Tick())*GameServer()->m_apPlayers[m_Owner]->m_RunAhead;
+				
+				if(!shield)
+				{
+					pHit->TakeDamage(vec2(0.f, 0.f), GameServer()->Tuning()->m_LaserDamage, m_Owner, WEAPON_LASER, m_StartTick);
+					pHit->m_DeathTick = Server()->Tick() + (pHit->m_DeathTick-Server()->Tick())*GameServer()->m_apPlayers[m_Owner]->m_RunAhead;
+				}
+				
 				m_Energy = -1;
 				m_DidHit = true;
 				m_MarkedForDestroy = true;

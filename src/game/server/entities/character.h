@@ -130,7 +130,7 @@ private:
 	// these are non-heldback inputs
 	CNetObj_PlayerInput m_LatestPrevPrevInput;
 	CNetObj_PlayerInput m_LatestPrevInput;
-	CNetObj_PlayerInput m_LatestInput;
+	public: CNetObj_PlayerInput m_LatestInput;
 
 	// input
 	CNetObj_PlayerInput m_PrevInput;
@@ -186,6 +186,9 @@ public:
 	// the player core for the physics
 	CCharacterCore m_Core;
 	bool m_Solo;
+
+	int m_HitByPlayer;
+	int m_lastHook;
 
 	void Pause(bool Pause);
 	bool Freeze(int Seconds);

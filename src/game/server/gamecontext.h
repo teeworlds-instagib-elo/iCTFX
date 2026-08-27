@@ -250,7 +250,7 @@ public:
 	void SendWeaponPickup(int ClientID, int Weapon);
 	void SendMotd(int ClientID);
 	void SendSettings(int ClientID);
-	void SendBroadcast(const char *pText, int ClientID, bool IsImportant = true);
+	void SendBroadcast(const char *pText, int ClientID, int lobby, bool IsImportant = true);
 
 	void List(int ClientID, const char *filter);
 
@@ -340,9 +340,12 @@ private:
 	static void ConUnSuper(IConsole::IResult *pResult, void *pUserData);
 	static void ConShotgun(IConsole::IResult *pResult, void *pUserData);
 	static void ConIDM(IConsole::IResult *pResult, void *pUserData);
+	static void ConFNG(IConsole::IResult *pResult, void *pUserData);
+	static void ConFlagReset(IConsole::IResult *pResult, void *pUserData);
 	static void ConBotAmount(IConsole::IResult *pResult, void *pUserData);
 	static void ConLOS(IConsole::IResult *pResult, void *pUserData);
 	static void ConGrenade(IConsole::IResult *pResult, void *pUserData);
+	static void ConShield(IConsole::IResult *pResult, void *pUserData);
 	static void ConHammer(IConsole::IResult *pResult, void *pUserData);
 	static void ConTournamentMode(IConsole::IResult *pResult, void *pUserData);
 	static void ConLaser(IConsole::IResult *pResult, void *pUserData);

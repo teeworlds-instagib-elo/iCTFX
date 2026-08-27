@@ -49,6 +49,8 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_LastRefillJumps = false;
 	m_LastPenalty = false;
 	m_LastBonus = false;
+	m_HitByPlayer = -1;
+	m_lastHook = -1;
 
 	m_TeleGunTeleport = false;
 	m_IsBlueTeleGunTeleport = false;
@@ -371,6 +373,9 @@ void CCharacter::FireWeapon()
 		return;
 	}
 
+	if(m_Core.m_ActiveWeapon == WEAPON_SHOTGUN)
+		return;
+
 	m_ReloadTimer = 0;
 
 	DoWeaponSwitch();
@@ -466,7 +471,11 @@ void CCharacter::FireWeapon()
 			Temp -= pTarget->m_Core.m_Vel;
 			pTarget->TakeDamage((vec2(0.f, -1.0f) + Temp) * Strength, g_pData->m_Weapons.m_Hammer.m_pBase->m_Damage,
 				m_pPlayer->GetCID(), m_Core.m_ActiveWeapon);
-			pTarget->UnFreeze();
+			
+			if(!GameServer()->m_apController[m_Lobby]->m_fng)
+				pTarget->UnFreeze();
+			
+			pTarget->m_lastHook = m_pPlayer->GetCID();
 
 			if(m_FreezeHammer)
 				pTarget->Freeze();
@@ -736,6 +745,14 @@ void CCharacter::Tick()
 
 	if(m_Paused)
 		return;
+	
+	if(m_Core.m_HookedPlayer >= 0)
+	{
+		if(GameServer()->m_apPlayers[m_Core.m_HookedPlayer]->GetCharacter())
+		{
+			GameServer()->m_apPlayers[m_Core.m_HookedPlayer]->GetCharacter()->m_lastHook = m_pPlayer->GetCID();
+		}
+	}
 	
 	if(Server()->Tick() % 50*4 == 0)
 		m_aWeapons[WEAPON_GRENADE].m_Ammo++;
@@ -1132,8 +1149,25 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int tick)
 		GameServer()->CreateSound(m_Lobby, m_Pos, SOUND_PLAYER_PAIN_LONG);
 	else
 		GameServer()->CreateSound(m_Lobby, m_Pos, SOUND_PLAYER_PAIN_SHORT);*/
+	
+	vec2 Temp = m_Core.m_Vel + Force;
+	m_Core.m_Vel = ClampVel(m_MoveRestrictions, Temp);
+	
 	if(GameServer()->m_apController[m_Lobby]->IsFriendlyFire(m_pPlayer->GetCID(), From))
+	{
+		if(GameServer()->m_apController[m_Lobby]->m_fng && From >= 0 && m_FreezeTime > 0)
+		{
+			UnFreeze();
+			int Mask = CmaskOne(From);
+			for(int i = 0; i < MAX_CLIENTS; i++)
+			{
+				if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetTeam() == TEAM_SPECTATORS && GameServer()->m_apPlayers[i]->m_SpectatorID == From)
+					Mask |= CmaskOne(i);
+			}
+			GameServer()->CreateSound(m_Lobby, GameServer()->m_apPlayers[From]->m_ViewPos, SOUND_HIT, Mask);
+		}
 		return false;
+	}
 
 	// do damage Hit sound
 	if(Dmg)
@@ -1141,9 +1175,6 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int tick)
 		m_EmoteType = EMOTE_PAIN;
 		m_EmoteStop = Server()->Tick() + 500 * Server()->TickSpeed() / 1000;
 	}
-
-	vec2 Temp = m_Core.m_Vel + Force;
-	m_Core.m_Vel = ClampVel(m_MoveRestrictions, Temp);
 
 	if(WEAPON_GRENADE == Weapon && From == m_pPlayer->GetCID())
 		m_aWeapons[WEAPON_GRENADE].m_Ammo++;
@@ -1154,6 +1185,24 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int tick)
 	if(m_pPlayer->GetCID() == From)
 		return false;
 	
+	if(GameServer()->m_apController[m_Lobby]->m_fng && From >= 0 && !m_FreezeTime)
+	{
+		m_HitByPlayer = From;
+		
+		if(Weapon != WEAPON_HAMMER && Weapon != WEAPON_GAME)
+		{
+			Freeze(8);
+			int Mask = CmaskOne(From);
+			for(int i = 0; i < MAX_CLIENTS; i++)
+			{
+				if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetTeam() == TEAM_SPECTATORS && GameServer()->m_apPlayers[i]->m_SpectatorID == From)
+					Mask |= CmaskOne(i);
+			}
+			GameServer()->CreateSound(m_Lobby, GameServer()->m_apPlayers[From]->m_ViewPos, SOUND_HIT, Mask);
+		}
+		return true;
+	}
+	
 	m_Health--;
 	
 	// check for death
@@ -1162,15 +1211,15 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int tick)
 		Die(From, Weapon, tick);
 
 		return false;
-	}else
+	}else if(Weapon != WEAPON_HAMMER && Weapon != WEAPON_GAME)
 	{
-		int Mask = CmaskOne(m_Killer);
+		int Mask = CmaskOne(From);
 		for(int i = 0; i < MAX_CLIENTS; i++)
 		{
-			if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetTeam() == TEAM_SPECTATORS && GameServer()->m_apPlayers[i]->m_SpectatorID == m_Killer)
+			if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetTeam() == TEAM_SPECTATORS && GameServer()->m_apPlayers[i]->m_SpectatorID == From)
 				Mask |= CmaskOne(i);
 		}
-		GameServer()->CreateSound(m_Lobby, GameServer()->m_apPlayers[m_Killer]->m_ViewPos, SOUND_HIT, Mask);
+		GameServer()->CreateSound(m_Lobby, GameServer()->m_apPlayers[From]->m_ViewPos, SOUND_HIT, Mask);
 	}
 
 	return true;
@@ -1201,6 +1250,23 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 
 		if(m_DeepFreeze || m_FreezeTime > 0 || m_FreezeTime == -1)
 			Weapon = WEAPON_NINJA;
+	}
+
+	if(m_Core.m_ActiveWeapon == WEAPON_SHOTGUN)
+	{
+		vec2 dir = normalize(vec2(m_LatestInput.m_TargetX, m_LatestInput.m_TargetY));
+		int Size = Server()->IsSixup(SnappingClient) ? 3 * 4 : sizeof(CNetObj_Pickup);
+		for(int i = 0; i < 5; i++)
+		{
+			CNetObj_Pickup *pP = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, GetID()*10+i, Size));
+			if(!pP)
+				return;
+
+			vec2 pos = m_Pos + rotate(dir, (i-2)*pi*4.6) * m_ProximityRadius * 3;
+			pP->m_X = (int)pos.x;
+			pP->m_Y = (int)pos.y;
+			pP->m_Type = POWERUP_ARMOR;
+		}
 	}
 
 	// This could probably happen when m_Jetpack changes instead
@@ -1238,6 +1304,9 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 
 	if(Weapon == WEAPON_GRENADE)
 		AmmoCount = m_aWeapons[Weapon].m_Ammo;
+	
+	if(Weapon == WEAPON_SHOTGUN)
+		AmmoCount = 0;
 
 	if(m_pPlayer->GetCID() == SnappingClient || SnappingClient == SERVER_DEMO_CLIENT ||
 		(!g_Config.m_SvStrictSpectateMode && m_pPlayer->GetCID() == GameServer()->m_apPlayers[SnappingClient]->m_SpectatorID))
@@ -2480,6 +2549,12 @@ void CCharacter::ResetPickups()
 	{
 		m_aWeapons[WEAPON_GRENADE].m_Got = true;
 		m_Core.m_ActiveWeapon = WEAPON_GRENADE;
+	}
+
+	if(GameWorld()->m_shield)
+	{
+		m_aWeapons[WEAPON_SHOTGUN].m_Got = true;
+		m_Core.m_ActiveWeapon = WEAPON_SHOTGUN;
 	}
 
 	if(GameWorld()->m_laser)
