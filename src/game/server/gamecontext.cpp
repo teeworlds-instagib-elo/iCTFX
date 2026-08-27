@@ -3967,9 +3967,9 @@ void CGameContext::CreateMapEntities(int Lobby)
 	CTile *pFront = 0;
 	CSwitchTile *pSwitch = 0;
 	if(m_Layers[Lobby].FrontLayer())
-		pFront = (CTile *)Kernel()->GetIMap(Lobby)->GetData(m_Layers[Lobby].FrontLayer()->m_Front);
+		pFront = (CTile *)Kernel()->GetIMap(m_Layers[Lobby].m_Map)->GetData(m_Layers[Lobby].FrontLayer()->m_Front);
 	if(m_Layers[Lobby].SwitchLayer())
-		pSwitch = (CSwitchTile *)Kernel()->GetIMap(Lobby)->GetData(m_Layers[Lobby].SwitchLayer()->m_Switch);
+		pSwitch = (CSwitchTile *)Kernel()->GetIMap(m_Layers[Lobby].m_Map)->GetData(m_Layers[Lobby].SwitchLayer()->m_Switch);
 
 	for(int y = 0; y < pTileMap->m_Height; y++)
 	{
