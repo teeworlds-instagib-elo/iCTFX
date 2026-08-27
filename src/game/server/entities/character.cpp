@@ -52,6 +52,8 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_HitByPlayer = -1;
 	m_lastHook = -1;
 
+	m_flag_invunerable_ticks = 0;
+
 	m_TeleGunTeleport = false;
 	m_IsBlueTeleGunTeleport = false;
 	m_Solo = false;
@@ -746,6 +748,9 @@ void CCharacter::Tick()
 	if(m_Paused)
 		return;
 	
+	if(m_flag_invunerable_ticks > 0)
+		m_flag_invunerable_ticks--;
+	
 	if(m_Core.m_HookedPlayer >= 0)
 	{
 		if(GameServer()->m_apPlayers[m_Core.m_HookedPlayer]->GetCharacter())
@@ -1167,6 +1172,27 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int tick)
 			GameServer()->CreateSound(m_Lobby, GameServer()->m_apPlayers[From]->m_ViewPos, SOUND_HIT, Mask);
 		}
 		return false;
+	}
+
+
+	if(GameServer()->m_apController[m_Lobby]->m_drop_flag_on_shot)
+	{
+		int flags = GameServer()->m_apController[m_Lobby]->DropFlag(this);
+
+		if(flags)
+		{
+			int Mask = CmaskOne(From);
+			for(int i = 0; i < MAX_CLIENTS; i++)
+			{
+				if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetTeam() == TEAM_SPECTATORS && GameServer()->m_apPlayers[i]->m_SpectatorID == From)
+					Mask |= CmaskOne(i);
+			}
+			GameServer()->CreateSound(m_Lobby, GameServer()->m_apPlayers[From]->m_ViewPos, SOUND_HIT, Mask);
+			GameServer()->m_apController[m_Lobby]->DropFlag(this);
+
+			//merely dropped the flags
+			return true;
+		}
 	}
 
 	// do damage Hit sound

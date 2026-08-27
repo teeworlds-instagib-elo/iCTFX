@@ -235,6 +235,8 @@ public:
 	int m_TileIndex;
 	int m_TileFIndex;
 
+	int m_flag_invunerable_ticks;
+
 	int m_MoveRestrictions;
 
 	vec2 m_Intersection;

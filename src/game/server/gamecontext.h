@@ -342,6 +342,7 @@ private:
 	static void ConIDM(IConsole::IResult *pResult, void *pUserData);
 	static void ConFNG(IConsole::IResult *pResult, void *pUserData);
 	static void ConFlagReset(IConsole::IResult *pResult, void *pUserData);
+	static void ConFlagDropping(IConsole::IResult *pResult, void *pUserData);
 	static void ConBotAmount(IConsole::IResult *pResult, void *pUserData);
 	static void ConLOS(IConsole::IResult *pResult, void *pUserData);
 	static void ConGrenade(IConsole::IResult *pResult, void *pUserData);
