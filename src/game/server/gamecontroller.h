@@ -72,6 +72,7 @@ public:
 	bool idm; //todo, not this shitty solution
 	bool m_fng; //todo, more of this shitty solution
 	bool m_tourneyMode = false;
+	bool m_flag_resetting = true;
 	int m_Lobby;
 
 	int m_ScoreLimit;

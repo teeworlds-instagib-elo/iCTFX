@@ -36,6 +36,7 @@ CGameControllerDDRace::CGameControllerDDRace(class CGameContext *pGameServer, in
 
 	idm = false;
 	m_fng = g_Config.m_SvFng;
+	m_flag_resetting = g_Config.m_SvFlagReset;
 	m_BotCount = 0;
 
 	int waypointAmount = 16;
@@ -651,7 +652,32 @@ void CGameControllerDDRace::Tick()
 				// update flag position
 				F->m_Pos = F->m_pCarryingCharacter->m_Pos;
 
-				if(m_apFlags[fi^1] && m_apFlags[fi^1]->m_AtStand && F->m_pCarryingCharacter->m_DeathTick == -1)
+				if(F->m_pCarryingCharacter->GetPlayer()->GetTeam() == fi &&
+					distance(F->m_StandPos, F->m_Pos) < CFlag::ms_PhysSize + CCharacter::ms_PhysSize && !m_flag_resetting)
+				{
+					CCharacter *pChr = F->m_pCarryingCharacter;
+					pChr->GetPlayer()->Add_Score(1);
+					
+
+					char aBuf[256];
+					str_format(aBuf, sizeof(aBuf), "flag_return player='%d:%s'",
+						pChr->GetPlayer()->GetCID(),
+						Server()->ClientName(pChr->GetPlayer()->GetCID()));
+					GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
+
+					GameServer()->CreateSoundGlobal(m_Lobby, SOUND_CTF_RETURN);
+					F->Reset();
+					for(int i = 0; i < MAX_CLIENTS; i++)
+					{
+						if(Server()->IsSixup(i))
+						{
+							GameServer()->SendGameMsg(protocol7::GAMEMSG_CTF_RETURN, fi, i);
+						}
+
+					}
+				}
+				else if(m_apFlags[fi^1] && m_apFlags[fi^1]->m_AtStand && F->m_pCarryingCharacter->m_DeathTick == -1
+						&& F->m_pCarryingCharacter->GetPlayer()->GetTeam() != fi)
 				{
 					if(distance(F->m_Pos, m_apFlags[fi^1]->m_Pos) < CFlag::ms_PhysSize + CCharacter::ms_PhysSize)
 					{
@@ -742,7 +768,7 @@ void CGameControllerDDRace::Tick()
 					if(!apCloseCCharacters[i]->IsAlive() || apCloseCCharacters[i]->GetPlayer()->GetTeam() == TEAM_SPECTATORS || GameServer()->Collision(m_Lobby)->IntersectLine(F->m_Pos, apCloseCCharacters[i]->m_Pos, NULL, NULL))
 						continue;
 
-					if(apCloseCCharacters[i]->GetPlayer()->GetTeam() == F->m_Team && apCloseCCharacters[i]->m_DeathTick == -1)
+					if(apCloseCCharacters[i]->GetPlayer()->GetTeam() == F->m_Team && apCloseCCharacters[i]->m_DeathTick == -1 && m_flag_resetting)
 					{
 						// return the flag
 						if(!F->m_AtStand && !F->m_BotGrabbed)
@@ -769,7 +795,7 @@ void CGameControllerDDRace::Tick()
 							}
 						}
 					}
-					else
+					else if(apCloseCCharacters[i]->GetPlayer()->GetTeam() != F->m_Team || !F->m_AtStand)
 					{
 						// take the flag
 						if(F->m_AtStand)

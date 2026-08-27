@@ -175,6 +175,8 @@ MACRO_CONFIG_INT(SvKillingspreeKills, sv_kspree_kills, 5, 3, 20, CFGFLAG_SERVER,
 
 MACRO_CONFIG_INT(SvFng, sv_fng, 0, 0, 1, CFGFLAG_SERVER, "sets gamemode to fng by default")
 
+MACRO_CONFIG_INT(SvFlagReset, sv_flag_reset, 1, 0, 1, CFGFLAG_SERVER, "reset your teams flag upon touching it")
+
 MACRO_CONFIG_INT(SvWeaponLaser, sv_weapon_laser, 1, 0, 1, CFGFLAG_SERVER, "enables / disables laser by default")
 MACRO_CONFIG_INT(SvWeaponHammer, sv_weapon_hammer, 0, 0, 1, CFGFLAG_SERVER, "enables / disables hammer by default")
 MACRO_CONFIG_INT(SvWeaponShield, sv_weapon_shield, 0, 0, 1, CFGFLAG_SERVER, "enables / disables shield by default")

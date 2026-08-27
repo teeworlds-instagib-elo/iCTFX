@@ -15,6 +15,7 @@
 // CONSOLE_COMMAND("shotgun", "", CFGFLAG_SERVER | CMDFLAG_TEST, ConShotgun, this, "Gives a shotgun to you")
 CONSOLE_COMMAND("idm", "", CFGFLAG_SERVER, ConIDM, this, "makes lobby IDM")
 CONSOLE_COMMAND("fng", "", CFGFLAG_SERVER, ConFNG, this, "makes lobby FNG")
+CONSOLE_COMMAND("flag_reset", "", CFGFLAG_SERVER, ConFlagReset, this, "toggle flag resetting on teammates touch")
 CONSOLE_COMMAND("bot_amount", "i[amount]", CFGFLAG_SERVER, ConBotAmount, this, "amount of bots in a lobby")
 CONSOLE_COMMAND("line_of_sight", "", CFGFLAG_SERVER, ConLOS, this, "makes lobby IDM")
 CONSOLE_COMMAND("grenade", "", CFGFLAG_SERVER, ConGrenade, this, "Gives lobby grenades")

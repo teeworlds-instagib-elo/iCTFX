@@ -252,6 +252,35 @@ void CGameContext::ConFNG(IConsole::IResult *pResult, void *pUserData)
 	}
 }
 
+void CGameContext::ConFlagReset(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	int Lobby = pResult->m_Lobby;
+	if(Lobby == 0)	//Lobby 0 is save server
+	{
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+				continue;
+			
+			pSelf->SendChatTarget(i, "You cannot change settings in lobby 0, got a different lobby");
+		}
+		return;
+	}
+
+	pSelf->m_apController[pResult->m_Lobby]->m_flag_resetting = !pSelf->m_apController[pResult->m_Lobby]->m_flag_resetting;
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+			continue;
+		
+		char aBuf[256];
+		str_format(aBuf, 256, "Flag resetting is %s", pSelf->m_apController[pResult->m_Lobby]->m_flag_resetting ? "enabled" : "disabled");
+
+		pSelf->SendChatTarget(i, aBuf);
+	}
+}
+
 void CGameContext::ConBotAmount(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
