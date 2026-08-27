@@ -212,6 +212,7 @@ public:
 	bool m_LiveFreeze;
 	bool m_EndlessHook;
 	bool m_FreezeHammer;
+	int m_ShieldReloadTimer;
 	enum
 	{
 		HIT_ALL = 0,

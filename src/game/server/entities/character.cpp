@@ -375,9 +375,6 @@ void CCharacter::FireWeapon()
 		return;
 	}
 
-	if(m_Core.m_ActiveWeapon == WEAPON_SHOTGUN)
-		return;
-
 	m_ReloadTimer = 0;
 
 	DoWeaponSwitch();
@@ -394,6 +391,16 @@ void CCharacter::FireWeapon()
 
 	if(!WillFire)
 		return;
+	
+	if(m_Core.m_ActiveWeapon == WEAPON_SHOTGUN)
+	{
+		if(m_ShieldReloadTimer < -Server()->TickSpeed() * 1)
+		{
+			GameServer()->CreateSound(m_Lobby, m_Pos, SOUND_PICKUP_ARMOR);
+			m_ShieldReloadTimer = Server()->TickSpeed() * 0.5;
+		}
+		return;
+	}
 
 	if(m_FreezeTime)
 	{
@@ -750,6 +757,8 @@ void CCharacter::Tick()
 	
 	if(m_flag_invunerable_ticks > 0)
 		m_flag_invunerable_ticks--;
+	
+	m_ShieldReloadTimer--;
 	
 	if(m_Core.m_HookedPlayer >= 0)
 	{
@@ -1278,7 +1287,7 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 			Weapon = WEAPON_NINJA;
 	}
 
-	if(m_Core.m_ActiveWeapon == WEAPON_SHOTGUN)
+	if(m_Core.m_ActiveWeapon == WEAPON_SHOTGUN && m_ShieldReloadTimer > 0)
 	{
 		vec2 dir = normalize(vec2(m_LatestInput.m_TargetX, m_LatestInput.m_TargetY));
 		int Size = Server()->IsSixup(SnappingClient) ? 3 * 4 : sizeof(CNetObj_Pickup);
