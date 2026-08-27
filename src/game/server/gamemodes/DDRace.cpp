@@ -35,6 +35,7 @@ CGameControllerDDRace::CGameControllerDDRace(class CGameContext *pGameServer, in
 	m_aTeamscore[TEAM_BLUE] = 0;
 
 	idm = false;
+	m_fng = g_Config.m_SvFng;
 	m_BotCount = 0;
 
 	int waypointAmount = 16;
@@ -266,6 +267,84 @@ void CGameControllerDDRace::HandleCharacterTiles(CCharacter *pChr, int MapIndex)
 		GameServer()->SendChatTarget(ClientID, "You are now out of the solo part");
 		pChr->SetSolo(false);
 	}
+
+
+	if(m_fng)
+	{
+		//partially copied from ddnet-insta
+		int aSpikeTiles[] = {
+			TILE_FNG_SPIKE_RED,
+			TILE_FNG_SPIKE_BLUE,
+			TILE_FNG_SPIKE_NORMAL,
+			TILE_FNG_SPIKE_GOLD,
+			TILE_FNG_SPIKE_GREEN,
+			TILE_FNG_SPIKE_PURPLE};
+		
+		int touched_spike = -1;
+		for(int spike : aSpikeTiles)
+		{
+			if(m_TileIndex != spike)
+				continue;
+			
+			touched_spike = spike;
+			break;
+		}
+
+		if(!pChr->m_FreezeTime)
+		{
+			pChr->Die(-1, WEAPON_WORLD);
+		}
+		else
+		{
+			if(pChr->m_lastHook != -1 && GameServer()->m_apPlayers[pChr->m_lastHook]->GetTeam() != pChr->GetPlayer()->GetTeam())
+			{
+				int team_score = 0;
+				int player_score = 0;
+
+				switch(touched_spike)
+				{
+					case TILE_FNG_SPIKE_BLUE:
+					case TILE_FNG_SPIKE_RED:
+
+						if(touched_spike - TILE_FNG_SPIKE_RED != pChr->GetPlayer()->GetTeam())
+						{
+							team_score = 10;
+							player_score = 5;
+						}
+						else
+						{
+							player_score = -5;
+							if(GameServer()->m_apPlayers[pChr->m_lastHook]->GetCharacter())
+								GameServer()->m_apPlayers[pChr->m_lastHook]->GetCharacter()->Freeze(5);
+						}
+						break;
+					case TILE_FNG_SPIKE_NORMAL:
+						team_score = 5;
+						player_score = 3;
+						break;
+					case TILE_FNG_SPIKE_GOLD:
+						team_score = 12;
+						player_score = 8;
+						break;
+					case TILE_FNG_SPIKE_GREEN:
+						team_score = 15;
+						player_score = 6;
+						break;
+					case TILE_FNG_SPIKE_PURPLE:
+						team_score = 18;
+						player_score = 10;
+						break;
+				}
+
+				if(player_score)
+					GameServer()->m_apPlayers[pChr->m_lastHook]->Add_Score(player_score);
+				
+				if(GameServer()->m_apPlayers[pChr->m_lastHook]->GetTeam() >= TEAM_RED)
+					m_aTeamscore[GameServer()->m_apPlayers[pChr->m_lastHook]->GetTeam()] += team_score;
+			}
+			pChr->Die(pChr->m_lastHook, WEAPON_WORLD);
+		}
+	}
 }
 
 int CGameControllerDDRace::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int WeaponID)
@@ -447,7 +526,7 @@ void CGameControllerDDRace::Snap(int SnappingClient)
 
 void CGameControllerDDRace::Tick()
 {
-	if(idm || !(m_apFlags[0] && m_apFlags[1]))
+	if(idm || !((m_apFlags[0] && m_apFlags[1]) || m_fng))
 	{
 		if(m_GameFlags != 0)
 		{
@@ -465,6 +544,12 @@ void CGameControllerDDRace::Tick()
 
 		m_pGameType = g_Config.m_SvTestingCommands ? TEST_TYPE_NAME : GAME_TYPE_NAME;
 		m_GameFlags = GAMEFLAG_TEAMS|GAMEFLAG_FLAGS;
+	}
+
+	if(m_fng)
+	{
+		m_pGameType = "FNG-X";
+		m_GameFlags = GAMEFLAG_TEAMS;
 	}
 
 	IGameController::Tick();
@@ -540,7 +625,7 @@ void CGameControllerDDRace::Tick()
 	}
 
 
-	if(!idm)
+	if(!idm && !m_fng)
 	{
 		for(int fi = 0; fi < 2; fi++)
 		{
@@ -783,7 +868,7 @@ void CGameControllerDDRace::Tick()
 	if(m_GameOverTick == -1 && !m_Warmup && !(g_Config.m_SvSaveServer && m_Lobby == 0))
 	{
 		// check score win condition
-		if(!idm && m_apFlags[0] && m_apFlags[0])
+		if(!idm && !m_fng && m_apFlags[0] && m_apFlags[0])
 		{
 			if((m_ScoreLimit > 0 && (m_aTeamscore[TEAM_RED] >= m_ScoreLimit || m_aTeamscore[TEAM_BLUE] >= m_ScoreLimit)) ||
 				(m_TimeLimit > 0 && (Server()->Tick()-m_RoundStartTick) >= m_TimeLimit*Server()->TickSpeed()*60))

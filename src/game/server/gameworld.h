@@ -32,6 +32,7 @@ public:
 
 private:
 	void Reset();
+	void SetSettings();
 	void RemoveEntities();
 
 	CEntity *m_pNextTraverseEntity = nullptr;

@@ -340,6 +340,7 @@ private:
 	static void ConUnSuper(IConsole::IResult *pResult, void *pUserData);
 	static void ConShotgun(IConsole::IResult *pResult, void *pUserData);
 	static void ConIDM(IConsole::IResult *pResult, void *pUserData);
+	static void ConFNG(IConsole::IResult *pResult, void *pUserData);
 	static void ConBotAmount(IConsole::IResult *pResult, void *pUserData);
 	static void ConLOS(IConsole::IResult *pResult, void *pUserData);
 	static void ConGrenade(IConsole::IResult *pResult, void *pUserData);

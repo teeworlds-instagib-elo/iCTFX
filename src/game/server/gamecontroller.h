@@ -70,6 +70,7 @@ public:
 	int m_WantedBotAmount = 0;
 	class CBot *m_apBots[MAX_BOTS] = {0};
 	bool idm; //todo, not this shitty solution
+	bool m_fng; //todo, more of this shitty solution
 	bool m_tourneyMode = false;
 	int m_Lobby;
 

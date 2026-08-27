@@ -173,6 +173,12 @@ MACRO_CONFIG_INT(SvGoTime, sv_go_time, 5, 0, 10, CFGFLAG_SERVER, "The restart ti
 MACRO_CONFIG_INT(SvWarTime, sv_war_time, 15, 0, 600, CFGFLAG_SERVER, "Default warmup-time before a war")
 MACRO_CONFIG_INT(SvKillingspreeKills, sv_kspree_kills, 5, 3, 20, CFGFLAG_SERVER, "How many kills are needed to be on a killing-spree")
 
+MACRO_CONFIG_INT(SvFng, sv_fng, 0, 0, 1, CFGFLAG_SERVER, "sets gamemode to fng by default")
+
+MACRO_CONFIG_INT(SvWeaponLaser, sv_weapon_laser, 1, 0, 1, CFGFLAG_SERVER, "enables / disables laser by default")
+MACRO_CONFIG_INT(SvWeaponHammer, sv_weapon_hammer, 0, 0, 1, CFGFLAG_SERVER, "enables / disables hammer by default")
+MACRO_CONFIG_INT(SvWeaponShield, sv_weapon_shield, 0, 0, 1, CFGFLAG_SERVER, "enables / disables shield by default")
+MACRO_CONFIG_INT(SvWeaponGrenade, sv_weapon_grenade, 0, 0, 1, CFGFLAG_SERVER, "enables / disables grenade by default")
 
 MACRO_CONFIG_STR(SqlDatabase, sql_database, 32, "ddnet", CFGFLAG_SERVER, "Sql database name")
 MACRO_CONFIG_STR(SqlPrefix, sql_prefix, 32, "record", CFGFLAG_SERVER, "Sql prefix")

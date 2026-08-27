@@ -187,6 +187,9 @@ public:
 	CCharacterCore m_Core;
 	bool m_Solo;
 
+	int m_HitByPlayer;
+	int m_lastHook;
+
 	void Pause(bool Pause);
 	bool Freeze(int Seconds);
 	bool Freeze();
