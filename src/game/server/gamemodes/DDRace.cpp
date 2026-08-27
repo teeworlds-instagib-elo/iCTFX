@@ -677,6 +677,29 @@ void CGameControllerDDRace::Tick()
 				// update flag position
 				F->m_Pos = F->m_pCarryingCharacter->m_Pos;
 
+				if(F->m_pCarryingCharacter->GetPlayer()->GetTeam() == fi)
+				{
+					F->m_HoldTimer--;
+
+					if(F->m_HoldTimer % Server()->TickSpeed() == 0 && F->m_HoldTimer / Server()->TickSpeed() < 10)
+					{
+						char str[16];
+						sprintf(str, "%i", F->m_HoldTimer/Server()->TickSpeed());
+						GameServer()->SendBroadcast(str, F->m_pCarryingCharacter->GetPlayer()->GetCID(), m_Lobby);
+						GameServer()->SendChatTarget(F->m_pCarryingCharacter->GetPlayer()->GetCID(), str);
+					}
+
+					if(F->m_HoldTimer < 0)
+					{
+						GameServer()->CreateSoundGlobal(m_Lobby, SOUND_CTF_DROP);
+						F->m_DropTick = Server()->Tick();
+						F->m_pCarryingCharacter = 0;
+						F->m_Vel = vec2(0,0);
+						F->m_Pos = F->m_PickupPos;
+						continue;
+					}
+				}
+
 				if(F->m_pCarryingCharacter->GetPlayer()->GetTeam() == fi &&
 					distance(F->m_StandPos, F->m_Pos) < CFlag::ms_PhysSize + CCharacter::ms_PhysSize && !m_flag_resetting)
 				{
@@ -841,6 +864,8 @@ void CGameControllerDDRace::Tick()
 						F->m_pCarryingCharacter = apCloseCCharacters[i];
 						F->m_pCarryingCharacter->GetPlayer()->Add_Score(1);
 						F->m_pCarryingCharacter->GetPlayer()->Add_Touches(1);
+						F->m_PickupPos = F->m_Pos;
+						F->m_HoldTimer = Server()->TickSpeed() * g_Config.m_SvFlagOwnHoldTimer;
 						
 
 						char aBuf[256];
