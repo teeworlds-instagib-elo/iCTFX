@@ -16,6 +16,7 @@
 CONSOLE_COMMAND("idm", "", CFGFLAG_SERVER, ConIDM, this, "makes lobby IDM")
 CONSOLE_COMMAND("fng", "", CFGFLAG_SERVER, ConFNG, this, "makes lobby FNG")
 CONSOLE_COMMAND("flag_reset", "", CFGFLAG_SERVER, ConFlagReset, this, "toggle flag resetting on teammates touch")
+CONSOLE_COMMAND("flag_pass", "", CFGFLAG_SERVER, ConFlagPass, this, "toggle flag passing by shooting teammates")
 CONSOLE_COMMAND("flag_drop", "", CFGFLAG_SERVER, ConFlagDropping, this, "toggle flag dropping acting as second life")
 CONSOLE_COMMAND("bot_amount", "i[amount]", CFGFLAG_SERVER, ConBotAmount, this, "amount of bots in a lobby")
 CONSOLE_COMMAND("line_of_sight", "", CFGFLAG_SERVER, ConLOS, this, "makes lobby IDM")

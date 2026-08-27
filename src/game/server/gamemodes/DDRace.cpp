@@ -38,6 +38,7 @@ CGameControllerDDRace::CGameControllerDDRace(class CGameContext *pGameServer, in
 	m_fng = g_Config.m_SvFng;
 	m_flag_resetting = g_Config.m_SvFlagReset;
 	m_drop_flag_on_shot = g_Config.m_SvFlagDrop;
+	m_flag_pass = g_Config.m_SvFlagPass;
 	m_BotCount = 0;
 
 	int waypointAmount = 16;

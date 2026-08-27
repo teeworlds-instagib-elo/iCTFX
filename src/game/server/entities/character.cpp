@@ -1169,6 +1169,21 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int tick)
 	
 	if(GameServer()->m_apController[m_Lobby]->IsFriendlyFire(m_pPlayer->GetCID(), From))
 	{
+		if(GameServer()->m_apController[m_Lobby]->m_flag_pass)
+		{
+			for(int i = 0; i < 2; i++)
+			{
+				if(GameServer()->m_apController[m_Lobby]->m_apFlags[i]->m_pCarryingCharacter &&
+					GameServer()->m_apController[m_Lobby]->m_apFlags[i]->m_pCarryingCharacter->GetPlayer()->GetCID() == From)
+				{
+					//pass flag
+					GameServer()->m_apController[m_Lobby]->m_apFlags[i]->m_pCarryingCharacter = this;
+					GameServer()->CreateSoundGlobal(m_Lobby, SOUND_CTF_GRAB_PL);
+					break;
+				}
+			}
+		}
+
 		if(GameServer()->m_apController[m_Lobby]->m_fng && From >= 0 && m_FreezeTime > 0)
 		{
 			UnFreeze();

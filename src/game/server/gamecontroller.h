@@ -74,6 +74,7 @@ public:
 	bool m_tourneyMode = false;
 	bool m_flag_resetting = true;
 	bool m_drop_flag_on_shot = false;
+	bool m_flag_pass = true;
 	int m_Lobby;
 
 	int m_ScoreLimit;
