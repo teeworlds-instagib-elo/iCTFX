@@ -341,6 +341,7 @@ private:
 	static void ConShotgun(IConsole::IResult *pResult, void *pUserData);
 	static void ConIDM(IConsole::IResult *pResult, void *pUserData);
 	static void ConFNG(IConsole::IResult *pResult, void *pUserData);
+	static void ConResetFun(IConsole::IResult *pResult, void *pUserData);
 	static void ConFlagReset(IConsole::IResult *pResult, void *pUserData);
 	static void ConFlagPass(IConsole::IResult *pResult, void *pUserData);
 	static void ConFlagDropping(IConsole::IResult *pResult, void *pUserData);

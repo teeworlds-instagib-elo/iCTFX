@@ -34,6 +34,7 @@ public:
 	void Tick() override;
 
 	void DoTeamChange(class CPlayer *pPlayer, int Team, bool DoChatMsg) override;
+	void ResetFun() override;
 
 	int64_t GetMaskForPlayerWorldEvent(int Asker, int ExceptID = -1) override;
 

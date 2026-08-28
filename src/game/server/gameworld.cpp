@@ -35,15 +35,6 @@ CGameWorld::~CGameWorld()
 			delete pFirstEntityType;
 }
 
-void CGameWorld::SetSettings()
-{
-	m_grenade = g_Config.m_SvWeaponGrenade;
-	m_shield = g_Config.m_SvWeaponShield;
-	m_hammer = g_Config.m_SvWeaponHammer;
-	m_laser = g_Config.m_SvWeaponLaser;
-	m_lineOfSight = false;
-}
-
 void CGameWorld::DeleteAllEntities()
 {
 	// delete all entities
@@ -61,8 +52,6 @@ void CGameWorld::DeleteAllEntities()
 
 	for(auto &pFirstEntityType : m_apFirstEntityTypes)
 		pFirstEntityType = 0;
-	
-	SetSettings();
 }
 
 void CGameWorld::SetGameServer(CGameContext *pGameServer)
@@ -175,7 +164,6 @@ void CGameWorld::Reset()
 	RemoveEntities();
 
 	m_ResetRequested = false;
-	SetSettings();
 }
 
 void CGameWorld::RemoveEntities()

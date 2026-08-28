@@ -860,7 +860,7 @@ void IGameController::Snap(int SnappingClient)
 	// 	GAMEINFOFLAG_ENTITIES_RACE |
 	// 	GAMEINFOFLAG_RACE;
 
-	if(!GameServer()->m_World[m_Lobby].m_grenade)
+	if(!GameServer()->m_apController[m_Lobby]->m_grenade)
 		pGameInfoEx->m_Flags |= GAMEINFOFLAG_UNLIMITED_AMMO;
 	
 	pGameInfoEx->m_Flags2 = 0;

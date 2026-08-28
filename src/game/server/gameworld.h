@@ -32,31 +32,23 @@ public:
 
 private:
 	void Reset();
-	void SetSettings();
 	void RemoveEntities();
-
+	
 	CEntity *m_pNextTraverseEntity = nullptr;
-
+	
 	class CGameContext *m_pGameServer;
 	class CConfig *m_pConfig;
 	class IServer *m_pServer;
-
+	
 	void UpdatePlayerMaps();
-
-public:
+	
+	public:
 	class CGameContext *GameServer() { return m_pGameServer; }
 	class CConfig *Config() { return m_pConfig; }
 	class IServer *Server() { return m_pServer; }
-
+	
 	CEntity *m_apFirstEntityTypes[NUM_ENTTYPES];
-
-	//fun options
-	bool m_grenade = false;
-	bool m_laser = true;
-	bool m_hammer = false;
-	bool m_shield = false;
-	bool m_lineOfSight = false;
-
+	
 	bool m_ResetRequested;
 	bool m_Paused;
 	CWorldCore m_Core;

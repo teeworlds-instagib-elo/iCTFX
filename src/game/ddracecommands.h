@@ -25,6 +25,8 @@ CONSOLE_COMMAND("tournament_mode", "", CFGFLAG_SERVER, ConTournamentMode, this, 
 CONSOLE_COMMAND("hammer", "", CFGFLAG_SERVER, ConHammer, this, "Gives lobby hammer")
 CONSOLE_COMMAND("laser", "", CFGFLAG_SERVER, ConLaser, this, "Gives lobby laser")
 CONSOLE_COMMAND("shield", "", CFGFLAG_SERVER, ConShield, this, "Gives lobby shields")
+CONSOLE_COMMAND("reset_fun", "", CFGFLAG_SERVER, ConResetFun, this, "reset to default settings")
+
 // CONSOLE_COMMAND("rifle", "", CFGFLAG_SERVER | CMDFLAG_TEST, ConLaser, this, "Gives a laser to you")
 // CONSOLE_COMMAND("jetpack", "", CFGFLAG_SERVER | CMDFLAG_TEST, ConJetpack, this, "Gives jetpack to you")
 // CONSOLE_COMMAND("weapons", "", CFGFLAG_SERVER | CMDFLAG_TEST, ConWeapons, this, "Gives all weapons to you")

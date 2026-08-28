@@ -43,7 +43,7 @@ void CFlag::Snap(int SnappingClient)
 	if(NetworkClipped(SnappingClient))
 		return;
 	
-	if(GameWorld()->m_lineOfSight && m_pCarryingCharacter != NULL && SnappingClient >= 0 && GameServer()->m_apPlayers[SnappingClient]->GetCharacter() &&
+	if(GameServer()->m_apController[m_Lobby]->m_lineOfSight && m_pCarryingCharacter != NULL && SnappingClient >= 0 && GameServer()->m_apPlayers[SnappingClient]->GetCharacter() &&
 		GameServer()->m_apPlayers[SnappingClient]->GetCharacter() != m_pCarryingCharacter && !GameServer()->CheckSightVisibility(m_Lobby, GameServer()->m_apPlayers[SnappingClient]->GetCharacter(), m_Pos, CCharacter::ms_PhysSize, 0))
 		return;
 	

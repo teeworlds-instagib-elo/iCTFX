@@ -34,12 +34,7 @@ CGameControllerDDRace::CGameControllerDDRace(class CGameContext *pGameServer, in
 	m_aTeamscore[TEAM_RED] = 0;
 	m_aTeamscore[TEAM_BLUE] = 0;
 
-	idm = false;
-	m_fng = g_Config.m_SvFng;
-	m_flag_resetting = g_Config.m_SvFlagReset;
-	m_drop_flag_on_shot = g_Config.m_SvFlagDrop;
-	m_flag_pass = g_Config.m_SvFlagPass;
-	m_BotCount = 0;
+	ResetFun();
 
 	int waypointAmount = 16;
 
@@ -508,6 +503,22 @@ void CGameControllerDDRace::OnPlayerDisconnect(CPlayer *pPlayer, const char *pRe
 
 		GameServer()->sql_handler->set_stats(Server()->ClientName(pPlayer->GetCID()), stats);
 	}
+}
+
+void CGameControllerDDRace::ResetFun()
+{
+	idm = false;
+	m_fng = g_Config.m_SvFng;
+	m_flag_resetting = g_Config.m_SvFlagReset;
+	m_drop_flag_on_shot = g_Config.m_SvFlagDrop;
+	m_flag_pass = g_Config.m_SvFlagPass;
+	m_BotCount = 0;
+
+	m_grenade = g_Config.m_SvWeaponGrenade;
+	m_shield = g_Config.m_SvWeaponShield;
+	m_hammer = g_Config.m_SvWeaponHammer;
+	m_laser = g_Config.m_SvWeaponLaser;
+	m_lineOfSight = false;
 }
 
 void CGameControllerDDRace::Snap(int SnappingClient)

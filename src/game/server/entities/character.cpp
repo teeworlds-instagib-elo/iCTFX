@@ -1541,7 +1541,7 @@ void CCharacter::Snap(int SnappingClient)
 	if((NetworkClipped(SnappingClient) || !CanSnapCharacter(SnappingClient)) && g_Config.m_SvAntiZoom)
 		return;
 	
-	if(GameWorld()->m_lineOfSight && SnappingClient >= 0 && m_pPlayer->GetCID() != SnappingClient && GameServer()->m_apPlayers[SnappingClient]->GetCharacter())
+	if(GameServer()->m_apController[m_Lobby]->m_lineOfSight && SnappingClient >= 0 && m_pPlayer->GetCID() != SnappingClient && GameServer()->m_apPlayers[SnappingClient]->GetCharacter())
 	{
 		CCharacter * snapChar = GameServer()->m_apPlayers[SnappingClient]->GetCharacter();
 		if(!GameServer()->CheckSightVisibility(m_Lobby, snapChar, m_Pos, CCharacter::ms_PhysSize, this))
@@ -2589,25 +2589,25 @@ void CCharacter::ResetPickups()
 		m_aWeapons[i].m_Got = false;
 	}
 
-	if(GameWorld()->m_hammer)
+	if(GameServer()->m_apController[m_Lobby]->m_hammer)
 	{
 		m_aWeapons[WEAPON_HAMMER].m_Got = true;
 		m_Core.m_ActiveWeapon = WEAPON_HAMMER;
 	}
 
-	if(GameWorld()->m_grenade)
+	if(GameServer()->m_apController[m_Lobby]->m_grenade)
 	{
 		m_aWeapons[WEAPON_GRENADE].m_Got = true;
 		m_Core.m_ActiveWeapon = WEAPON_GRENADE;
 	}
 
-	if(GameWorld()->m_shield)
+	if(GameServer()->m_apController[m_Lobby]->m_shield)
 	{
 		m_aWeapons[WEAPON_SHOTGUN].m_Got = true;
 		m_Core.m_ActiveWeapon = WEAPON_SHOTGUN;
 	}
 
-	if(GameWorld()->m_laser)
+	if(GameServer()->m_apController[m_Lobby]->m_laser)
 	{
 		m_aWeapons[WEAPON_LASER].m_Got = true;
 		m_Core.m_ActiveWeapon = WEAPON_LASER;

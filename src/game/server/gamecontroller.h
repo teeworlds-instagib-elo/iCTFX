@@ -75,6 +75,14 @@ public:
 	bool m_flag_resetting = true;
 	bool m_drop_flag_on_shot = false;
 	bool m_flag_pass = true;
+
+	//fun options
+	bool m_grenade = false;
+	bool m_laser = true;
+	bool m_hammer = false;
+	bool m_shield = false;
+	bool m_lineOfSight = false;
+
 	int m_Lobby;
 
 	int m_ScoreLimit;
@@ -111,6 +119,8 @@ public:
 	virtual void OnCharacterSpawn(class CCharacter *pChr);
 
 	virtual void HandleCharacterTiles(class CCharacter *pChr, int MapIndex);
+
+	virtual void ResetFun() = 0;
 
 	/*
 		Function: OnEntity
