@@ -17,6 +17,9 @@ public:
 	bool m_BotGrabbed;
 	int m_Bot;
 
+	int m_HoldTimer = 0;
+	vec2 m_PickupPos;
+
 	vec2 m_Positions[POSITION_HISTORY];
 
 	int m_Team;

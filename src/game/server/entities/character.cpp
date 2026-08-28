@@ -52,6 +52,8 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_HitByPlayer = -1;
 	m_lastHook = -1;
 
+	m_flag_invunerable_ticks = 0;
+
 	m_TeleGunTeleport = false;
 	m_IsBlueTeleGunTeleport = false;
 	m_Solo = false;
@@ -373,9 +375,6 @@ void CCharacter::FireWeapon()
 		return;
 	}
 
-	if(m_Core.m_ActiveWeapon == WEAPON_SHOTGUN)
-		return;
-
 	m_ReloadTimer = 0;
 
 	DoWeaponSwitch();
@@ -387,11 +386,21 @@ void CCharacter::FireWeapon()
 	if(CountInput(m_LatestPrevInput.m_Fire, m_LatestInput.m_Fire).m_Presses)
 		WillFire = true;
 
-	if(m_LatestInput.m_Fire & 1)
+	if(m_LatestInput.m_Fire & 1 && m_Core.m_ActiveWeapon != WEAPON_HAMMER)
 		WillFire = true;
 
 	if(!WillFire)
 		return;
+	
+	if(m_Core.m_ActiveWeapon == WEAPON_SHOTGUN)
+	{
+		if(m_ShieldReloadTimer < -Server()->TickSpeed() * 1)
+		{
+			GameServer()->CreateSound(m_Lobby, m_Pos, SOUND_PICKUP_ARMOR);
+			m_ShieldReloadTimer = Server()->TickSpeed() * 0.5;
+		}
+		return;
+	}
 
 	if(m_FreezeTime)
 	{
@@ -514,6 +523,7 @@ void CCharacter::FireWeapon()
 				m_pPlayer->GetCID(), //Owner
 				ProjStartPos, //Pos
 				Direction, //Dir
+				vec2(0,0),
 				Lifetime, //Span
 				false, //Freeze
 				false, //Explosive
@@ -571,6 +581,7 @@ void CCharacter::FireWeapon()
 			m_pPlayer->GetCID(), //Owner
 			ProjStartPos, //Pos
 			Direction, //Dir
+			m_Core.m_Vel,
 			Lifetime, //Span
 			false, //Freeze
 			true, //Explosive
@@ -624,7 +635,7 @@ void CCharacter::HandleWeapons()
 {
 	//ninja
 	HandleNinja();
-	HandleJetpack();
+	// HandleJetpack();
 
 	if(m_PainSoundTimer > 0)
 		m_PainSoundTimer--;
@@ -745,6 +756,11 @@ void CCharacter::Tick()
 
 	if(m_Paused)
 		return;
+	
+	if(m_flag_invunerable_ticks > 0)
+		m_flag_invunerable_ticks--;
+	
+	m_ShieldReloadTimer--;
 	
 	if(m_Core.m_HookedPlayer >= 0)
 	{
@@ -1150,11 +1166,34 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int tick)
 	else
 		GameServer()->CreateSound(m_Lobby, m_Pos, SOUND_PLAYER_PAIN_SHORT);*/
 	
-	vec2 Temp = m_Core.m_Vel + Force;
+	vec2 forceFactor = vec2(3.2,1.2);
+
+	if(GameServer()->m_apController[m_Lobby]->IsFriendlyFire(m_pPlayer->GetCID(), From))
+		forceFactor = vec2(0.5,0.5);
+	
+	if(!GameServer()->m_apController[m_Lobby]->m_fng || Weapon != WEAPON_HAMMER)
+		forceFactor = vec2(1,1);
+	
+	vec2 Temp = m_Core.m_Vel + Force * forceFactor;
 	m_Core.m_Vel = ClampVel(m_MoveRestrictions, Temp);
 	
 	if(GameServer()->m_apController[m_Lobby]->IsFriendlyFire(m_pPlayer->GetCID(), From))
 	{
+		if(GameServer()->m_apController[m_Lobby]->m_flag_pass)
+		{
+			for(int i = 0; i < 2; i++)
+			{
+				if(GameServer()->m_apController[m_Lobby]->m_apFlags[i]->m_pCarryingCharacter &&
+					GameServer()->m_apController[m_Lobby]->m_apFlags[i]->m_pCarryingCharacter->GetPlayer()->GetCID() == From)
+				{
+					//pass flag
+					GameServer()->m_apController[m_Lobby]->m_apFlags[i]->m_pCarryingCharacter = this;
+					GameServer()->CreateSoundGlobal(m_Lobby, SOUND_CTF_GRAB_PL);
+					break;
+				}
+			}
+		}
+
 		if(GameServer()->m_apController[m_Lobby]->m_fng && From >= 0 && m_FreezeTime > 0)
 		{
 			UnFreeze();
@@ -1167,6 +1206,27 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int tick)
 			GameServer()->CreateSound(m_Lobby, GameServer()->m_apPlayers[From]->m_ViewPos, SOUND_HIT, Mask);
 		}
 		return false;
+	}
+
+
+	if(GameServer()->m_apController[m_Lobby]->m_drop_flag_on_shot)
+	{
+		int flags = GameServer()->m_apController[m_Lobby]->DropFlag(this);
+
+		if(flags)
+		{
+			int Mask = CmaskOne(From);
+			for(int i = 0; i < MAX_CLIENTS; i++)
+			{
+				if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetTeam() == TEAM_SPECTATORS && GameServer()->m_apPlayers[i]->m_SpectatorID == From)
+					Mask |= CmaskOne(i);
+			}
+			GameServer()->CreateSound(m_Lobby, GameServer()->m_apPlayers[From]->m_ViewPos, SOUND_HIT, Mask);
+			GameServer()->m_apController[m_Lobby]->DropFlag(this);
+
+			//merely dropped the flags
+			return true;
+		}
 	}
 
 	// do damage Hit sound
@@ -1185,11 +1245,11 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int tick)
 	if(m_pPlayer->GetCID() == From)
 		return false;
 	
-	if(GameServer()->m_apController[m_Lobby]->m_fng && From >= 0 && !m_FreezeTime)
+	if(GameServer()->m_apController[m_Lobby]->m_fng && From >= 0)
 	{
 		m_HitByPlayer = From;
 		
-		if(Weapon != WEAPON_HAMMER && Weapon != WEAPON_GAME)
+		if(Weapon != WEAPON_HAMMER && Weapon != WEAPON_GAME && !m_FreezeTime)
 		{
 			Freeze(8);
 			int Mask = CmaskOne(From);
@@ -1252,7 +1312,7 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 			Weapon = WEAPON_NINJA;
 	}
 
-	if(m_Core.m_ActiveWeapon == WEAPON_SHOTGUN)
+	if(m_Core.m_ActiveWeapon == WEAPON_SHOTGUN && m_ShieldReloadTimer > 0)
 	{
 		vec2 dir = normalize(vec2(m_LatestInput.m_TargetX, m_LatestInput.m_TargetY));
 		int Size = Server()->IsSixup(SnappingClient) ? 3 * 4 : sizeof(CNetObj_Pickup);
@@ -1491,7 +1551,7 @@ void CCharacter::Snap(int SnappingClient)
 	if((NetworkClipped(SnappingClient) || !CanSnapCharacter(SnappingClient)) && g_Config.m_SvAntiZoom)
 		return;
 	
-	if(GameWorld()->m_lineOfSight && SnappingClient >= 0 && m_pPlayer->GetCID() != SnappingClient && GameServer()->m_apPlayers[SnappingClient]->GetCharacter())
+	if(GameServer()->m_apController[m_Lobby]->m_lineOfSight && SnappingClient >= 0 && m_pPlayer->GetCID() != SnappingClient && GameServer()->m_apPlayers[SnappingClient]->GetCharacter())
 	{
 		CCharacter * snapChar = GameServer()->m_apPlayers[SnappingClient]->GetCharacter();
 		if(!GameServer()->CheckSightVisibility(m_Lobby, snapChar, m_Pos, CCharacter::ms_PhysSize, this))
@@ -2539,25 +2599,25 @@ void CCharacter::ResetPickups()
 		m_aWeapons[i].m_Got = false;
 	}
 
-	if(GameWorld()->m_hammer)
+	if(GameServer()->m_apController[m_Lobby]->m_hammer)
 	{
 		m_aWeapons[WEAPON_HAMMER].m_Got = true;
 		m_Core.m_ActiveWeapon = WEAPON_HAMMER;
 	}
 
-	if(GameWorld()->m_grenade)
+	if(GameServer()->m_apController[m_Lobby]->m_grenade)
 	{
 		m_aWeapons[WEAPON_GRENADE].m_Got = true;
 		m_Core.m_ActiveWeapon = WEAPON_GRENADE;
 	}
 
-	if(GameWorld()->m_shield)
+	if(GameServer()->m_apController[m_Lobby]->m_shield)
 	{
 		m_aWeapons[WEAPON_SHOTGUN].m_Got = true;
 		m_Core.m_ActiveWeapon = WEAPON_SHOTGUN;
 	}
 
-	if(GameWorld()->m_laser)
+	if(GameServer()->m_apController[m_Lobby]->m_laser)
 	{
 		m_aWeapons[WEAPON_LASER].m_Got = true;
 		m_Core.m_ActiveWeapon = WEAPON_LASER;

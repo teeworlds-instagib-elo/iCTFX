@@ -73,6 +73,18 @@ public:
 	bool m_fng; //todo, more of this shitty solution
 	bool m_tourneyMode = false;
 	bool m_flag_resetting = true;
+	bool m_drop_flag_on_shot = false;
+	bool m_flag_pass = false;
+	bool m_grenade_velocity = false;
+	bool m_grenade_hook = false;
+
+	//fun options
+	bool m_grenade = false;
+	bool m_laser = true;
+	bool m_hammer = false;
+	bool m_shield = false;
+	bool m_lineOfSight = false;
+
 	int m_Lobby;
 
 	int m_ScoreLimit;
@@ -96,6 +108,9 @@ public:
 				weapon when switching team or player suicides.
 	*/
 	virtual int OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int Weapon);
+
+	virtual int DropFlag(class CCharacter *pVictim) = 0;
+
 	/*
 		Function: OnCharacterSpawn
 			Called when a CCharacter spawns into the game world.
@@ -106,6 +121,8 @@ public:
 	virtual void OnCharacterSpawn(class CCharacter *pChr);
 
 	virtual void HandleCharacterTiles(class CCharacter *pChr, int MapIndex);
+
+	virtual void ResetFun() = 0;
 
 	/*
 		Function: OnEntity

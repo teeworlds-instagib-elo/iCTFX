@@ -212,6 +212,7 @@ public:
 	bool m_LiveFreeze;
 	bool m_EndlessHook;
 	bool m_FreezeHammer;
+	int m_ShieldReloadTimer;
 	enum
 	{
 		HIT_ALL = 0,
@@ -234,6 +235,8 @@ public:
 	float m_CpCurrent[25];
 	int m_TileIndex;
 	int m_TileFIndex;
+
+	int m_flag_invunerable_ticks;
 
 	int m_MoveRestrictions;
 

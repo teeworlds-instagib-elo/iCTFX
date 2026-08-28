@@ -14,6 +14,7 @@ public:
 		int Owner,
 		vec2 Pos,
 		vec2 Dir,
+		vec2 Vel,
 		int Span,
 		bool Freeze,
 		bool Explosive,
@@ -21,6 +22,8 @@ public:
 		int SoundImpact,
 		int Layer = 0,
 		int Number = 0);
+	
+	~CProjectile();
 
 	vec2 GetPos(float Time);
 	void FillInfo(CNetObj_Projectile *pProj);
@@ -33,6 +36,7 @@ public:
 
 private:
 	vec2 m_Direction;
+	vec2 m_Vel;
 	int m_LifeSpan;
 	int m_Owner;
 	int m_Type;
@@ -48,6 +52,8 @@ private:
 	bool m_Freeze;
 	int m_TuneZone;
 	bool m_BelongsToPracticeTeam;
+
+	int m_Hooked;
 
 public:
 	void SetBouncing(int Value);

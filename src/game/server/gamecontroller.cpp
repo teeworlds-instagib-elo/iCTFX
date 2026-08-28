@@ -263,6 +263,7 @@ bool IGameController::OnEntity(int Index, vec2 Pos, int Layer, int Flags, int Nu
 			-1, //Owner
 			Pos, //Pos
 			vec2(sin(Deg), cos(Deg)), //Dir
+			vec2(0,0),
 			-2, //Span
 			true, //Freeze
 			true, //Explosive
@@ -290,6 +291,7 @@ bool IGameController::OnEntity(int Index, vec2 Pos, int Layer, int Flags, int Nu
 			-1, //Owner
 			Pos, //Pos
 			vec2(sin(Deg), cos(Deg)), //Dir
+			vec2(0,0),
 			-2, //Span
 			true, //Freeze
 			false, //Explosive
@@ -860,7 +862,7 @@ void IGameController::Snap(int SnappingClient)
 	// 	GAMEINFOFLAG_ENTITIES_RACE |
 	// 	GAMEINFOFLAG_RACE;
 
-	if(!GameServer()->m_World[m_Lobby].m_grenade)
+	if(!GameServer()->m_apController[m_Lobby]->m_grenade)
 		pGameInfoEx->m_Flags |= GAMEINFOFLAG_UNLIMITED_AMMO;
 	
 	pGameInfoEx->m_Flags2 = 0;

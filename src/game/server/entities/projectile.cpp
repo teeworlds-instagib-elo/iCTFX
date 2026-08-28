@@ -18,6 +18,7 @@ CProjectile::CProjectile(
 	int Owner,
 	vec2 Pos,
 	vec2 Dir,
+	vec2 Vel,
 	int Span,
 	bool Freeze,
 	bool Explosive,
@@ -30,6 +31,11 @@ CProjectile::CProjectile(
 	m_Type = Type;
 	m_Pos = Pos;
 	m_Direction = Dir;
+	m_Vel = Vel;
+
+	if(!GameServer()->m_apController[m_Lobby]->m_grenade_velocity)
+		m_Vel = vec2(0,0);
+
 	m_LifeSpan = Span;
 	m_Owner = Owner;
 	m_Force = Force;
@@ -47,7 +53,21 @@ CProjectile::CProjectile(
 	CCharacter *pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
 	m_BelongsToPracticeTeam = false;
 
+	m_Hooked = -1;
+
 	GameWorld()->InsertEntity(this);
+}
+
+CProjectile::~CProjectile()
+{
+	if(m_Hooked != -1)
+	{
+		if(GameServer()->m_apPlayers[m_Hooked] && GameServer()->GetLobby(m_Hooked) == m_Lobby && GameServer()->m_apPlayers[m_Hooked]->GetCharacter())
+		{
+			CCharacter * pChar = GameServer()->m_apPlayers[m_Hooked]->GetCharacter();
+			pChar->m_Core.m_HookState = HOOK_RETRACTED;
+		}
+	}
 }
 
 void CProjectile::Reset()
@@ -113,6 +133,76 @@ void CProjectile::Tick()
 	float Pt = (Server()->Tick() - m_StartTick - 1) / (float)Server()->TickSpeed();
 	float Ct = (Server()->Tick() - m_StartTick) / (float)Server()->TickSpeed();
 	vec2 PrevPos = GetPos(Pt);
+
+	float RampValue = VelocityRamp(length(m_Vel) * 50, 550, 2000, 1.4f);
+	vec2 Vel = m_Vel * RampValue;
+	m_Vel.y *= 0.97f;
+	m_Pos += Vel;
+
+	//check if anybody is hooking it
+	if(GameServer()->m_apController[m_Lobby]->m_grenade_hook)
+	{
+		if(m_Hooked == -1)
+		{
+			for(int i = 0; i < MAX_CLIENTS; i++)
+			{
+				if(!GameServer()->m_apPlayers[i] || GameServer()->GetLobby(i) != m_Lobby || !GameServer()->m_apPlayers[i]->GetCharacter())
+					continue;
+				
+				CCharacter * pChar = GameServer()->m_apPlayers[i]->GetCharacter();
+				
+				if(pChar->m_Core.m_HookState == HOOK_FLYING && distance(pChar->m_Core.m_HookPos, PrevPos) < 32*2)
+				{
+					m_Hooked = i;
+					pChar->m_Core.m_HookState = HOOK_GRABBED;
+					pChar->m_Core.m_HookedPlayer = -1;
+					break;
+				}
+			}
+		}
+		else
+		{
+			//hooking logic
+			bool still_hooked = false;
+
+			if(GameServer()->m_apPlayers[m_Hooked] && GameServer()->GetLobby(m_Hooked) == m_Lobby && GameServer()->m_apPlayers[m_Hooked]->GetCharacter())
+			{
+				CCharacter * pChar = GameServer()->m_apPlayers[m_Hooked]->GetCharacter();
+
+				if(pChar->m_Core.m_HookState == HOOK_GRABBED)
+				{
+					still_hooked = true;
+					pChar->m_Core.m_HookPos = PrevPos;
+					
+					if(distance(PrevPos, pChar->m_Pos) > pChar->m_ProximityRadius * 3)
+						m_Vel += normalize(pChar->m_Pos - PrevPos)*3;
+					else
+					{
+						if(m_Explosive)
+						{
+							int64_t TeamMask = -1LL;
+							if(pChar && pChar->IsAlive())
+							{
+								TeamMask = 0;
+							}
+
+							GameServer()->CreateExplosion(m_Lobby, PrevPos, m_Owner, m_Type, m_Owner == -1, (!pChar ? -1 : pChar->Team()),
+								(m_Owner != -1) ? TeamMask : -1LL);
+							GameServer()->CreateSound(m_Lobby, PrevPos, m_SoundImpact,
+								(m_Owner != -1) ? TeamMask : -1LL);
+						}
+
+						m_MarkedForDestroy = true;
+					}
+				}
+			}
+
+			if(!still_hooked)
+				m_Hooked = -1;
+		}
+	}
+
+
 	vec2 CurPos = GetPos(Ct);
 	vec2 ColPos;
 	vec2 NewPos;

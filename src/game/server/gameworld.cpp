@@ -35,15 +35,6 @@ CGameWorld::~CGameWorld()
 			delete pFirstEntityType;
 }
 
-void CGameWorld::SetSettings()
-{
-	m_grenade = g_Config.m_SvWeaponGrenade;
-	m_shield = g_Config.m_SvWeaponShield;
-	m_hammer = g_Config.m_SvWeaponHammer;
-	m_laser = g_Config.m_SvWeaponLaser;
-	m_lineOfSight = false;
-}
-
 void CGameWorld::DeleteAllEntities()
 {
 	// delete all entities
@@ -61,8 +52,6 @@ void CGameWorld::DeleteAllEntities()
 
 	for(auto &pFirstEntityType : m_apFirstEntityTypes)
 		pFirstEntityType = 0;
-	
-	SetSettings();
 }
 
 void CGameWorld::SetGameServer(CGameContext *pGameServer)
@@ -175,7 +164,6 @@ void CGameWorld::Reset()
 	RemoveEntities();
 
 	m_ResetRequested = false;
-	SetSettings();
 }
 
 void CGameWorld::RemoveEntities()
@@ -384,7 +372,8 @@ CCharacter *CGameWorld::IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, v
 			float Len = distance(pos, IntersectPos);
 			if(Len < p->m_ProximityRadius * 3 + Radius)
 			{
-				if(p->m_Core.m_ActiveWeapon == WEAPON_SHOTGUN && distance(normalize(vec2(p->m_LatestInput.m_TargetX, p->m_LatestInput.m_TargetY)), normalize(Pos0-pos)) < 0.5)
+				if(p->m_Core.m_ActiveWeapon == WEAPON_SHOTGUN && p->m_ShieldReloadTimer > 0
+					&& distance(normalize(vec2(p->m_LatestInput.m_TargetX, p->m_LatestInput.m_TargetY)), normalize(Pos0-pos)) < 0.5)
 				{
 					vec2 dir = normalize(Pos0-Pos1);
 					for(int i = 0; i < 20; i++)

@@ -19,6 +19,7 @@ public:
 
 	void OnCharacterSpawn(class CCharacter *pChr) override;
 	int OnCharacterDeath(class CCharacter *pVictim, class CPlayer *pKiller, int WeaponID) override;
+	int DropFlag(class CCharacter *pVictim) override;
 	void Snap(int SnappingClient);
 	
 	void HandleCharacterTiles(class CCharacter *pChr, int MapIndex) override;
@@ -33,6 +34,7 @@ public:
 	void Tick() override;
 
 	void DoTeamChange(class CPlayer *pPlayer, int Team, bool DoChatMsg) override;
+	void ResetFun() override;
 
 	int64_t GetMaskForPlayerWorldEvent(int Asker, int ExceptID = -1) override;
 

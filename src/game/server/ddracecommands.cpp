@@ -181,14 +181,14 @@ void CGameContext::ConLOS(IConsole::IResult *pResult, void *pUserData)
 		return;
 	}
 
-	pSelf->m_World[pResult->m_Lobby].m_lineOfSight = !pSelf->m_World[pResult->m_Lobby].m_lineOfSight;
+	pSelf->m_apController[Lobby]->m_lineOfSight = !pSelf->m_apController[Lobby]->m_lineOfSight;
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
 		if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
 			continue;
 		
 		char aBuf[256];
-		str_format(aBuf, 256, "line of sight is %s", pSelf->m_World[pResult->m_Lobby].m_lineOfSight ? "enabled" : "disabled");
+		str_format(aBuf, 256, "line of sight is %s", pSelf->m_apController[Lobby]->m_lineOfSight ? "enabled" : "disabled");
 
 		pSelf->SendChatTarget(i, aBuf);
 	}
@@ -252,6 +252,35 @@ void CGameContext::ConFNG(IConsole::IResult *pResult, void *pUserData)
 	}
 }
 
+void CGameContext::ConResetFun(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	int Lobby = pResult->m_Lobby;
+	if(Lobby == 0)	//Lobby 0 is save server
+	{
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+				continue;
+			
+			pSelf->SendChatTarget(i, "You cannot change settings in lobby 0, got a different lobby");
+		}
+		return;
+	}
+
+	pSelf->m_apController[pResult->m_Lobby]->ResetFun();
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+			continue;
+		
+		char aBuf[256];
+		str_format(aBuf, 256, "Settings reset");
+
+		pSelf->SendChatTarget(i, aBuf);
+	}
+}
+
 void CGameContext::ConFlagReset(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;
@@ -276,6 +305,122 @@ void CGameContext::ConFlagReset(IConsole::IResult *pResult, void *pUserData)
 		
 		char aBuf[256];
 		str_format(aBuf, 256, "Flag resetting is %s", pSelf->m_apController[pResult->m_Lobby]->m_flag_resetting ? "enabled" : "disabled");
+
+		pSelf->SendChatTarget(i, aBuf);
+	}
+}
+
+void CGameContext::ConFlagPass(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	int Lobby = pResult->m_Lobby;
+	if(Lobby == 0)	//Lobby 0 is save server
+	{
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+				continue;
+			
+			pSelf->SendChatTarget(i, "You cannot change settings in lobby 0, got a different lobby");
+		}
+		return;
+	}
+
+	pSelf->m_apController[pResult->m_Lobby]->m_flag_pass = !pSelf->m_apController[pResult->m_Lobby]->m_flag_pass;
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+			continue;
+		
+		char aBuf[256];
+		str_format(aBuf, 256, "Flag passing is %s", pSelf->m_apController[pResult->m_Lobby]->m_flag_pass ? "enabled" : "disabled");
+
+		pSelf->SendChatTarget(i, aBuf);
+	}
+}
+
+void CGameContext::ConGrenadeVelocity(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	int Lobby = pResult->m_Lobby;
+	if(Lobby == 0)	//Lobby 0 is save server
+	{
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+				continue;
+			
+			pSelf->SendChatTarget(i, "You cannot change settings in lobby 0, got a different lobby");
+		}
+		return;
+	}
+
+	pSelf->m_apController[pResult->m_Lobby]->m_grenade_velocity = !pSelf->m_apController[pResult->m_Lobby]->m_grenade_velocity;
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+			continue;
+		
+		char aBuf[256];
+		str_format(aBuf, 256, "grenade velocity is %s", pSelf->m_apController[pResult->m_Lobby]->m_grenade_velocity ? "enabled" : "disabled");
+
+		pSelf->SendChatTarget(i, aBuf);
+	}
+}
+
+void CGameContext::ConGrenadeHook(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	int Lobby = pResult->m_Lobby;
+	if(Lobby == 0)	//Lobby 0 is save server
+	{
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+				continue;
+			
+			pSelf->SendChatTarget(i, "You cannot change settings in lobby 0, got a different lobby");
+		}
+		return;
+	}
+
+	pSelf->m_apController[pResult->m_Lobby]->m_grenade_hook = !pSelf->m_apController[pResult->m_Lobby]->m_grenade_hook;
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+			continue;
+		
+		char aBuf[256];
+		str_format(aBuf, 256, "grenade hook is %s", pSelf->m_apController[pResult->m_Lobby]->m_grenade_hook ? "enabled" : "disabled");
+
+		pSelf->SendChatTarget(i, aBuf);
+	}
+}
+
+void CGameContext::ConFlagDropping(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	int Lobby = pResult->m_Lobby;
+	if(Lobby == 0)	//Lobby 0 is save server
+	{
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+				continue;
+			
+			pSelf->SendChatTarget(i, "You cannot change settings in lobby 0, got a different lobby");
+		}
+		return;
+	}
+
+	pSelf->m_apController[pResult->m_Lobby]->m_drop_flag_on_shot = !pSelf->m_apController[pResult->m_Lobby]->m_drop_flag_on_shot;
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+			continue;
+		
+		char aBuf[256];
+		str_format(aBuf, 256, "Flag dropping is %s", pSelf->m_apController[pResult->m_Lobby]->m_drop_flag_on_shot ? "enabled" : "disabled");
 
 		pSelf->SendChatTarget(i, aBuf);
 	}
@@ -358,14 +503,14 @@ void CGameContext::ConHammer(IConsole::IResult *pResult, void *pUserData)
 		return;
 	}
 
-	pSelf->m_World[pResult->m_Lobby].m_hammer = !pSelf->m_World[pResult->m_Lobby].m_hammer;
+	pSelf->m_apController[Lobby]->m_hammer = !pSelf->m_apController[Lobby]->m_hammer;
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
 		if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
 			continue;
 		
 		char aBuf[256];
-		str_format(aBuf, 256, "hammer is %s", pSelf->m_World[pResult->m_Lobby].m_hammer ? "enabled" : "disabled");
+		str_format(aBuf, 256, "hammer is %s", pSelf->m_apController[Lobby]->m_hammer ? "enabled" : "disabled");
 
 		pSelf->SendChatTarget(i, aBuf);
 	}
@@ -387,14 +532,14 @@ void CGameContext::ConGrenade(IConsole::IResult *pResult, void *pUserData)
 		return;
 	}
 
-	pSelf->m_World[pResult->m_Lobby].m_grenade = !pSelf->m_World[pResult->m_Lobby].m_grenade;
+	pSelf->m_apController[Lobby]->m_grenade = !pSelf->m_apController[Lobby]->m_grenade;
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
 		if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
 			continue;
 		
 		char aBuf[256];
-		str_format(aBuf, 256, "grenade is %s", pSelf->m_World[pResult->m_Lobby].m_grenade ? "enabled" : "disabled");
+		str_format(aBuf, 256, "grenade is %s", pSelf->m_apController[Lobby]->m_grenade ? "enabled" : "disabled");
 
 		pSelf->SendChatTarget(i, aBuf);
 	}
@@ -416,14 +561,14 @@ void CGameContext::ConShield(IConsole::IResult *pResult, void *pUserData)
 		return;
 	}
 
-	pSelf->m_World[pResult->m_Lobby].m_shield = !pSelf->m_World[pResult->m_Lobby].m_shield;
+	pSelf->m_apController[Lobby]->m_shield = !pSelf->m_apController[Lobby]->m_shield;
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
 		if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
 			continue;
 		
 		char aBuf[256];
-		str_format(aBuf, 256, "shield is %s", pSelf->m_World[pResult->m_Lobby].m_shield ? "enabled" : "disabled");
+		str_format(aBuf, 256, "shield is %s", pSelf->m_apController[Lobby]->m_shield ? "enabled" : "disabled");
 
 		pSelf->SendChatTarget(i, aBuf);
 	}
@@ -445,14 +590,14 @@ void CGameContext::ConLaser(IConsole::IResult *pResult, void *pUserData)
 		return;
 	}
 
-	pSelf->m_World[pResult->m_Lobby].m_laser = !pSelf->m_World[pResult->m_Lobby].m_laser;
+	pSelf->m_apController[Lobby]->m_laser = !pSelf->m_apController[Lobby]->m_laser;
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
 		if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
 			continue;
 		
 		char aBuf[256];
-		str_format(aBuf, 256, "laser is %s", pSelf->m_World[pResult->m_Lobby].m_laser ? "enabled" : "disabled");
+		str_format(aBuf, 256, "laser is %s", pSelf->m_apController[Lobby]->m_laser ? "enabled" : "disabled");
 
 		pSelf->SendChatTarget(i, aBuf);
 	}

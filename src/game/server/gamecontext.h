@@ -341,7 +341,12 @@ private:
 	static void ConShotgun(IConsole::IResult *pResult, void *pUserData);
 	static void ConIDM(IConsole::IResult *pResult, void *pUserData);
 	static void ConFNG(IConsole::IResult *pResult, void *pUserData);
+	static void ConResetFun(IConsole::IResult *pResult, void *pUserData);
 	static void ConFlagReset(IConsole::IResult *pResult, void *pUserData);
+	static void ConFlagPass(IConsole::IResult *pResult, void *pUserData);
+	static void ConGrenadeVelocity(IConsole::IResult *pResult, void *pUserData);
+	static void ConGrenadeHook(IConsole::IResult *pResult, void *pUserData);
+	static void ConFlagDropping(IConsole::IResult *pResult, void *pUserData);
 	static void ConBotAmount(IConsole::IResult *pResult, void *pUserData);
 	static void ConLOS(IConsole::IResult *pResult, void *pUserData);
 	static void ConGrenade(IConsole::IResult *pResult, void *pUserData);

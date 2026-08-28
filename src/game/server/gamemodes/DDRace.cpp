@@ -34,10 +34,7 @@ CGameControllerDDRace::CGameControllerDDRace(class CGameContext *pGameServer, in
 	m_aTeamscore[TEAM_RED] = 0;
 	m_aTeamscore[TEAM_BLUE] = 0;
 
-	idm = false;
-	m_fng = g_Config.m_SvFng;
-	m_flag_resetting = g_Config.m_SvFlagReset;
-	m_BotCount = 0;
+	ResetFun();
 
 	int waypointAmount = 16;
 
@@ -353,7 +350,6 @@ int CGameControllerDDRace::OnCharacterDeath(class CCharacter *pVictim, class CPl
 	IGameController::OnCharacterDeath(pVictim, pKiller, WeaponID);
 	int HadFlag = 0;
 
-	// drop flags
 	for(int i = 0; i < 2; i++)
 	{
 		CFlag *F = m_apFlags[i];
@@ -361,21 +357,8 @@ int CGameControllerDDRace::OnCharacterDeath(class CCharacter *pVictim, class CPl
 			HadFlag |= 2;
 		if(F && F->m_pCarryingCharacter == pVictim)
 		{
-			GameServer()->CreateSoundGlobal(m_Lobby, SOUND_CTF_DROP);
-			F->m_DropTick = Server()->Tick();
-			F->m_pCarryingCharacter = 0;
-			F->m_Vel = vec2(0,0);
-			F->m_Pos = pVictim->m_Pos;
-			for(int i = 0; i < POSITION_HISTORY; i++)
-			{
-				F->m_Positions[i] = F->m_Pos;
-			}
-			// pVictim->GetPlayer()->m_Stats.m_LostFlags++;
-
 			if(pKiller && pKiller->GetTeam() != pVictim->GetPlayer()->GetTeam())
 			{
-				// if(g_Config.m_SvLoltextShow)
-				// 	GameServer()->CreateLolText(pKiller->GetCharacter(), "+1");
 				pKiller->Add_Score(1);
 			}
 
@@ -383,7 +366,45 @@ int CGameControllerDDRace::OnCharacterDeath(class CCharacter *pVictim, class CPl
 		}
 	}
 
+	DropFlag(pVictim);
+
 	return HadFlag;
+}
+
+int CGameControllerDDRace::DropFlag(class CCharacter *pChar)
+{
+	// drop flags
+	int flag_counter = 0;
+	for(int i = 0; i < 2; i++)
+	{
+		CFlag *F = m_apFlags[i];
+		if(F && F->m_pCarryingCharacter == pChar)
+			flag_counter++;
+	}
+
+	for(int i = 0; i < 2; i++)
+	{
+		CFlag *F = m_apFlags[i];
+		if(F && F->m_pCarryingCharacter == pChar)
+		{
+			GameServer()->CreateSoundGlobal(m_Lobby, SOUND_CTF_DROP);
+			F->m_DropTick = Server()->Tick();
+			F->m_pCarryingCharacter = 0;
+			pChar->m_flag_invunerable_ticks = Server()->TickSpeed() * 0.7;
+			F->m_Vel = vec2(0,0);
+
+			if(flag_counter == 2)
+				F->m_Vel = vec2(3*(i*2-1), -5);
+			
+			F->m_Pos = pChar->m_Pos;
+			for(int i = 0; i < POSITION_HISTORY; i++)
+			{
+				F->m_Positions[i] = F->m_Pos;
+			}
+		}
+	}
+
+	return flag_counter;
 }
 
 #include <iostream>
@@ -482,6 +503,25 @@ void CGameControllerDDRace::OnPlayerDisconnect(CPlayer *pPlayer, const char *pRe
 
 		GameServer()->sql_handler->set_stats(Server()->ClientName(pPlayer->GetCID()), stats);
 	}
+}
+
+void CGameControllerDDRace::ResetFun()
+{
+	idm = false;
+	m_fng = g_Config.m_SvFng;
+	m_flag_resetting = g_Config.m_SvFlagReset;
+	m_drop_flag_on_shot = g_Config.m_SvFlagDrop;
+	m_flag_pass = g_Config.m_SvFlagPass;
+	m_BotCount = 0;
+
+	m_grenade_velocity = g_Config.m_SvGrenadeVelocity;
+	m_grenade_hook = g_Config.m_SvGrenadeHook;
+
+	m_grenade = g_Config.m_SvWeaponGrenade;
+	m_shield = g_Config.m_SvWeaponShield;
+	m_hammer = g_Config.m_SvWeaponHammer;
+	m_laser = g_Config.m_SvWeaponLaser;
+	m_lineOfSight = false;
 }
 
 void CGameControllerDDRace::Snap(int SnappingClient)
@@ -652,6 +692,29 @@ void CGameControllerDDRace::Tick()
 				// update flag position
 				F->m_Pos = F->m_pCarryingCharacter->m_Pos;
 
+				if(F->m_pCarryingCharacter->GetPlayer()->GetTeam() == fi)
+				{
+					F->m_HoldTimer--;
+
+					if(F->m_HoldTimer % Server()->TickSpeed() == 0 && F->m_HoldTimer / Server()->TickSpeed() < 10)
+					{
+						char str[16];
+						sprintf(str, "%i", F->m_HoldTimer/Server()->TickSpeed());
+						GameServer()->SendBroadcast(str, F->m_pCarryingCharacter->GetPlayer()->GetCID(), m_Lobby);
+						GameServer()->SendChatTarget(F->m_pCarryingCharacter->GetPlayer()->GetCID(), str);
+					}
+
+					if(F->m_HoldTimer < 0)
+					{
+						GameServer()->CreateSoundGlobal(m_Lobby, SOUND_CTF_DROP);
+						F->m_DropTick = Server()->Tick();
+						F->m_pCarryingCharacter = 0;
+						F->m_Vel = vec2(0,0);
+						F->m_Pos = F->m_PickupPos;
+						continue;
+					}
+				}
+
 				if(F->m_pCarryingCharacter->GetPlayer()->GetTeam() == fi &&
 					distance(F->m_StandPos, F->m_Pos) < CFlag::ms_PhysSize + CCharacter::ms_PhysSize && !m_flag_resetting)
 				{
@@ -795,7 +858,7 @@ void CGameControllerDDRace::Tick()
 							}
 						}
 					}
-					else if(apCloseCCharacters[i]->GetPlayer()->GetTeam() != F->m_Team || !F->m_AtStand)
+					else if((apCloseCCharacters[i]->GetPlayer()->GetTeam() != F->m_Team || !F->m_AtStand) && !apCloseCCharacters[i]->m_flag_invunerable_ticks)
 					{
 						// take the flag
 						if(F->m_AtStand)
@@ -816,6 +879,8 @@ void CGameControllerDDRace::Tick()
 						F->m_pCarryingCharacter = apCloseCCharacters[i];
 						F->m_pCarryingCharacter->GetPlayer()->Add_Score(1);
 						F->m_pCarryingCharacter->GetPlayer()->Add_Touches(1);
+						F->m_PickupPos = F->m_Pos;
+						F->m_HoldTimer = Server()->TickSpeed() * g_Config.m_SvFlagOwnHoldTimer;
 						
 
 						char aBuf[256];
@@ -861,6 +926,7 @@ void CGameControllerDDRace::Tick()
 					else
 					{
 						F->m_Vel.y += 0.5f; //GameServer()->m_World[m_Lobby].m_Core.m_Tuning.m_Gravity;
+						F->m_Vel.x *= 0.98f;
 						GameServer()->Collision(m_Lobby)->MoveBox(&F->m_Pos, &F->m_Vel, vec2(F->ms_PhysSize, F->ms_PhysSize), 0.5f);
 						
 						int index = GameServer()->Collision(m_Lobby)->GetMapIndex(F->m_Pos);
