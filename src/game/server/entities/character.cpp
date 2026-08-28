@@ -386,7 +386,7 @@ void CCharacter::FireWeapon()
 	if(CountInput(m_LatestPrevInput.m_Fire, m_LatestInput.m_Fire).m_Presses)
 		WillFire = true;
 
-	if(m_LatestInput.m_Fire & 1)
+	if(m_LatestInput.m_Fire & 1 && m_Core.m_ActiveWeapon != WEAPON_HAMMER)
 		WillFire = true;
 
 	if(!WillFire)
@@ -635,7 +635,7 @@ void CCharacter::HandleWeapons()
 {
 	//ninja
 	HandleNinja();
-	HandleJetpack();
+	// HandleJetpack();
 
 	if(m_PainSoundTimer > 0)
 		m_PainSoundTimer--;
@@ -1166,7 +1166,15 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int tick)
 	else
 		GameServer()->CreateSound(m_Lobby, m_Pos, SOUND_PLAYER_PAIN_SHORT);*/
 	
-	vec2 Temp = m_Core.m_Vel + Force;
+	vec2 forceFactor = vec2(3.2,1.2);
+
+	if(GameServer()->m_apController[m_Lobby]->IsFriendlyFire(m_pPlayer->GetCID(), From))
+		forceFactor = vec2(0.5,0.5);
+	
+	if(!GameServer()->m_apController[m_Lobby]->m_fng)
+		forceFactor = vec2(1,1);
+	
+	vec2 Temp = m_Core.m_Vel + Force * forceFactor;
 	m_Core.m_Vel = ClampVel(m_MoveRestrictions, Temp);
 	
 	if(GameServer()->m_apController[m_Lobby]->IsFriendlyFire(m_pPlayer->GetCID(), From))
@@ -1237,11 +1245,11 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int tick)
 	if(m_pPlayer->GetCID() == From)
 		return false;
 	
-	if(GameServer()->m_apController[m_Lobby]->m_fng && From >= 0 && !m_FreezeTime)
+	if(GameServer()->m_apController[m_Lobby]->m_fng && From >= 0)
 	{
 		m_HitByPlayer = From;
 		
-		if(Weapon != WEAPON_HAMMER && Weapon != WEAPON_GAME)
+		if(Weapon != WEAPON_HAMMER && Weapon != WEAPON_GAME && !m_FreezeTime)
 		{
 			Freeze(8);
 			int Mask = CmaskOne(From);
