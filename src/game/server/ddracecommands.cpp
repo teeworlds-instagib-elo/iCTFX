@@ -339,6 +339,35 @@ void CGameContext::ConFlagPass(IConsole::IResult *pResult, void *pUserData)
 	}
 }
 
+void CGameContext::ConGrenadeVelocity(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	int Lobby = pResult->m_Lobby;
+	if(Lobby == 0)	//Lobby 0 is save server
+	{
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+				continue;
+			
+			pSelf->SendChatTarget(i, "You cannot change settings in lobby 0, got a different lobby");
+		}
+		return;
+	}
+
+	pSelf->m_apController[pResult->m_Lobby]->m_grenade_velocity = !pSelf->m_apController[pResult->m_Lobby]->m_grenade_velocity;
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)
+			continue;
+		
+		char aBuf[256];
+		str_format(aBuf, 256, "grenade velocity is %s", pSelf->m_apController[pResult->m_Lobby]->m_grenade_velocity ? "enabled" : "disabled");
+
+		pSelf->SendChatTarget(i, aBuf);
+	}
+}
+
 void CGameContext::ConFlagDropping(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;

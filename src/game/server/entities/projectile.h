@@ -14,6 +14,7 @@ public:
 		int Owner,
 		vec2 Pos,
 		vec2 Dir,
+		vec2 Vel,
 		int Span,
 		bool Freeze,
 		bool Explosive,
@@ -33,6 +34,7 @@ public:
 
 private:
 	vec2 m_Direction;
+	vec2 m_Vel;
 	int m_LifeSpan;
 	int m_Owner;
 	int m_Type;

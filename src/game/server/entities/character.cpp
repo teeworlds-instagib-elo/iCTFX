@@ -523,6 +523,7 @@ void CCharacter::FireWeapon()
 				m_pPlayer->GetCID(), //Owner
 				ProjStartPos, //Pos
 				Direction, //Dir
+				vec2(0,0),
 				Lifetime, //Span
 				false, //Freeze
 				false, //Explosive
@@ -580,6 +581,7 @@ void CCharacter::FireWeapon()
 			m_pPlayer->GetCID(), //Owner
 			ProjStartPos, //Pos
 			Direction, //Dir
+			m_Core.m_Vel,
 			Lifetime, //Span
 			false, //Freeze
 			true, //Explosive

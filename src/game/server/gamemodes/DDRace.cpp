@@ -514,6 +514,8 @@ void CGameControllerDDRace::ResetFun()
 	m_flag_pass = g_Config.m_SvFlagPass;
 	m_BotCount = 0;
 
+	m_grenade_velocity = g_Config.m_SvGrenadeVelocity;
+
 	m_grenade = g_Config.m_SvWeaponGrenade;
 	m_shield = g_Config.m_SvWeaponShield;
 	m_hammer = g_Config.m_SvWeaponHammer;

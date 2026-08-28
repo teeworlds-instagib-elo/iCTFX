@@ -18,6 +18,7 @@ CProjectile::CProjectile(
 	int Owner,
 	vec2 Pos,
 	vec2 Dir,
+	vec2 Vel,
 	int Span,
 	bool Freeze,
 	bool Explosive,
@@ -30,6 +31,7 @@ CProjectile::CProjectile(
 	m_Type = Type;
 	m_Pos = Pos;
 	m_Direction = Dir;
+	m_Vel = Vel;
 	m_LifeSpan = Span;
 	m_Owner = Owner;
 	m_Force = Force;
@@ -113,6 +115,16 @@ void CProjectile::Tick()
 	float Pt = (Server()->Tick() - m_StartTick - 1) / (float)Server()->TickSpeed();
 	float Ct = (Server()->Tick() - m_StartTick) / (float)Server()->TickSpeed();
 	vec2 PrevPos = GetPos(Pt);
+
+	if(GameServer()->m_apController[m_Lobby]->m_grenade_velocity)
+	{
+		float RampValue = VelocityRamp(length(m_Vel) * 50, 550, 2000, 1.4f);
+		vec2 Vel = m_Vel * RampValue;
+		m_Vel *= 0.97f;
+		m_Pos += Vel;
+	}
+
+
 	vec2 CurPos = GetPos(Ct);
 	vec2 ColPos;
 	vec2 NewPos;

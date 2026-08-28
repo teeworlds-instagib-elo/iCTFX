@@ -263,6 +263,7 @@ bool IGameController::OnEntity(int Index, vec2 Pos, int Layer, int Flags, int Nu
 			-1, //Owner
 			Pos, //Pos
 			vec2(sin(Deg), cos(Deg)), //Dir
+			vec2(0,0),
 			-2, //Span
 			true, //Freeze
 			true, //Explosive
@@ -290,6 +291,7 @@ bool IGameController::OnEntity(int Index, vec2 Pos, int Layer, int Flags, int Nu
 			-1, //Owner
 			Pos, //Pos
 			vec2(sin(Deg), cos(Deg)), //Dir
+			vec2(0,0),
 			-2, //Span
 			true, //Freeze
 			false, //Explosive
