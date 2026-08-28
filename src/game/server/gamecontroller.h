@@ -76,6 +76,7 @@ public:
 	bool m_drop_flag_on_shot = false;
 	bool m_flag_pass = false;
 	bool m_grenade_velocity = false;
+	bool m_grenade_hook = false;
 
 	//fun options
 	bool m_grenade = false;

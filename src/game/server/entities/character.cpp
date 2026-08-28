@@ -1171,7 +1171,7 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int tick)
 	if(GameServer()->m_apController[m_Lobby]->IsFriendlyFire(m_pPlayer->GetCID(), From))
 		forceFactor = vec2(0.5,0.5);
 	
-	if(!GameServer()->m_apController[m_Lobby]->m_fng)
+	if(!GameServer()->m_apController[m_Lobby]->m_fng || Weapon != WEAPON_HAMMER)
 		forceFactor = vec2(1,1);
 	
 	vec2 Temp = m_Core.m_Vel + Force * forceFactor;

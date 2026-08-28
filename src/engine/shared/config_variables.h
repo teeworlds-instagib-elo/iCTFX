@@ -180,6 +180,7 @@ MACRO_CONFIG_INT(SvFlagOwnHoldTimer, sv_flag_own_hold_timer, 15, 0, 120, CFGFLAG
 MACRO_CONFIG_INT(SvFlagDrop, sv_flag_drop, 0, 0, 1, CFGFLAG_SERVER, "drop flag instead of dying, acting as a second life")
 MACRO_CONFIG_INT(SvFlagPass, sv_flag_pass, 0, 0, 1, CFGFLAG_SERVER, "pass flags to teammates by shooting them")
 MACRO_CONFIG_INT(SvGrenadeVelocity, sv_grenade_velocity, 0, 0, 1, CFGFLAG_SERVER, "grenade keeps velocity of its shooter")
+MACRO_CONFIG_INT(SvGrenadeHook, sv_grenade_hook, 0, 0, 1, CFGFLAG_SERVER, "grenades become hookable")
 
 MACRO_CONFIG_INT(SvWeaponLaser, sv_weapon_laser, 1, 0, 1, CFGFLAG_SERVER, "enables / disables laser by default")
 MACRO_CONFIG_INT(SvWeaponHammer, sv_weapon_hammer, 0, 0, 1, CFGFLAG_SERVER, "enables / disables hammer by default")
