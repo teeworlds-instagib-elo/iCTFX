@@ -588,7 +588,8 @@ int IGameController::OnCharacterDeath(class CCharacter *pVictim, class CPlayer *
 		}
 		else
 		{
-			pKiller->Add_Score(1); // normal kill
+			if(!m_fng)
+				pKiller->Add_Score(1); // normal kill
 			pKiller->Add_Kills(1);
 		}
 	}

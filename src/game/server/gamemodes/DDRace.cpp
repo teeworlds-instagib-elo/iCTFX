@@ -294,7 +294,8 @@ void CGameControllerDDRace::HandleCharacterTiles(CCharacter *pChr, int MapIndex)
 		}
 		else
 		{
-			if(pChr->m_lastHook != -1 && GameServer()->m_apPlayers[pChr->m_lastHook]->GetTeam() != pChr->GetPlayer()->GetTeam())
+			if(pChr->m_lastHook != -1 && GameServer()->m_apPlayers[pChr->m_lastHook] &&
+				GameServer()->m_apPlayers[pChr->m_lastHook]->GetTeam() != pChr->GetPlayer()->GetTeam())
 			{
 				int team_score = 0;
 				int player_score = 0;
@@ -312,8 +313,11 @@ void CGameControllerDDRace::HandleCharacterTiles(CCharacter *pChr, int MapIndex)
 						else
 						{
 							player_score = -5;
-							if(GameServer()->m_apPlayers[pChr->m_lastHook]->GetCharacter())
-								GameServer()->m_apPlayers[pChr->m_lastHook]->GetCharacter()->Freeze(5);
+							if(GameServer()->GetPlayerChar(pChr->m_lastHook))
+							{
+								GameServer()->GetPlayerChar(pChr->m_lastHook)->Freeze(5);
+								GameServer()->CreateSound(m_Lobby, GameServer()->GetPlayerChar(pChr->m_lastHook)->m_Pos, SOUND_TEE_CRY);
+							}
 						}
 						break;
 					case TILE_FNG_SPIKE_NORMAL:
@@ -332,6 +336,15 @@ void CGameControllerDDRace::HandleCharacterTiles(CCharacter *pChr, int MapIndex)
 						team_score = 18;
 						player_score = 10;
 						break;
+				}
+
+				if(GameServer()->GetPlayerChar(pChr->m_lastHook))
+					GameServer()->MakeLaserTextPoints(GameServer()->GetPlayerChar(pChr->m_lastHook)->m_Pos, pChr->m_lastHook, m_Lobby, player_score);
+
+				if(player_score > 0)
+				{
+					GameServer()->CreateSoundGlobal(m_Lobby, SOUND_CTF_CAPTURE, pChr->m_lastHook);
+					GameServer()->CreateSoundGlobal(m_Lobby, SOUND_CTF_GRAB_EN, pChr->GetPlayer()->GetCID());
 				}
 
 				if(player_score)

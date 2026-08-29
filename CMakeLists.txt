@@ -2197,6 +2197,8 @@ if(SERVER)
     entities/flag.h
     entities/bot.cpp
     entities/bot.h
+    entities/laserText.cpp
+    entities/laserText.h
     entities/gun.cpp
     entities/gun.h
     entities/laser.cpp

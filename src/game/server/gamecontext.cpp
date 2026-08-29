@@ -25,6 +25,7 @@
 #include <game/generated/protocolglue.h>
 
 #include "entities/character.h"
+#include "entities/laserText.h"
 #include "gamemodes/DDRace.h"
 #include "player.h"
 
@@ -138,6 +139,19 @@ class CCharacter *CGameContext::GetPlayerChar(int ClientID)
 	if(ClientID < 0 || ClientID >= MAX_CLIENTS || !m_apPlayers[ClientID])
 		return 0;
 	return m_apPlayers[ClientID]->GetCharacter();
+}
+
+/* This is copied straight from https://github.com/Jupeyy/teeworlds-fng2-mod/blob/fng_06*/
+void CGameContext::MakeLaserTextPoints(vec2 pPos, int pOwner, int Lobby, int pPoints)
+{
+	if(Lobby < 0 || Lobby > MAX_LOBBIES)
+		return;
+	
+	char text[10];
+	if(pPoints >= 0) str_format(text, 10, "+%d", pPoints);
+	else str_format(text, 10, "%d", pPoints);
+	pPos.y -= 20.0 * 2.5;
+	new CLaserText(&m_World[Lobby], pPos, pOwner, Server()->TickSpeed() * 3, text, (int)(strlen(text)));
 }
 
 void CGameContext::CreateDamageInd(int Lobby, vec2 Pos, float Angle, int Amount, int64_t Mask)
