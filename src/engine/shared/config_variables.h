@@ -188,6 +188,10 @@ MACRO_CONFIG_INT(SvWeaponHammer, sv_weapon_hammer, 0, 0, 1, CFGFLAG_SERVER, "ena
 MACRO_CONFIG_INT(SvWeaponShield, sv_weapon_shield, 0, 0, 1, CFGFLAG_SERVER, "enables / disables shield by default")
 MACRO_CONFIG_INT(SvWeaponGrenade, sv_weapon_grenade, 0, 0, 1, CFGFLAG_SERVER, "enables / disables grenade by default")
 
+MACRO_CONFIG_INT(SvGrenadeAmmo, sv_grenade_ammo, 4, 0, 10, CFGFLAG_SERVER, "grenade ammo count, 0 = unlimited")
+MACRO_CONFIG_INT(SvGrenadeAmmoReload, sv_grenade_ammo_reload, 40, 1, 150, CFGFLAG_SERVER, "grenade ammo reload time in ticks")
+
+
 MACRO_CONFIG_STR(SqlDatabase, sql_database, 32, "ddnet", CFGFLAG_SERVER, "Sql database name")
 MACRO_CONFIG_STR(SqlPrefix, sql_prefix, 32, "record", CFGFLAG_SERVER, "Sql prefix")
 MACRO_CONFIG_STR(SqlUser, sql_user, 32, "ddnet", CFGFLAG_SERVER, "Sql username")

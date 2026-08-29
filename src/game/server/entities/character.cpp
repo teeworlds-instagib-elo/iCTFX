@@ -71,7 +71,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_Core.Reset();
 	m_Core.Init(&GameServer()->m_World[m_Lobby].m_Core, GameServer()->Collision(m_Lobby), nullptr, this);
 	m_Core.m_ActiveWeapon = WEAPON_LASER;
-	m_aWeapons[WEAPON_GRENADE].m_Ammo = 4;
+	m_aWeapons[WEAPON_GRENADE].m_Ammo = g_Config.m_SvGrenadeAmmo;
 	m_Core.m_Pos = m_Pos;
 	GameServer()->m_World[m_Lobby].m_Core.m_apCharacters[m_pPlayer->GetCID()] = &m_Core;
 
@@ -770,11 +770,14 @@ void CCharacter::Tick()
 		}
 	}
 	
-	if(Server()->Tick() % 50*4 == 0)
+	if(Server()->Tick() % g_Config.m_SvGrenadeAmmoReload == 0 && m_ReloadTimer == 0)
 		m_aWeapons[WEAPON_GRENADE].m_Ammo++;
 	
-	if(m_aWeapons[WEAPON_GRENADE].m_Ammo > 4)
-		m_aWeapons[WEAPON_GRENADE].m_Ammo = 4;
+	if(m_aWeapons[WEAPON_GRENADE].m_Ammo > GameServer()->m_apController[m_Lobby]->m_grenade_ammo)
+		m_aWeapons[WEAPON_GRENADE].m_Ammo = GameServer()->m_apController[m_Lobby]->m_grenade_ammo;
+	
+	if(GameServer()->m_apController[m_Lobby]->m_grenade_ammo == 0)
+		m_aWeapons[WEAPON_GRENADE].m_Ammo = 10;
 
 	// set emote
 	if(m_EmoteStop < Server()->Tick())

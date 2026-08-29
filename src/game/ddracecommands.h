@@ -19,6 +19,7 @@ CONSOLE_COMMAND("flag_reset", "", CFGFLAG_SERVER, ConFlagReset, this, "toggle fl
 CONSOLE_COMMAND("flag_pass", "", CFGFLAG_SERVER, ConFlagPass, this, "toggle flag passing by shooting teammates")
 CONSOLE_COMMAND("grenade_velocity", "", CFGFLAG_SERVER, ConGrenadeVelocity, this, "toggle grenades keeping velocity of shooter")
 CONSOLE_COMMAND("grenade_hook", "", CFGFLAG_SERVER, ConGrenadeHook, this, "toggle grenades being hookable")
+CONSOLE_COMMAND("grenade_ammo", "i[amount]", CFGFLAG_SERVER, ConGrenadeAmmo, this, "set amount of grenade ammo, 0 = unlimited")
 CONSOLE_COMMAND("flag_drop", "", CFGFLAG_SERVER, ConFlagDropping, this, "toggle flag dropping acting as second life")
 CONSOLE_COMMAND("bot_amount", "i[amount]", CFGFLAG_SERVER, ConBotAmount, this, "amount of bots in a lobby")
 CONSOLE_COMMAND("line_of_sight", "", CFGFLAG_SERVER, ConLOS, this, "makes lobby IDM")

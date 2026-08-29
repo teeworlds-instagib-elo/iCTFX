@@ -346,6 +346,7 @@ private:
 	static void ConFlagPass(IConsole::IResult *pResult, void *pUserData);
 	static void ConGrenadeVelocity(IConsole::IResult *pResult, void *pUserData);
 	static void ConGrenadeHook(IConsole::IResult *pResult, void *pUserData);
+	static void ConGrenadeAmmo(IConsole::IResult *pResult, void *pUserData);
 	static void ConFlagDropping(IConsole::IResult *pResult, void *pUserData);
 	static void ConBotAmount(IConsole::IResult *pResult, void *pUserData);
 	static void ConLOS(IConsole::IResult *pResult, void *pUserData);
