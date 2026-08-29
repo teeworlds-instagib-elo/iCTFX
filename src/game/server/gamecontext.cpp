@@ -784,6 +784,9 @@ void CGameContext::SendTuningParams(int ClientID, int Zone)
 		pParams = (int *)&m_Tuning;
 	else
 		pParams = (int *)&(m_aTuningList[Zone]);
+	
+	if(m_apPlayers[ClientID] && m_apPlayers[ClientID]->GetCharacter())
+		pParams = (int *)&m_apPlayers[ClientID]->GetCharacter()->m_Core.m_Tuning;
 
 	unsigned int Last = sizeof(m_Tuning) / sizeof(int);
 	if(m_apPlayers[ClientID])

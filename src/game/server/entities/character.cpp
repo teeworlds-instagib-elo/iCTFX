@@ -2316,6 +2316,9 @@ void CCharacter::HandleTuneLayer()
 	int CurrentIndex = GameServer()->Collision(m_Lobby)->GetMapIndex(m_Pos);
 	m_TuneZone = GameServer()->Collision(m_Lobby)->IsTune(CurrentIndex);
 
+	if(m_TuneZoneOld == m_TuneZone)
+		return;
+	
 	if(m_TuneZone)
 		m_Core.m_Tuning = GameServer()->TuningList()[m_TuneZone]; // throw tunings from specific zone into gamecore
 	else

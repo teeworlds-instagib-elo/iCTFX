@@ -66,6 +66,8 @@ CProjectile::~CProjectile()
 		{
 			CCharacter * pChar = GameServer()->m_apPlayers[m_Hooked]->GetCharacter();
 			pChar->m_Core.m_HookState = HOOK_RETRACTED;
+			pChar->m_Core.m_Tuning.m_HookDragAccel = GameServer()->Tuning()->m_HookDragAccel;
+			GameServer()->SendTuningParams(m_Hooked);
 		}
 	}
 }
@@ -153,6 +155,8 @@ void CProjectile::Tick()
 				
 				if(pChar->m_Core.m_HookState == HOOK_FLYING && distance(pChar->m_Core.m_HookPos, PrevPos) < 32*2)
 				{
+					pChar->m_Core.m_Tuning.m_HookDragAccel = (g_Config.m_SvGrenadeHookAccel / 100.0f);
+					GameServer()->SendTuningParams(m_Hooked);
 					m_Hooked = i;
 					pChar->m_Core.m_HookState = HOOK_GRABBED;
 					pChar->m_Core.m_HookedPlayer = -1;
@@ -174,8 +178,8 @@ void CProjectile::Tick()
 					still_hooked = true;
 					pChar->m_Core.m_HookPos = PrevPos;
 					
-					if(distance(PrevPos, pChar->m_Pos) > pChar->m_ProximityRadius * 3)
-						m_Vel += normalize(pChar->m_Pos - PrevPos)*3;
+					if(distance(PrevPos, pChar->m_Pos) > pChar->m_ProximityRadius * 2)
+						m_Vel += normalize(pChar->m_Pos - PrevPos)*2;
 					else
 					{
 						if(m_Explosive)
@@ -198,7 +202,14 @@ void CProjectile::Tick()
 			}
 
 			if(!still_hooked)
+			{
+				if(GameServer()->m_apPlayers[m_Hooked] && GameServer()->GetLobby(m_Hooked) == m_Lobby && GameServer()->m_apPlayers[m_Hooked]->GetCharacter())
+				{
+					GameServer()->m_apPlayers[m_Hooked]->GetCharacter()->m_Core.m_Tuning.m_HookDragAccel = GameServer()->Tuning()->m_HookDragAccel;
+					GameServer()->SendTuningParams(m_Hooked);
+				}
 				m_Hooked = -1;
+			}
 		}
 	}
 
