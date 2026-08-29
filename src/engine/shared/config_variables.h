@@ -190,6 +190,7 @@ MACRO_CONFIG_INT(SvWeaponGrenade, sv_weapon_grenade, 0, 0, 1, CFGFLAG_SERVER, "e
 
 MACRO_CONFIG_INT(SvGrenadeAmmo, sv_grenade_ammo, 4, 0, 10, CFGFLAG_SERVER, "grenade ammo count, 0 = unlimited")
 MACRO_CONFIG_INT(SvGrenadeAmmoReload, sv_grenade_ammo_reload, 40, 1, 150, CFGFLAG_SERVER, "grenade ammo reload time in ticks")
+MACRO_CONFIG_INT(SvLaserCollision, sv_laser_collision, 1, 0, 1, CFGFLAG_SERVER, "if laser has collision (not go through walls)")
 
 
 MACRO_CONFIG_STR(SqlDatabase, sql_database, 32, "ddnet", CFGFLAG_SERVER, "Sql database name")
