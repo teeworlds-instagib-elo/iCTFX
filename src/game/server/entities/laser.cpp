@@ -245,7 +245,8 @@ void CLaser::DoBounce()
 	vec2 Tele;
 
 	int teleptr = 0;
-	if(m_Energy > 0 && GameServer()->Collision(m_Lobby)->IntersectLineTeleWeapon(m_Pos, To, &Tele, &To, &teleptr))
+	if(m_Energy > 0 && (!GameServer()->m_apController[m_Lobby]->m_laser_collision ||
+		GameServer()->Collision(m_Lobby)->IntersectLineTeleWeapon(m_Pos, To, &Tele, &To, &teleptr)))
 	{
 		if(!HitCharacter(m_Pos, To))
 		{

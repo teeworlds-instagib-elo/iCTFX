@@ -77,6 +77,8 @@ public:
 	bool m_flag_pass = false;
 	bool m_grenade_velocity = false;
 	bool m_grenade_hook = false;
+	int m_grenade_ammo = 4;
+	bool m_laser_collision = true;
 
 	//fun options
 	bool m_grenade = false;

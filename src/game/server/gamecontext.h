@@ -163,6 +163,7 @@ public:
 
 	// helper functions
 	class CCharacter *GetPlayerChar(int ClientID);
+	void MakeLaserTextPoints(vec2 pPos, int pOwner, int Lobby, int pPoints);
 	bool EmulateBug(int Bug);
 
 	virtual int GetLobbiesMap(int Lobby);
@@ -346,6 +347,8 @@ private:
 	static void ConFlagPass(IConsole::IResult *pResult, void *pUserData);
 	static void ConGrenadeVelocity(IConsole::IResult *pResult, void *pUserData);
 	static void ConGrenadeHook(IConsole::IResult *pResult, void *pUserData);
+	static void ConLaserCollision(IConsole::IResult *pResult, void *pUserData);
+	static void ConGrenadeAmmo(IConsole::IResult *pResult, void *pUserData);
 	static void ConFlagDropping(IConsole::IResult *pResult, void *pUserData);
 	static void ConBotAmount(IConsole::IResult *pResult, void *pUserData);
 	static void ConLOS(IConsole::IResult *pResult, void *pUserData);

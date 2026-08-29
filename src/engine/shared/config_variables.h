@@ -181,11 +181,17 @@ MACRO_CONFIG_INT(SvFlagDrop, sv_flag_drop, 0, 0, 1, CFGFLAG_SERVER, "drop flag i
 MACRO_CONFIG_INT(SvFlagPass, sv_flag_pass, 0, 0, 1, CFGFLAG_SERVER, "pass flags to teammates by shooting them")
 MACRO_CONFIG_INT(SvGrenadeVelocity, sv_grenade_velocity, 0, 0, 1, CFGFLAG_SERVER, "grenade keeps velocity of its shooter")
 MACRO_CONFIG_INT(SvGrenadeHook, sv_grenade_hook, 0, 0, 1, CFGFLAG_SERVER, "grenades become hookable")
+MACRO_CONFIG_INT(SvGrenadeHookAccel, sv_grenade_hook_accel, 0, 0, 300, CFGFLAG_SERVER, "how much a hooked grenades pulls you towards it")
 
 MACRO_CONFIG_INT(SvWeaponLaser, sv_weapon_laser, 1, 0, 1, CFGFLAG_SERVER, "enables / disables laser by default")
 MACRO_CONFIG_INT(SvWeaponHammer, sv_weapon_hammer, 0, 0, 1, CFGFLAG_SERVER, "enables / disables hammer by default")
 MACRO_CONFIG_INT(SvWeaponShield, sv_weapon_shield, 0, 0, 1, CFGFLAG_SERVER, "enables / disables shield by default")
 MACRO_CONFIG_INT(SvWeaponGrenade, sv_weapon_grenade, 0, 0, 1, CFGFLAG_SERVER, "enables / disables grenade by default")
+
+MACRO_CONFIG_INT(SvGrenadeAmmo, sv_grenade_ammo, 4, 0, 10, CFGFLAG_SERVER, "grenade ammo count, 0 = unlimited")
+MACRO_CONFIG_INT(SvGrenadeAmmoReload, sv_grenade_ammo_reload, 40, 1, 150, CFGFLAG_SERVER, "grenade ammo reload time in ticks")
+MACRO_CONFIG_INT(SvLaserCollision, sv_laser_collision, 1, 0, 1, CFGFLAG_SERVER, "if laser has collision (not go through walls)")
+
 
 MACRO_CONFIG_STR(SqlDatabase, sql_database, 32, "ddnet", CFGFLAG_SERVER, "Sql database name")
 MACRO_CONFIG_STR(SqlPrefix, sql_prefix, 32, "record", CFGFLAG_SERVER, "Sql prefix")

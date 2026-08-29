@@ -71,7 +71,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_Core.Reset();
 	m_Core.Init(&GameServer()->m_World[m_Lobby].m_Core, GameServer()->Collision(m_Lobby), nullptr, this);
 	m_Core.m_ActiveWeapon = WEAPON_LASER;
-	m_aWeapons[WEAPON_GRENADE].m_Ammo = 4;
+	m_aWeapons[WEAPON_GRENADE].m_Ammo = g_Config.m_SvGrenadeAmmo;
 	m_Core.m_Pos = m_Pos;
 	GameServer()->m_World[m_Lobby].m_Core.m_apCharacters[m_pPlayer->GetCID()] = &m_Core;
 
@@ -770,11 +770,14 @@ void CCharacter::Tick()
 		}
 	}
 	
-	if(Server()->Tick() % 50*4 == 0)
+	if(Server()->Tick() % g_Config.m_SvGrenadeAmmoReload == 0 && m_ReloadTimer == 0)
 		m_aWeapons[WEAPON_GRENADE].m_Ammo++;
 	
-	if(m_aWeapons[WEAPON_GRENADE].m_Ammo > 4)
-		m_aWeapons[WEAPON_GRENADE].m_Ammo = 4;
+	if(m_aWeapons[WEAPON_GRENADE].m_Ammo > GameServer()->m_apController[m_Lobby]->m_grenade_ammo)
+		m_aWeapons[WEAPON_GRENADE].m_Ammo = GameServer()->m_apController[m_Lobby]->m_grenade_ammo;
+	
+	if(GameServer()->m_apController[m_Lobby]->m_grenade_ammo == 0)
+		m_aWeapons[WEAPON_GRENADE].m_Ammo = 10;
 
 	// set emote
 	if(m_EmoteStop < Server()->Tick())
@@ -1194,9 +1197,16 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int tick)
 			}
 		}
 
-		if(GameServer()->m_apController[m_Lobby]->m_fng && From >= 0 && m_FreezeTime > 0)
+		if(GameServer()->m_apController[m_Lobby]->m_fng && From >= 0 && m_FreezeTime > 0 && Weapon == WEAPON_HAMMER)
 		{
-			UnFreeze();
+			m_FreezeTime -= Server()->TickSpeed() * 3;
+
+			if(m_FreezeTime <= 0)
+			{
+				m_FreezeTime = 1;
+				UnFreeze();
+			}
+
 			int Mask = CmaskOne(From);
 			for(int i = 0; i < MAX_CLIENTS; i++)
 			{
@@ -1204,6 +1214,11 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int tick)
 					Mask |= CmaskOne(i);
 			}
 			GameServer()->CreateSound(m_Lobby, GameServer()->m_apPlayers[From]->m_ViewPos, SOUND_HIT, Mask);
+
+			if(GameServer()->PlayerExists(From))
+			{
+				GameServer()->m_apPlayers[From]->Add_Score(1);
+			}
 		}
 		return false;
 	}
@@ -1248,6 +1263,11 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int tick)
 	if(GameServer()->m_apController[m_Lobby]->m_fng && From >= 0)
 	{
 		m_HitByPlayer = From;
+
+		if(Weapon != WEAPON_HAMMER && Weapon != WEAPON_GAME && From >= 0 && GameServer()->m_apPlayers[From])
+		{
+			GameServer()->m_apPlayers[From]->Add_Score(1);
+		}
 		
 		if(Weapon != WEAPON_HAMMER && Weapon != WEAPON_GAME && !m_FreezeTime)
 		{
@@ -2316,6 +2336,9 @@ void CCharacter::HandleTuneLayer()
 	int CurrentIndex = GameServer()->Collision(m_Lobby)->GetMapIndex(m_Pos);
 	m_TuneZone = GameServer()->Collision(m_Lobby)->IsTune(CurrentIndex);
 
+	if(m_TuneZoneOld == m_TuneZone)
+		return;
+	
 	if(m_TuneZone)
 		m_Core.m_Tuning = GameServer()->TuningList()[m_TuneZone]; // throw tunings from specific zone into gamecore
 	else
@@ -2385,7 +2408,20 @@ void CCharacter::DDRaceTick()
 	{
 		if(m_FreezeTime % Server()->TickSpeed() == Server()->TickSpeed() - 1 || m_FreezeTime == -1)
 		{
-			GameServer()->CreateDamageInd(m_Lobby, m_Pos, 0, (m_FreezeTime + 1) / Server()->TickSpeed(), 0);
+			int cid = m_pPlayer->GetCID();
+			int64_t Mask = CmaskOne(cid);
+			int64_t MaskEnemy = 0;
+			for(int i = 0; i < MAX_CLIENTS; i++)
+			{
+				if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetTeam() == TEAM_SPECTATORS && GameServer()->m_apPlayers[i]->m_SpectatorID == cid)
+					Mask |= CmaskOne(i);
+				else if(GameServer()->m_apPlayers[i] && GameServer()->m_apPlayers[i]->GetTeam() == GetPlayer()->GetTeam())
+					Mask |= CmaskOne(i);
+				else if(GameServer()->m_apPlayers[i])
+					MaskEnemy |= CmaskOne(i);
+			}
+			GameServer()->CreateDamageInd(m_Lobby, m_Pos, 0, (m_FreezeTime + 1) / Server()->TickSpeed(), Mask);
+			GameServer()->CreateDamageInd(m_Lobby, m_Pos, 0, 1, MaskEnemy);
 		}
 		if(m_FreezeTime > 0)
 			m_FreezeTime--;
