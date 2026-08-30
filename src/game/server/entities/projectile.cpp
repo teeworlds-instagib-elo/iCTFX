@@ -62,7 +62,7 @@ CProjectile::~CProjectile()
 {
 	if(m_Hooked != -1)
 	{
-		if(GameServer()->m_apPlayers[m_Hooked] && GameServer()->GetLobby(m_Hooked) == m_Lobby && GameServer()->m_apPlayers[m_Hooked]->GetCharacter())
+		if(GameServer()->GetPlayerChar(m_Hooked) && GameServer()->GetLobby(m_Hooked) == m_Lobby)
 		{
 			CCharacter * pChar = GameServer()->m_apPlayers[m_Hooked]->GetCharacter();
 			pChar->m_Core.m_HookState = HOOK_RETRACTED;
@@ -169,7 +169,7 @@ void CProjectile::Tick()
 			//hooking logic
 			bool still_hooked = false;
 
-			if(GameServer()->m_apPlayers[m_Hooked] && GameServer()->GetLobby(m_Hooked) == m_Lobby && GameServer()->m_apPlayers[m_Hooked]->GetCharacter())
+			if(GameServer()->GetPlayerChar(m_Hooked) && GameServer()->GetLobby(m_Hooked) == m_Lobby)
 			{
 				CCharacter * pChar = GameServer()->m_apPlayers[m_Hooked]->GetCharacter();
 
@@ -203,7 +203,7 @@ void CProjectile::Tick()
 
 			if(!still_hooked)
 			{
-				if(GameServer()->m_apPlayers[m_Hooked] && GameServer()->GetLobby(m_Hooked) == m_Lobby && GameServer()->m_apPlayers[m_Hooked]->GetCharacter())
+				if(GameServer()->GetPlayerChar(m_Hooked) && GameServer()->GetLobby(m_Hooked) == m_Lobby)
 				{
 					GameServer()->m_apPlayers[m_Hooked]->GetCharacter()->m_Core.m_Tuning.m_HookDragAccel = GameServer()->Tuning()->m_HookDragAccel;
 					GameServer()->SendTuningParams(m_Hooked);

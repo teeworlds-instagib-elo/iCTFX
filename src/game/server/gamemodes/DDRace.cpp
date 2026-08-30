@@ -386,6 +386,9 @@ int CGameControllerDDRace::OnCharacterDeath(class CCharacter *pVictim, class CPl
 
 int CGameControllerDDRace::DropFlag(class CCharacter *pChar)
 {
+	if(!pChar)
+		return 0;
+
 	// drop flags
 	int flag_counter = 0;
 	for(int i = 0; i < 2; i++)

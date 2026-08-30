@@ -476,6 +476,7 @@ void CBot::Tick()
 		m_pController->m_apFlags[!m_Team]->m_Pos = m_Pos;
 		m_pController->m_apFlags[!m_Team]->m_AtStand = false;
 		m_pController->m_apFlags[!m_Team]->m_BotGrabbed = true;
+		m_pController->m_apFlags[!m_Team]->m_pCarryingCharacter = 0;
 	}
 
 	int distanceWaypoint = distance(vec2(m_pController->m_aWaypoints[m_Waypoint].x, m_pController->m_aWaypoints[m_Waypoint].y), m_Pos);

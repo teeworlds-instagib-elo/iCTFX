@@ -70,7 +70,6 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 
 	m_Core.Reset();
 	m_Core.Init(&GameServer()->m_World[m_Lobby].m_Core, GameServer()->Collision(m_Lobby), nullptr, this);
-	m_Core.m_ActiveWeapon = WEAPON_LASER;
 	m_aWeapons[WEAPON_GRENADE].m_Ammo = g_Config.m_SvGrenadeAmmo;
 	m_Core.m_Pos = m_Pos;
 	GameServer()->m_World[m_Lobby].m_Core.m_apCharacters[m_pPlayer->GetCID()] = &m_Core;
@@ -120,7 +119,10 @@ void CCharacter::Destroy()
 
 void CCharacter::SetWeapon(int W)
 {
-	if(W == m_Core.m_ActiveWeapon)
+	if(W == m_Core.m_ActiveWeapon) 
+		return;
+	
+	if(W < 0 || W >= NUM_WEAPONS || !m_aWeapons[W].m_Got)
 		return;
 	
 	if(m_pPlayer)
@@ -764,9 +766,9 @@ void CCharacter::Tick()
 	
 	if(m_Core.m_HookedPlayer >= 0)
 	{
-		if(GameServer()->m_apPlayers[m_Core.m_HookedPlayer]->GetCharacter())
+		if(GameServer()->GetPlayerChar(m_Core.m_HookedPlayer))
 		{
-			GameServer()->m_apPlayers[m_Core.m_HookedPlayer]->GetCharacter()->m_lastHook = m_pPlayer->GetCID();
+			GameServer()->GetPlayerChar(m_Core.m_HookedPlayer)->m_lastHook = m_pPlayer->GetCID();
 		}
 	}
 	
@@ -1186,6 +1188,9 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int tick)
 		{
 			for(int i = 0; i < 2; i++)
 			{
+				if(!GameServer()->m_apController[m_Lobby]->m_apFlags[i])
+					continue;
+				
 				if(GameServer()->m_apController[m_Lobby]->m_apFlags[i]->m_pCarryingCharacter &&
 					GameServer()->m_apController[m_Lobby]->m_apFlags[i]->m_pCarryingCharacter->GetPlayer()->GetCID() == From)
 				{
@@ -1224,7 +1229,7 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int tick)
 	}
 
 
-	if(GameServer()->m_apController[m_Lobby]->m_drop_flag_on_shot)
+	if(GameServer()->m_apController[m_Lobby]->m_drop_flag_on_shot && GameServer()->PlayerExists(From))
 	{
 		int flags = GameServer()->m_apController[m_Lobby]->DropFlag(this);
 
@@ -1260,11 +1265,11 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int tick)
 	if(m_pPlayer->GetCID() == From)
 		return false;
 	
-	if(GameServer()->m_apController[m_Lobby]->m_fng && From >= 0)
+	if(GameServer()->m_apController[m_Lobby]->m_fng && GameServer()->PlayerExists(From))
 	{
 		m_HitByPlayer = From;
 
-		if(Weapon != WEAPON_HAMMER && Weapon != WEAPON_GAME && From >= 0 && GameServer()->m_apPlayers[From])
+		if(Weapon != WEAPON_HAMMER && Weapon != WEAPON_GAME)
 		{
 			GameServer()->m_apPlayers[From]->Add_Score(1);
 		}
@@ -1291,7 +1296,7 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int tick)
 		Die(From, Weapon, tick);
 
 		return false;
-	}else if(Weapon != WEAPON_HAMMER && Weapon != WEAPON_GAME)
+	}else if(Weapon != WEAPON_HAMMER && Weapon != WEAPON_GAME && GameServer()->PlayerExists(From))
 	{
 		int Mask = CmaskOne(From);
 		for(int i = 0; i < MAX_CLIENTS; i++)
@@ -2638,25 +2643,37 @@ void CCharacter::ResetPickups()
 	if(GameServer()->m_apController[m_Lobby]->m_hammer)
 	{
 		m_aWeapons[WEAPON_HAMMER].m_Got = true;
-		m_Core.m_ActiveWeapon = WEAPON_HAMMER;
 	}
 
 	if(GameServer()->m_apController[m_Lobby]->m_grenade)
 	{
 		m_aWeapons[WEAPON_GRENADE].m_Got = true;
-		m_Core.m_ActiveWeapon = WEAPON_GRENADE;
 	}
 
 	if(GameServer()->m_apController[m_Lobby]->m_shield)
 	{
 		m_aWeapons[WEAPON_SHOTGUN].m_Got = true;
-		m_Core.m_ActiveWeapon = WEAPON_SHOTGUN;
 	}
 
 	if(GameServer()->m_apController[m_Lobby]->m_laser)
 	{
 		m_aWeapons[WEAPON_LASER].m_Got = true;
-		m_Core.m_ActiveWeapon = WEAPON_LASER;
+	}
+
+	if(m_Core.m_ActiveWeapon < 0 || !m_aWeapons[m_Core.m_ActiveWeapon].m_Got)
+	{
+		if(m_Core.m_ActiveWeapon < 0)
+			m_Core.m_ActiveWeapon = 0;
+		
+		for(int i = 0; i < NUM_WEAPONS; i++)
+		{
+			int idx = (m_Core.m_ActiveWeapon - i + NUM_WEAPONS) % NUM_WEAPONS;
+			if(m_aWeapons[idx].m_Got)
+			{
+				m_Core.m_ActiveWeapon = idx;
+				break;
+			}
+		}
 	}
 }
 
