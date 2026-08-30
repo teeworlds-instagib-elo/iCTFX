@@ -266,7 +266,7 @@ public:
 	//
 	void LoadMapSettings();
 
-	virtual void SetPlayer_LastAckedSnapshot(int ClientID, int tick);
+	virtual void SetPlayer_LastAckedSnapshot(int ClientID, int tick, int intendedTick);
 
 	// engine events
 	virtual void OnInit();

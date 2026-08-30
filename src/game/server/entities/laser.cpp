@@ -85,7 +85,7 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 	int tick = -1;
 
 	if(m_Owner != -1 && !m_pBot && GameServer()->m_apPlayers[m_Owner]->m_Rollback && g_Config.m_SvRollback)
-		tick = GameServer()->m_apPlayers[m_Owner]->m_LastAckedSnapshot;
+		tick = Server()->Tick() - GameServer()->m_apPlayers[m_Owner]->m_PreInputRetimed;
 	
 	shots[shot_index].tick = Server()->Tick();
 	shots[shot_index].rollbackTick = tick;

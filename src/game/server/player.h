@@ -76,6 +76,8 @@ public:
 	// used for snapping to just update latency if the scoreboard is active
 	int m_aCurLatency[MAX_CLIENTS];
 	int m_LastAckedSnapshot;
+	float m_LastAckedSnapshotSmoothed;
+	int m_PreInputRetimed;
 	int m_LAS_leftover;
 
 	// used for spectator mode
