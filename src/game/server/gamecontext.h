@@ -130,6 +130,7 @@ class CGameContext : public IGameServer
 	struct CPersistentClientData
 	{
 		bool m_IsSpectator;
+		int m_FirstVoteTick;
 	};
 
 public:
@@ -265,7 +266,7 @@ public:
 	//
 	void LoadMapSettings();
 
-	virtual void SetPlayer_LastAckedSnapshot(int ClientID, int tick);
+	virtual void SetPlayer_LastAckedSnapshot(int ClientID, int tick, int intendedTick);
 
 	// engine events
 	virtual void OnInit();

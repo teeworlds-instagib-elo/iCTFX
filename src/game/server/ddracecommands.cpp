@@ -211,6 +211,10 @@ void CGameContext::ConIDM(IConsole::IResult *pResult, void *pUserData)
 	}
 
 	pSelf->m_apController[pResult->m_Lobby]->idm = !pSelf->m_apController[pResult->m_Lobby]->idm;
+
+	pSelf->m_apController[pResult->m_Lobby]->ChangeMap(pSelf->Kernel()->GetIMap(pSelf->Layers(Lobby)->m_Map)->m_aMapName);
+	pSelf->m_apController[pResult->m_Lobby]->StartRound();
+
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
 		if(!pSelf->PlayerExists(i) || pSelf->GetLobby(i) != Lobby)

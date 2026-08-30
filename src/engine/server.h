@@ -290,7 +290,7 @@ public:
 	virtual void OnPostSnap() = 0;
 
 	virtual void OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID) = 0;
-	virtual void SetPlayer_LastAckedSnapshot(int ClientID, int tick) = 0;
+	virtual void SetPlayer_LastAckedSnapshot(int ClientID, int tick, int intendedTick) = 0;
 
 	// Called before map reload, for any data that the game wants to
 	// persist to the next map.

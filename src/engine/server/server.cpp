@@ -1543,7 +1543,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 			if(m_aClients[ClientID].m_LastAckedSnapshot > 0)
 				m_aClients[ClientID].m_SnapRate = CClient::SNAPRATE_FULL;
 			
-			// GameServer()->SetPlayer_LastAckedSnapshot(ClientID, m_aClients[ClientID].m_LastAckedSnapshot);
+			GameServer()->SetPlayer_LastAckedSnapshot(ClientID, Acked, IntendedTick);
 			
 
 			if(m_aClients[ClientID].m_Snapshots.Get(m_aClients[ClientID].m_LastAckedSnapshot, &TagTime, 0, 0) >= 0)
@@ -1611,7 +1611,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 						PreInput.m_IntendedTick = IntendedTick;
 						if(GameServer()->GetClient_LAS(Id) && GetClientVersion(Id) >= VERSION_DDNET_PREINPUT)
 						{
-							PreInput.m_IntendedTick = Tick() + Tick() - GameServer()->GetClient_LAS(Id);
+							PreInput.m_IntendedTick = Tick() + GameServer()->GetClient_LAS(Id);
 						}
 
 						SendPackMsg(&PreInput, MSGFLAG_VITAL | MSGFLAG_NORECORD, Id);

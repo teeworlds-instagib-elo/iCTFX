@@ -280,7 +280,7 @@ void CCharacterCore::Tick(bool UseInput)
 
 				if(m_pCharacter && m_pCharacter->GameServer()->m_apPlayers[m_Id]->m_Rollback && g_Config.m_SvRollback)
 				{
-					int tick = m_pCharacter->GameServer()->m_apPlayers[m_Id]->m_LastAckedSnapshot;
+					int tick = m_pCharacter->Server()->Tick() - m_pCharacter->GameServer()->m_apPlayers[m_Id]->m_PreInputRetimed - 1;
 					tick = tick % POSITION_HISTORY;
 					pos = pCharCore->m_pCharacter->m_Positions[tick];
 				}

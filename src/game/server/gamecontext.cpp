@@ -911,9 +911,22 @@ void CGameContext::SwapTeams(int Lobby)
 	(void)m_apController[Lobby]->CheckTeamBalance();
 }
 
-void CGameContext::SetPlayer_LastAckedSnapshot(int ClientID, int tick)
+void CGameContext::SetPlayer_LastAckedSnapshot(int ClientID, int tick, int intendedTick)
 {
 	m_apPlayers[ClientID]->m_LastAckedSnapshot = tick;
+
+	float lerp = 0.1;
+	if(m_apPlayers[ClientID]->m_LastAckedSnapshotSmoothed == 0)
+		m_apPlayers[ClientID]->m_LastAckedSnapshotSmoothed = intendedTick-tick;
+	else
+		m_apPlayers[ClientID]->m_LastAckedSnapshotSmoothed = m_apPlayers[ClientID]->m_LastAckedSnapshotSmoothed * (1-lerp) + (intendedTick-tick) * lerp;
+
+	if(m_apPlayers[ClientID]->m_PreInputRetimed < m_apPlayers[ClientID]->m_LastAckedSnapshotSmoothed + 2 ||
+		m_apPlayers[ClientID]->m_PreInputRetimed == 0 || 
+		m_apPlayers[ClientID]->m_PreInputRetimed > m_apPlayers[ClientID]->m_LastAckedSnapshotSmoothed + 4)
+	{
+		m_apPlayers[ClientID]->m_PreInputRetimed = m_apPlayers[ClientID]->m_LastAckedSnapshotSmoothed + 2;
+	}
 }
 
 void CGameContext::ResetAllGames()
@@ -1348,7 +1361,9 @@ int CGameContext::GetClient_LAS(int ClientId)
 {
 	// return m_apPlayers[ClientId]->m_LAS_leftover;
 	if (m_apPlayers[ClientId]->m_Rollback && !m_apPlayers[ClientId]->m_Rollback_old)
-		return m_apPlayers[ClientId]->m_LastAckedSnapshot;
+		// return m_apPlayers[ClientId]->m_LastAckedSnapshot;
+		return m_apPlayers[ClientId]->m_PreInputRetimed;
+	
 	return 0;
 }
 
@@ -1668,6 +1683,7 @@ bool CGameContext::OnClientDataPersist(int ClientID, void *pData)
 		return false;
 	}
 	pPersistent->m_IsSpectator = m_apPlayers[ClientID]->GetTeam() == TEAM_SPECTATORS;
+	pPersistent->m_FirstVoteTick = m_apPlayers[ClientID]->m_FirstVoteTick-Server()->Tick();
 	return true;
 }
 
@@ -1708,6 +1724,12 @@ void CGameContext::OnClientConnected(int ClientID, void *pData)
 	if(m_apPlayers[ClientID])
 		delete m_apPlayers[ClientID];
 	m_apPlayers[ClientID] = new(ClientID) CPlayer(this, ClientID, StartTeam);
+
+	if(pPersistentData)
+	{
+		m_apPlayers[ClientID]->m_FirstVoteTick = Server()->Tick() + pPersistentData->m_FirstVoteTick;
+		printf("remove m_FirstVoteTick %i\n", Server()->Tick()-m_apPlayers[ClientID]->m_FirstVoteTick);
+	}
 
 #ifdef CONF_DEBUG
 	if(g_Config.m_DbgDummies)

@@ -1229,7 +1229,7 @@ bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int tick)
 	}
 
 
-	if(GameServer()->m_apController[m_Lobby]->m_drop_flag_on_shot && GameServer()->PlayerExists(From))
+	if(GameServer()->m_apController[m_Lobby]->m_drop_flag_on_shot && GameServer()->PlayerExists(From) && From != m_pPlayer->GetCID())
 	{
 		int flags = GameServer()->m_apController[m_Lobby]->DropFlag(this);
 
@@ -1489,7 +1489,8 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 			&& !GameServer()->m_apPlayers[SnappingClient]->m_Rollback_old && Server()->GetClientVersion(SnappingClient) >= VERSION_DDNET_PREINPUT)
 		{
 			// seePrediction = Server()->Tick() - GameServer()->m_apPlayers[SnappingClient]->m_LAS_leftover;
-			seePrediction = GameServer()->m_apPlayers[SnappingClient]->m_LastAckedSnapshot+1;
+			// seePrediction = GameServer()->m_apPlayers[SnappingClient]->m_LastAckedSnapshot+1;
+			seePrediction = Server()->Tick() - GameServer()->m_apPlayers[SnappingClient]->m_PreInputRetimed+1;
 			*pCharacter = m_PastCharacters[seePrediction % POSITION_HISTORY];
 			latest_target = true;
 		}
