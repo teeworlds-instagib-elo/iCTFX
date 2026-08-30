@@ -546,10 +546,18 @@ void IGameController::ChangeMap(const char *pToMap)
 			GameServer()->Layers(m_Lobby)->Init(GameServer()->Kernel(), i);
 			GameServer()->Collision(m_Lobby)->Init(GameServer()->Layers(m_Lobby));
 			
-			for(int i = 0; i < 3; i++)
-				m_aNumSpawnPoints[i] = 0;
+			for(int sp = 0; sp < 3; sp++)
+				m_aNumSpawnPoints[sp] = 0;
 			
 			GameServer()->CreateMapEntities(m_Lobby);
+
+			for(int ci = 0; ci < MAX_CLIENTS; ci++)
+			{
+				if(GameServer()->GetLobby(ci) == m_Lobby)
+				{
+					Server()->ClientReloadMap(ci);
+				}
+			}
 			break;
 		}
 	}

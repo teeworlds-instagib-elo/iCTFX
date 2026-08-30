@@ -587,6 +587,9 @@ void CGameControllerDDRace::Tick()
 {
 	if(idm || !((m_apFlags[0] && m_apFlags[1]) || m_fng))
 	{
+		if(!m_fng)
+			idm = true;
+
 		if(m_GameFlags != 0)
 		{
 			m_ScoreLimit = 20;

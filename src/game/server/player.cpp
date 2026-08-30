@@ -223,6 +223,11 @@ void CPlayer::Tick()
 	if(m_ChatScore > 0)
 		m_ChatScore--;
 
+	if(GameServer()->m_apController[GameServer()->GetLobby(GetCID())]->idm && m_Team == TEAM_BLUE)
+	{
+		m_Team = TEAM_RED;
+	}
+
 	Server()->SetClientScore(m_ClientID, m_ShownStats.m_Score);
 
 	if(m_Moderating && m_Afk)

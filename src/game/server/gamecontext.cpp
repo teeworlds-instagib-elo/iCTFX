@@ -1668,6 +1668,7 @@ bool CGameContext::OnClientDataPersist(int ClientID, void *pData)
 		return false;
 	}
 	pPersistent->m_IsSpectator = m_apPlayers[ClientID]->GetTeam() == TEAM_SPECTATORS;
+	pPersistent->m_FirstVoteTick = m_apPlayers[ClientID]->m_FirstVoteTick-Server()->Tick();
 	return true;
 }
 
@@ -1708,6 +1709,12 @@ void CGameContext::OnClientConnected(int ClientID, void *pData)
 	if(m_apPlayers[ClientID])
 		delete m_apPlayers[ClientID];
 	m_apPlayers[ClientID] = new(ClientID) CPlayer(this, ClientID, StartTeam);
+
+	if(pPersistentData)
+	{
+		m_apPlayers[ClientID]->m_FirstVoteTick = Server()->Tick() + pPersistentData->m_FirstVoteTick;
+		printf("remove m_FirstVoteTick %i\n", Server()->Tick()-m_apPlayers[ClientID]->m_FirstVoteTick);
+	}
 
 #ifdef CONF_DEBUG
 	if(g_Config.m_DbgDummies)

@@ -130,6 +130,7 @@ class CGameContext : public IGameServer
 	struct CPersistentClientData
 	{
 		bool m_IsSpectator;
+		int m_FirstVoteTick;
 	};
 
 public:
