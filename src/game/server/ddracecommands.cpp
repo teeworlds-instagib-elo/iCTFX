@@ -571,6 +571,9 @@ void CGameContext::ConHammer(IConsole::IResult *pResult, void *pUserData)
 		str_format(aBuf, 256, "hammer is %s", pSelf->m_apController[Lobby]->m_hammer ? "enabled" : "disabled");
 
 		pSelf->SendChatTarget(i, aBuf);
+
+		if(pSelf->GetPlayerChar(i))
+			pSelf->GetPlayerChar(i)->ResetPickups();
 	}
 }
 
@@ -600,6 +603,8 @@ void CGameContext::ConGrenade(IConsole::IResult *pResult, void *pUserData)
 		str_format(aBuf, 256, "grenade is %s", pSelf->m_apController[Lobby]->m_grenade ? "enabled" : "disabled");
 
 		pSelf->SendChatTarget(i, aBuf);
+		if(pSelf->GetPlayerChar(i))
+			pSelf->GetPlayerChar(i)->ResetPickups();
 	}
 }
 
@@ -629,6 +634,9 @@ void CGameContext::ConShield(IConsole::IResult *pResult, void *pUserData)
 		str_format(aBuf, 256, "shield is %s", pSelf->m_apController[Lobby]->m_shield ? "enabled" : "disabled");
 
 		pSelf->SendChatTarget(i, aBuf);
+
+		if(pSelf->GetPlayerChar(i))
+			pSelf->GetPlayerChar(i)->ResetPickups();
 	}
 }
 
@@ -658,6 +666,9 @@ void CGameContext::ConLaser(IConsole::IResult *pResult, void *pUserData)
 		str_format(aBuf, 256, "laser is %s", pSelf->m_apController[Lobby]->m_laser ? "enabled" : "disabled");
 
 		pSelf->SendChatTarget(i, aBuf);
+
+		if(pSelf->GetPlayerChar(i))
+			pSelf->GetPlayerChar(i)->ResetPickups();
 	}
 }
 
