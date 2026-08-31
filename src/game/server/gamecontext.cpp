@@ -184,7 +184,7 @@ void CGameContext::CreateHammerHit(int Lobby, vec2 Pos, int64_t Mask)
 	}
 }
 
-void CGameContext::CreateExplosion(int Lobby, vec2 Pos, int Owner, int Weapon, bool NoDamage, int ActivatedTeam, int64_t Mask)
+void CGameContext::CreateExplosion(int Lobby, vec2 Pos, int Owner, int Weapon, bool NoDamage, int ActivatedTeam, int64_t Mask, int tick)
 {
 	// create the event
 	CNetEvent_Explosion *pEvent = (CNetEvent_Explosion *)m_Events.Create(Lobby, NETEVENTTYPE_EXPLOSION, sizeof(CNetEvent_Explosion), Mask);
@@ -215,6 +215,12 @@ void CGameContext::CreateExplosion(int Lobby, vec2 Pos, int Owner, int Weapon, b
 	for(int i = 0; i < Num; i++)
 	{
 		vec2 Diff = apEnts[i]->m_Pos - Pos;
+
+		if(tick != -1 && ((CCharacter*)apEnts[i])->m_pPlayer->GetCID() != Owner)
+		{
+			Diff = ((CCharacter*)apEnts[i])->m_Positions[tick % POSITION_HISTORY] - Pos;
+		}
+
 		vec2 ForceDir(0, 1);
 		float l = length(Diff);
 		if(l)

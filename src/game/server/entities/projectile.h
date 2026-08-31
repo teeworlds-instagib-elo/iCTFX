@@ -54,6 +54,7 @@ private:
 	bool m_BelongsToPracticeTeam;
 
 	int m_Hooked;
+	int m_RollbackOffset;
 
 public:
 	void SetBouncing(int Value);

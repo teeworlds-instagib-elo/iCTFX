@@ -53,6 +53,14 @@ CProjectile::CProjectile(
 	CCharacter *pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
 	m_BelongsToPracticeTeam = false;
 
+	//rollback grenade implementation inspired by +KZ
+	m_RollbackOffset = 0;
+
+	if(pOwnerChar && pOwnerChar->GetPlayer()->m_Rollback)
+	{
+		m_RollbackOffset = pOwnerChar->GetPlayer()->m_PreInputRetimed;
+	}
+
 	m_Hooked = -1;
 
 	GameWorld()->InsertEntity(this);
@@ -225,9 +233,15 @@ void CProjectile::Tick()
 
 	CCharacter *pTargetChr = 0;
 
+	int tick = -1;
+
+	if(m_RollbackOffset)
+		tick = Server()->Tick()-m_RollbackOffset;
+
 	bool shield = false;
 	if(pOwnerChar ? !(pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_GRENADE) : g_Config.m_SvHit)
-		pTargetChr = GameServer()->m_World[m_Lobby].IntersectCharacter(PrevPos, ColPos, m_Freeze ? 1.0f : 6.0f, ColPos, shield, pOwnerChar, m_Owner);
+		pTargetChr = GameServer()->m_World[m_Lobby].IntersectCharacter(PrevPos, ColPos, m_Freeze ? 1.0f : 6.0f,
+				ColPos, shield, pOwnerChar, m_Owner, 0, tick);
 
 	if(m_LifeSpan > -1)
 		m_LifeSpan--;
@@ -258,7 +272,7 @@ void CProjectile::Tick()
 		if(m_Explosive /*??*/ && (!pTargetChr || (pTargetChr && (!m_Freeze || (m_Type == WEAPON_SHOTGUN && Collide)))))
 		{
 			GameServer()->CreateExplosion(m_Lobby, ColPos, m_Owner, m_Type, m_Owner == -1, (!pTargetChr ? -1 : pTargetChr->Team()),
-				(m_Owner != -1) ? TeamMask : -1LL);
+				(m_Owner != -1) ? TeamMask : -1LL, tick);
 			GameServer()->CreateSound(m_Lobby, ColPos, m_SoundImpact,
 				(m_Owner != -1) ? TeamMask : -1LL);
 		}
@@ -441,6 +455,9 @@ void CProjectile::Snap(int SnappingClient)
 		{
 			return;
 		}
+
+		if(SnappingClient != m_Owner)
+			DDNetProjectile.m_StartTick -= m_RollbackOffset;
 		mem_copy(pProj, &DDNetProjectile, sizeof(DDNetProjectile));
 	}
 	else
@@ -451,6 +468,8 @@ void CProjectile::Snap(int SnappingClient)
 			return;
 		}
 		FillInfo(pProj);
+		if(SnappingClient != m_Owner)
+			pProj->m_StartTick -= m_RollbackOffset;
 	}
 }
 
