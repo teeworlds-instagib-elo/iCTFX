@@ -927,11 +927,11 @@ void CGameContext::SetPlayer_LastAckedSnapshot(int ClientID, int tick, int inten
 	else
 		m_apPlayers[ClientID]->m_LastAckedSnapshotSmoothed = m_apPlayers[ClientID]->m_LastAckedSnapshotSmoothed * (1-lerp) + (intendedTick-tick) * lerp;
 
-	if(m_apPlayers[ClientID]->m_PreInputRetimed < m_apPlayers[ClientID]->m_LastAckedSnapshotSmoothed + 2 ||
+	if(m_apPlayers[ClientID]->m_PreInputRetimed < (m_apPlayers[ClientID]->m_LastAckedSnapshotSmoothed + 2)*m_apPlayers[ClientID]->m_Rollback_partial ||
 		m_apPlayers[ClientID]->m_PreInputRetimed == 0 || 
-		m_apPlayers[ClientID]->m_PreInputRetimed > m_apPlayers[ClientID]->m_LastAckedSnapshotSmoothed + 4)
+		m_apPlayers[ClientID]->m_PreInputRetimed > (m_apPlayers[ClientID]->m_LastAckedSnapshotSmoothed + 4)*m_apPlayers[ClientID]->m_Rollback_partial)
 	{
-		m_apPlayers[ClientID]->m_PreInputRetimed = m_apPlayers[ClientID]->m_LastAckedSnapshotSmoothed + 2;
+		m_apPlayers[ClientID]->m_PreInputRetimed = (m_apPlayers[ClientID]->m_LastAckedSnapshotSmoothed + 2)*m_apPlayers[ClientID]->m_Rollback_partial;
 	}
 }
 

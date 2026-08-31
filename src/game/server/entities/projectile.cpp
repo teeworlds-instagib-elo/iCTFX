@@ -236,7 +236,7 @@ void CProjectile::Tick()
 	int tick = -1;
 
 	if(m_RollbackOffset)
-		tick = Server()->Tick()-m_RollbackOffset;
+		tick = Server()->Tick()-m_RollbackOffset + 1;
 
 	bool shield = false;
 	if(pOwnerChar ? !(pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_GRENADE) : g_Config.m_SvHit)
