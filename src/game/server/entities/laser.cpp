@@ -250,6 +250,9 @@ void CLaser::DoBounce()
 	{
 		if(!HitCharacter(m_Pos, To))
 		{
+			if(m_Lobby == 0)
+				teleptr = 0;
+			
 			// intersected
 			m_From = m_Pos;
 			m_Pos = To;

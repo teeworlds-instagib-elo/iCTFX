@@ -33,6 +33,7 @@ CHAT_COMMAND("reset", "", CFGFLAG_SERVER, ConReset, this, "reset slots")
 CHAT_COMMAND("restart", "", CFGFLAG_SERVER, ConRestart, this, "restart")
 
 CHAT_COMMAND("lobby", "?i[lobby]", CFGFLAG_CHAT | CFGFLAG_SERVER, ConLobby, this, "Switch lobbies or show current lobby")
+CHAT_COMMAND("lobbies", "", CFGFLAG_CHAT, ConLobbies, this, "Go and see all Lobbies")
 CHAT_COMMAND("mute_spec", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConMuteSpec, this, "Mutes spec")
 CHAT_COMMAND("mute_lobbies", "", CFGFLAG_CHAT | CFGFLAG_SERVER, ConMuteLobbies, this, "Mutes other lobbies")
 

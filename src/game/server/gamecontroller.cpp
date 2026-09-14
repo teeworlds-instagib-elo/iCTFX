@@ -572,7 +572,7 @@ void IGameController::OnReset()
 
 bool IGameController::IsTeamplay() const
 {
-	if (idm) return false;
+	if (idm && !m_fng) return false;
 	return true;
 	// return m_GameFlags&GAMEFLAG_TEAMS;
 }
@@ -996,7 +996,7 @@ int IGameController::GetAutoTeam(int NotThisID)
 	int aNumplayers[2] = {0, 0};
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
-		if(GameServer()->m_apPlayers[i] && i != NotThisID && GameServer()->GetLobby(i) == m_Lobby)
+		if(i != NotThisID && GameServer()->GetLobby(i) == m_Lobby)
 		{
 			if(GameServer()->m_apPlayers[i]->GetTeam() >= TEAM_RED && GameServer()->m_apPlayers[i]->GetTeam() <= TEAM_BLUE)
 				aNumplayers[GameServer()->m_apPlayers[i]->GetTeam()]++;

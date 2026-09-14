@@ -93,6 +93,9 @@ public:
 	int m_TimeLimit;
 	int m_SpectatorSlots;
 
+	std::map<int, std::vector<vec2>> m_TeleOuts;
+	std::map<int, std::vector<vec2>> m_TeleCheckOuts;
+
 	void ResetGame();
 	
 	IGameController(class CGameContext *pGameServer);

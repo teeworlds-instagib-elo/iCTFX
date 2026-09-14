@@ -306,7 +306,7 @@ public:
 	// If it is reconnecting to the game after a map change, the
 	// `pPersistentData` point is nonnull and contains the data the game
 	// previously stored.
-	virtual void OnClientConnected(int ClientID, void *pPersistentData) = 0;
+	virtual void OnClientConnected(int ClientID, void *pPersistentData, int Lobby) = 0;
 
 	virtual void OnClientEnter(int ClientID) = 0;
 	virtual void OnClientDrop(int ClientID, const char *pReason) = 0;

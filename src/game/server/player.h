@@ -85,6 +85,7 @@ public:
 
 	bool m_IsReady;
 	int m_OldLobby = -1;
+	int m_PreviousLobby = 0;
 
 	//
 	int m_Vote;
@@ -114,6 +115,7 @@ public:
 	float m_RunAhead;
 
 	int m_HitPoints;
+	int m_SpeedCap;
 	int m_LastWeapon = WEAPON_LASER;
 
 	CNetObj_Character m_CoreAheads[POSITION_HISTORY];
