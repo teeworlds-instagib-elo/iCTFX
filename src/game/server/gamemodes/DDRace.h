@@ -40,9 +40,6 @@ public:
 
 	void InitTeleporter();
 
-	std::map<int, std::vector<vec2>> m_TeleOuts;
-	std::map<int, std::vector<vec2>> m_TeleCheckOuts;
-
 	#define MAX_WAYPOINT_CONNECTIONS 12
 	#define MAX_WAYPOINTS 32
 	struct CWaypoint

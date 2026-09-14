@@ -11,6 +11,7 @@
 #include <engine/server.h>
 #include <game/version.h>
 #include <game/server/entities/flag.h>
+#include <game/server/entities/laserText.h>
 #include <time.h>
 
 #include <algorithm>
@@ -614,6 +615,71 @@ void CGameControllerDDRace::Tick()
 		m_GameFlags = GAMEFLAG_TEAMS;
 	}
 
+	if(m_Lobby == 0)
+	{
+		m_pGameType = "iCTFX";
+
+		m_GameFlags = GAMEFLAG_TEAMS;
+
+		if(Server()->Tick() % Server()->TickSpeed() == 0)
+		{
+			for (auto const& lobby_point : m_TeleOuts)
+			{
+				int lobby = lobby_point.first + 1;
+
+				// printf("lobby %i\n", lobby);
+
+				if(lobby <= 0 || lobby > MAX_LOBBIES)
+					continue;
+				
+				
+				char gametype[64] = "CTF";
+				char str[64];
+
+				if(GameServer()->m_apController[lobby]->idm)
+					sprintf(gametype, "DM");
+
+				if(GameServer()->m_apController[lobby]->m_fng)
+					sprintf(gametype, "FNG");
+
+				if(GameServer()->m_apController[lobby]->m_grenade)
+				{
+					sprintf(str, "G%s", gametype);
+					strcpy(gametype, str);
+				}
+				
+				if(GameServer()->m_apController[lobby]->m_laser)
+				{
+					if(!GameServer()->m_apController[lobby]->m_fng)
+					{
+						sprintf(str, "I%s", gametype);
+						strcpy(gametype, str);
+					}
+				}
+				
+				new CLaserText(&GameServer()->m_World[m_Lobby], lobby_point.second[0] + vec2(-32*2.5, -32*3), -1, Server()->TickSpeed(), gametype, strlen(gametype), 0.7);
+
+
+				char aMapName[512];
+				memcpy(aMapName, Server()->Kernel()->GetIMap(GameServer()->Layers(lobby)->m_Map)->m_aMapName, 512);
+
+				for(int i = 0; i < 512 && aMapName[i]; i++)
+				{
+					char c = aMapName[i];
+
+					if(c >= 'a' && c <= 'z')
+						c += 'A' - 'a';
+
+					aMapName[i] = c;
+				}
+				new CLaserText(&GameServer()->m_World[m_Lobby], lobby_point.second[0] + vec2(-32*4, -32*5), -1, Server()->TickSpeed(), aMapName, strlen(aMapName), 0.7);
+
+				sprintf(str, "%i", lobby);
+				new CLaserText(&GameServer()->m_World[m_Lobby], lobby_point.second[0] + vec2(-32*1, 32*1), -1, Server()->TickSpeed(), str, strlen(str), 0.7);
+			}
+		}
+	}
+
 	IGameController::Tick();
 
 	//spawn bots
@@ -634,6 +700,9 @@ void CGameControllerDDRace::Tick()
 		int numPlayers = aNumplayers[0] + aNumplayers[1];
 
 		int wantedAmount = g_Config.m_SvBotAmount - numPlayers;
+
+		wantedAmount = 0;
+		//todo, something maybe?
 
 		if(m_Lobby != 0)
 			wantedAmount = m_WantedBotAmount;		

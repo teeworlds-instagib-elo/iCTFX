@@ -63,6 +63,7 @@ CONSOLE_COMMAND("force_unpause", "v[id]", CFGFLAG_SERVER, ConForcePause, this, "
 
 CONSOLE_COMMAND("shuffle_teams", "", CFGFLAG_SERVER, ConShuffleTeams, this, "shuffles teams teams")
 CONSOLE_COMMAND("set_hitpoints", "i[amount] r[player name] ", CFGFLAG_SERVER, ConSetHitPoints, this, "sets amount of times this player can be hit")
+CONSOLE_COMMAND("speedcap", "i[amount] r[player name] ", CFGFLAG_SERVER, ConSpeedCap, this, "sets an speed cap on the X axis, 0 to disable, 10 is walk speed")
 
 CONSOLE_COMMAND("vote_mute", "v[id] i[seconds]", CFGFLAG_SERVER, ConVoteMute, this, "Remove v's right to vote for i seconds")
 CONSOLE_COMMAND("vote_unmute", "v[id]", CFGFLAG_SERVER, ConVoteUnmute, this, "Give back v's right to vote.")

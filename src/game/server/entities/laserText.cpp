@@ -267,7 +267,7 @@ static const bool asciiTable[256][5][3] = {
 	{ {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0}, {0,0,0} }  // ascii 255
 };
 
-CLaserText::CLaserText(CGameWorld *pGameWorld, vec2 Pos, int Owner, int pAliveTicks, char* pText, int pTextLen)
+CLaserText::CLaserText(CGameWorld *pGameWorld, vec2 Pos, int Owner, int pAliveTicks, char* pText, int pTextLen, float scaler)
 : CEntity(pGameWorld, CGameWorld::ENTTYPE_LASER)
 {
 	m_Pos = Pos;
@@ -280,7 +280,8 @@ CLaserText::CLaserText(CGameWorld *pGameWorld, vec2 Pos, int Owner, int pAliveTi
 	
 	m_TextLen = pTextLen;
 	m_Text = new char[pTextLen];
-	memcpy(m_Text, pText, pTextLen);	
+	memcpy(m_Text, pText, pTextLen);
+	m_Scaler = scaler;
 	
 	m_CharNum = 0;
 
@@ -303,6 +304,8 @@ CLaserText::CLaserText(CGameWorld *pGameWorld, vec2 Pos, int Owner, int pAliveTi
 	for(int i = 0; i < m_TextLen; ++i){
 		makeLaser(m_Text[i], i, charCount);
 	}
+
+	m_CharNum = charCount;
 }
 
 CLaserText::CLaserText(CGameWorld *pGameWorld, vec2 Pos, int Owner, int pAliveTicks, char* pText, int pTextLen, float pCharPointOffset, float pCharOffsetFactor)
@@ -341,6 +344,8 @@ CLaserText::CLaserText(CGameWorld *pGameWorld, vec2 Pos, int Owner, int pAliveTi
 	for(int i = 0; i < m_TextLen; ++i){
 		makeLaser(m_Text[i], i, charCount);
 	}
+
+	m_CharNum = charCount;
 }
 
 void CLaserText::Reset()
@@ -395,9 +400,16 @@ void CLaserText::makeLaser(char pChar, int pCharOffset, int& charCount){
 			} else tail[n][j] = (unsigned short)-1;
 		}
 	}
+
+	bool laser[5*3] = {0};
+	vec2 from[5*3];
+	vec2 to[5*3];
 	
 	for(int n = 0; n < 5; ++n){
-		for(int j = 0; j < 3; ++j){
+		for(int j = 0; j < 3; ++j){		
+			from[n*3+j] = vec2(0,0);
+			to[n*3+j] = vec2(0,0);
+
 			if(asciiTable[(unsigned char)pChar][n][j]){
 				//additional x, y offset to draw a line
 				int x = j, y = n;
@@ -474,16 +486,53 @@ void CLaserText::makeLaser(char pChar, int pCharOffset, int& charCount){
 					tail[n][j] = (y << 8 | x);
 				}
 				
-				CLaserChar* pObj = (m_Chars[charCount] = new CLaserChar(GameWorld()));
+				to[n*3+j].x = m_Pos.x + (pCharOffset * m_PosOffsetChars + j * m_PosOffsetCharPoints) * m_Scaler;
+				to[n*3+j].y = m_Pos.y + (n * m_PosOffsetCharPoints) * m_Scaler;
+				from[n*3+j].x = m_Pos.x + (pCharOffset * m_PosOffsetChars + x * m_PosOffsetCharPoints) * m_Scaler;
+				from[n*3+j].y = m_Pos.y + (y * m_PosOffsetCharPoints) * m_Scaler;
 
-				pObj->m_Pos.x = m_Pos.x + pCharOffset * m_PosOffsetChars + j * m_PosOffsetCharPoints;
-				pObj->m_Pos.y = m_Pos.y + n * m_PosOffsetCharPoints;
-				pObj->m_Frompos.x = m_Pos.x + pCharOffset * m_PosOffsetChars + x * m_PosOffsetCharPoints;
-				pObj->m_Frompos.y = m_Pos.y + y * m_PosOffsetCharPoints;
 
-				++charCount;
+				laser[n*3+j] = true;
 			}	
 		}
+	}
+
+	for(int i = 0; i < 5*3; i++)
+	{
+		if(!laser[i])
+			continue;
+		
+		CLaserChar* pObj = (m_Chars[charCount] = new CLaserChar(GameWorld()));
+		++charCount;
+
+		for(int j = i+1; j < 5*3; j++)
+		{
+			if(!laser[j])
+				continue;
+			
+			if(distance(to[i], from[j]) < 3)
+			{
+				if(distance(normalize(to[i]-from[i]), normalize(to[j]-from[j])) < 0.01)
+				{
+					to[i] = to[j];
+					laser[j] = false;
+					continue;
+				}
+			}
+
+			if(distance(from[i], to[j]) < 3)
+			{
+				if(distance(normalize(to[i]-from[i]), normalize(to[j]-from[j])) < 0.01)
+				{
+					from[i] = from[j];
+					laser[j] = false;
+					continue;
+				}
+			}
+		}
+
+		pObj->m_Pos = to[i];
+		pObj->m_Frompos = from[i];
 	}
 }
 

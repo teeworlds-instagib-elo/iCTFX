@@ -1,6 +1,7 @@
 /* (c) Magnus Auvinen. See licence.txt in the root of the distribution for more information. */
 /* If you are missing that file, acquire a complete release at teeworlds.com.                */
 #include <antibot/antibot_data.h>
+#include <cmath>
 #include <engine/shared/config.h>
 #include <game/generated/server_data.h>
 #include <game/mapitems.h>
@@ -747,6 +748,8 @@ void CCharacter::ResetInput()
 
 void CCharacter::Tick()
 {
+	if(!m_pPlayer)
+		return;
 	/*if(m_pPlayer->m_ForceBalanced)
 	{
 		char Buf[128];
@@ -807,6 +810,12 @@ void CCharacter::Tick()
 	HandleWeapons();
 
 	DDRacePostCoreTick();
+
+
+	if(m_pPlayer && m_pPlayer->m_SpeedCap > 0 && abs(m_Core.m_Vel.x) > m_pPlayer->m_SpeedCap)
+	{
+		m_Core.m_Vel.x = clamp(m_Core.m_Vel.x, (float)-m_pPlayer->m_SpeedCap, (float)m_pPlayer->m_SpeedCap);
+	}
 
 	if(m_Core.m_TriggeredEvents & COREEVENT_HOOK_ATTACH_PLAYER)
 	{
@@ -1085,6 +1094,8 @@ void CCharacter::Death()
 
 bool CCharacter::TakeDamage(vec2 Force, int Dmg, int From, int Weapon, int tick)
 {
+	if(m_Lobby == 0)
+		return false;
 	/*m_Core.m_Vel += Force;
 
 	if(GameServer()->m_apController[m_Lobby]->IsFriendlyFire(m_pPlayer->GetCID(), From) && !g_Config.m_SvTeamdamage)
@@ -2227,11 +2238,16 @@ void CCharacter::HandleTiles(int Index)
 	// }
 
 	int z = GameServer()->Collision(m_Lobby)->IsTeleport(MapIndex);
-	if(!g_Config.m_SvOldTeleportHook && !g_Config.m_SvOldTeleportWeapons && z && !(*m_pTeleOuts)[z - 1].empty())
+	if(!g_Config.m_SvOldTeleportHook && z && !(*m_pTeleOuts)[z - 1].empty())
 	{
 		if(m_Super)
 			return;
 		int TeleOut = m_Core.m_pWorld->RandomOr0((*m_pTeleOuts)[z - 1].size());
+		if(m_Lobby == 0)
+		{
+		    GameServer()->SetPlayerLobby(GetPlayer()->GetCID(), z);
+			return;
+		}
 		m_Core.m_Pos = (*m_pTeleOuts)[z - 1][TeleOut];
 		if(!g_Config.m_SvTeleportHoldHook)
 		{
@@ -2248,6 +2264,11 @@ void CCharacter::HandleTiles(int Index)
 			return;
 		int TeleOut = m_Core.m_pWorld->RandomOr0((*m_pTeleOuts)[evilz - 1].size());
 		m_Core.m_Pos = (*m_pTeleOuts)[evilz - 1][TeleOut];
+		if(m_Lobby == 0)
+		{
+		    GameServer()->SetPlayerLobby(GetPlayer()->GetCID(), evilz);
+			return;
+		}
 		if(!g_Config.m_SvOldTeleportHook && !g_Config.m_SvOldTeleportWeapons)
 		{
 			m_Core.m_Vel = vec2(0, 0);

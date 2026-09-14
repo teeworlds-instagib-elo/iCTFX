@@ -104,6 +104,7 @@ class CGameContext : public IGameServer
 	static void ConScoreLimit(IConsole::IResult *pResult, void *pUserData);
 	static void ConSpectatorSlots(IConsole::IResult *pResult, void *pUserData);
 	static void ConLobby(IConsole::IResult *pResult, void *pUserData);
+	static void ConLobbies(IConsole::IResult *pResult, void *pUserData);
 	static void ConMuteSpec(IConsole::IResult *pResult, void *pUserData);
 	static void ConMuteLobbies(IConsole::IResult *pResult, void *pUserData);
 	static void ConBroadcast(IConsole::IResult *pResult, void *pUserData);
@@ -122,6 +123,7 @@ class CGameContext : public IGameServer
 
 	static void ConSwapTeams(IConsole::IResult *pResult, void *pUserData);
 	static void ConSetHitPoints(IConsole::IResult *pResult, void *pUserData);
+	static void ConSpeedCap(IConsole::IResult *pResult, void *pUserData);
 	static void ConShuffleTeams(IConsole::IResult *pResult, void *pUserData);
 	void Construct(int Resetting);
 	void Destruct(int Resetting);
@@ -131,6 +133,7 @@ class CGameContext : public IGameServer
 	{
 		bool m_IsSpectator;
 		int m_FirstVoteTick;
+		int m_PreviousLobby;
 	};
 
 public:
@@ -285,7 +288,7 @@ public:
 	virtual void OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID);
 
 	virtual bool OnClientDataPersist(int ClientID, void *pData);
-	virtual void OnClientConnected(int ClientID, void *pData);
+	virtual void OnClientConnected(int ClientID, void *pData, int Lobby);
 	virtual void OnClientEnter(int ClientID);
 	virtual void OnClientDrop(int ClientID, const char *pReason);
 	virtual void OnClientDirectInput(int ClientID, void *pInput);
@@ -315,6 +318,7 @@ public:
 	// Describes the time when the first player joined the server.
 	int64_t m_NonEmptySince;
 	int GetClientVersion(int ClientID) const;
+	bool SetPlayerLobby(int ClientID, int Lobby);
 	bool PlayerExists(int ClientID) const { return m_apPlayers[ClientID]; }
 	void KillPlayer(int ClientID) override;
 	// Returns true if someone is actively moderating.

@@ -48,6 +48,7 @@ void CPlayer::Reset()
 	m_LastAckedSnapshot = 0;
 	m_LastAckedSnapshotSmoothed = 0;
 	m_PreInputRetimed = 0;
+	m_SpeedCap = 0;
 
 	int *pIdMap = Server()->GetIdMap(m_ClientID);
 	for(int i = 1; i < VANILLA_MAX_CLIENTS; i++)
@@ -412,6 +413,12 @@ void CPlayer::Snap(int SnappingClient)
 
 	char str[256];
 	snprintf(str, 256, "%s%s", m_Rollback ? "(R)" : "", Server()->ClientClan(m_ClientID));
+
+	if(GetLobby() != GameServer()->GetLobby(SnappingClient))
+	{
+		snprintf(str, 256, "Lobby %i\n", GetLobby());
+	}
+
 	StrToInts(&pClientInfo->m_Name0, 4, Server()->ClientName(m_ClientID));
 	StrToInts(&pClientInfo->m_Clan0, 3, str);
 	pClientInfo->m_Country = Server()->ClientCountry(m_ClientID);
@@ -427,6 +434,37 @@ void CPlayer::Snap(int SnappingClient)
 	// send 0 if times of others are not shown
 	if(SnappingClient != m_ClientID && g_Config.m_SvHideScore)
 		Score = -9999;
+	
+	if(GetLobby() != 0 && SnappingLobby == 0)
+	{
+		CNetObj_Character *pCharacter = static_cast<CNetObj_Character *>(Server()->SnapNewItem(NETOBJTYPE_CHARACTER, id, sizeof(CNetObj_Character)));
+		if(!pCharacter)
+			return;
+		
+		int counter = 0;
+		int player_idx = 0;
+		for(int i = 0; i < MAX_CLIENTS; i++)
+		{
+			if(GameServer()->GetLobby(i) != GetLobby())
+				continue;
+			
+			counter++;
+			if(i < GetCID())
+				player_idx++;
+		}
+
+		if(GameServer()->m_apController[0]->m_TeleOuts[GetLobby()-1].size())
+		{
+			float x = player_idx % 6;
+			float y = player_idx / 6 - 0.3;
+
+			x -= (std::min(6.0f, counter-y*6)-1) * 0.5;
+			y -= (std::min(6.0f, (float)(counter/6))-1) * 0.5;
+
+			pCharacter->m_X = round_to_int(GameServer()->m_apController[0]->m_TeleOuts[GetLobby()-1][0].x + 48*x);
+			pCharacter->m_Y = round_to_int(GameServer()->m_apController[0]->m_TeleOuts[GetLobby()-1][0].y + 48*y);
+		}
+	}
 
 	if(!Server()->IsSixup(SnappingClient))
 	{
@@ -440,7 +478,7 @@ void CPlayer::Snap(int SnappingClient)
 		pPlayerInfo->m_ClientID = id;
 		pPlayerInfo->m_Team = m_Team;
 
-		if(SnappingLobby != GetLobby())
+		if(SnappingLobby != GetLobby() && SnappingLobby != 0)
 			pPlayerInfo->m_Team = TEAM_SPECTATORS;
 
 		if(SnappingClientVersion < VERSION_DDNET_INDEPENDENT_SPECTATORS_TEAM)
@@ -782,6 +820,12 @@ void CPlayer::TryRespawn()
 
 	if(!GameServer()->m_apController[GetLobby()]->CanSpawn(m_Team, &SpawnPos, 0))
 		return;
+	
+	if(GetLobby() == 0 && m_PreviousLobby > 0 && m_PreviousLobby < MAX_LOBBIES)
+	{
+		if(GameServer()->m_apController[0]->m_TeleOuts.count(m_PreviousLobby-1))
+			SpawnPos = GameServer()->m_apController[0]->m_TeleOuts[m_PreviousLobby-1][0];
+	}
 
 	m_WeakHookSpawn = false;
 	m_Spawning = false;

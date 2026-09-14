@@ -1363,6 +1363,23 @@ void CGameContext::ConSetHitPoints(IConsole::IResult *pResult, void *pUserData)
 			"couldn't find player");
 }
 
+void CGameContext::ConSpeedCap(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+
+	for(int ClientID = 0; ClientID < MAX_CLIENTS; ClientID++)
+	{
+		if(str_comp(pResult->GetString(1), pSelf->Server()->ClientName(ClientID)) == 0)
+		{
+			pSelf->m_apPlayers[ClientID]->m_SpeedCap = pResult->GetInteger(0);
+			return;
+		}
+	}
+
+	pSelf->Console()->Print(IConsole::OUTPUT_LEVEL_STANDARD, "info",
+			"couldn't find player");
+}
+
 void CGameContext::ConShuffleTeams(IConsole::IResult *pResult, void *pUserData)
 {
 	CGameContext *pSelf = (CGameContext *)pUserData;

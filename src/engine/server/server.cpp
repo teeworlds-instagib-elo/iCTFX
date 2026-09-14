@@ -1500,7 +1500,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 					m_aClients[ClientID].m_HasPersistentData = false;
 				}
 				m_aClients[ClientID].m_State = CClient::STATE_READY;
-				GameServer()->OnClientConnected(ClientID, pPersistentData);
+				GameServer()->OnClientConnected(ClientID, pPersistentData, m_aClients[ClientID].m_Lobby);
 			}
 
 			SendConnectionReady(ClientID);

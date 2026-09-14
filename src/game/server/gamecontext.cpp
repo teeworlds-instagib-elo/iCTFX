@@ -595,7 +595,7 @@ void CGameContext::SendBroadcast(const char *pText, int ClientID, int lobby, boo
 		return;
 	}
 
-	if(!m_apPlayers[ClientID])
+	if(PlayerExists(ClientID))
 		return;
 
 	if(!IsImportant && m_apPlayers[ClientID]->m_LastBroadcastImportance && m_apPlayers[ClientID]->m_LastBroadcast > Server()->Tick() - Server()->TickSpeed() * 10)
@@ -967,7 +967,7 @@ void CGameContext::OnTick()
 	static int sayLobbyLine = 0;
 	sayLobbyLine++;
 
-	if(sayLobbyLine > Server()->TickSpeed()*60*3)
+	if(sayLobbyLine > Server()->TickSpeed()*60*5)
 	{
 		sayLobbyLine = 0;
 		for(int i = 0; i < MAX_CLIENTS; i++)
@@ -975,7 +975,7 @@ void CGameContext::OnTick()
 			if(!PlayerExists(i) || GetLobby(i) != 0)
 				continue;
 			
-			if(m_apPlayers[i]->m_lobbyReminderCount > 3)
+			if(m_apPlayers[i]->m_lobbyReminderCount > 2)
 				continue;
 			
 			m_apPlayers[i]->m_lobbyReminderCount++;
@@ -1690,10 +1690,11 @@ bool CGameContext::OnClientDataPersist(int ClientID, void *pData)
 	}
 	pPersistent->m_IsSpectator = m_apPlayers[ClientID]->GetTeam() == TEAM_SPECTATORS;
 	pPersistent->m_FirstVoteTick = m_apPlayers[ClientID]->m_FirstVoteTick-Server()->Tick();
+	pPersistent->m_PreviousLobby = m_apPlayers[ClientID]->m_OldLobby;
 	return true;
 }
 
-void CGameContext::OnClientConnected(int ClientID, void *pData)
+void CGameContext::OnClientConnected(int ClientID, void *pData, int Lobby)
 {
 	CPersistentClientData *pPersistentData = (CPersistentClientData *)pData;
 	bool Spec = false;
@@ -1718,8 +1719,12 @@ void CGameContext::OnClientConnected(int ClientID, void *pData)
 		}
 	}
 
+	if(Lobby < 0 || Lobby >= MAX_LOBBIES)
+		Lobby = 0;
+	
+
 	// Check which team the player should be on
-	const int StartTeam = (Spec || g_Config.m_SvTournamentMode) ? TEAM_SPECTATORS : m_apController[g_Config.m_SvDefaultLobby]->GetAutoTeam(ClientID);
+	int StartTeam = (Spec || g_Config.m_SvTournamentMode) ? TEAM_SPECTATORS : m_apController[Lobby]->GetAutoTeam(ClientID);
 
 	if (StartTeam == TEAM_SPECTATORS)
 	{
@@ -1734,7 +1739,7 @@ void CGameContext::OnClientConnected(int ClientID, void *pData)
 	if(pPersistentData)
 	{
 		m_apPlayers[ClientID]->m_FirstVoteTick = Server()->Tick() + pPersistentData->m_FirstVoteTick;
-		printf("remove m_FirstVoteTick %i\n", Server()->Tick()-m_apPlayers[ClientID]->m_FirstVoteTick);
+		m_apPlayers[ClientID]->m_PreviousLobby = pPersistentData->m_PreviousLobby;
 	}
 
 #ifdef CONF_DEBUG
@@ -2631,7 +2636,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 				{
 					str_format(aChatmsg, sizeof(aChatmsg), "'%s' called for vote to move '%s' to spectators (%s)", Server()->ClientName(ClientID), Server()->ClientName(SpectateID), aReason);
 					str_format(aDesc, sizeof(aDesc), "Move '%s' to spectators", Server()->ClientName(SpectateID));
-					// str_format(aCmd, sizeof(aCmd), "uninvite %d ; set_team %d -1 %d", SpectateID, SpectateID, g_Config.m_SvVoteSpectateRejoindelay);
+					str_format(aCmd, sizeof(aCmd), "set_team %d -1 %d", SpectateID, SpectateID, g_Config.m_SvVoteSpectateRejoindelay);
 				}
 				m_aVotes[Lobby].m_VoteType = VOTE_TYPE_SPECTATE;
 				m_aVotes[Lobby].m_VoteVictim = SpectateID;
@@ -3283,47 +3288,7 @@ void CGameContext::ConLobby(IConsole::IResult *pResult, void *pUserData)
 	{
 		int lobby = clamp(pResult->GetInteger(0), 0, MAX_LOBBIES-1);
 
-		bool spec = pSelf->m_apPlayers[pResult->m_ClientID]->GetTeam() == TEAM_SPECTATORS;
-
-		pSelf->m_apPlayers[pResult->m_ClientID]->KillCharacter();
-		((CServer*)pSelf->Server())->m_aClients[pResult->m_ClientID].m_Lobby = lobby;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_Score = 0;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_Kills = 0;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_Deaths = 0;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_Touches = 0;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_Captures = 0;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_FastestCapture = -1;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_Shots = 0;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_Wallshots = 0;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_WallshotKills = 0;
-		pSelf->m_apPlayers[pResult->m_ClientID]->m_ShownStats.m_Suicides = 0;
-	
-		int team = pSelf->m_apController[lobby]->GetAutoTeam(pResult->m_ClientID);
-		
-
-		if(pSelf->m_apController[lobby]->m_tourneyMode)
-			spec = true;
-
-		if(spec)
-			team = TEAM_SPECTATORS;
-		
-		pSelf->m_apPlayers[pResult->m_ClientID]->SetTeam(team);
-
-		for(int i = 0; i < MAX_CLIENTS; i++)
-		{
-			if(!pSelf->PlayerExists(i))
-				continue;
-			
-			bool sameLobby = true;
-			if(pSelf->GetLobby(i) != lobby)
-				sameLobby = false;
-
-			char aBuf[128];
-			str_format(aBuf, 128, "%s joined %slobby: %i", ((CServer*)pSelf->Server())->m_aClients[pResult->m_ClientID].m_aName, 
-				sameLobby ? "your " : "", lobby);
-
-			pSelf->SendChatTarget(i, aBuf);
-		}
+		pSelf->SetPlayerLobby(pResult->m_ClientID, lobby);
 	}
 	else
 	{
@@ -3332,6 +3297,12 @@ void CGameContext::ConLobby(IConsole::IResult *pResult, void *pUserData)
 		pSelf->SendChatTarget(pResult->m_ClientID, aBuf);
 		pSelf->List(pResult->m_ClientID, pResult->GetString(0));
 	}
+}
+
+void CGameContext::ConLobbies(IConsole::IResult *pResult, void *pUserData)
+{
+	CGameContext *pSelf = (CGameContext *)pUserData;
+	pSelf->SetPlayerLobby(pResult->m_ClientID, 0);
 }
 
 void CGameContext::ConMuteSpec(IConsole::IResult *pResult, void *pUserData)
@@ -3736,11 +3707,17 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 	m_pAntibot->RoundStart(this);
 
 	int Map = 0;
+	int LobbyMap = 0;
 	for(int i = 0; i < Kernel()->m_AmountMaps; i++)
 	{
 		if(str_comp(Kernel()->GetIMap(i)->m_aMapName, g_Config.m_SvMap) == 0)
 		{
 			Map = i;
+		}
+		
+		if(str_comp(Kernel()->GetIMap(i)->m_aMapName, g_Config.m_SvLobbyMap) == 0)
+		{
+			LobbyMap = i;
 		}
 	}
 
@@ -3773,7 +3750,12 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 
 	for(int i = 0; i < MAX_LOBBIES; i++)
 	{
-		m_Layers[i].Init(Kernel(), Map);
+		int map = Map;
+
+		if(i == 0)
+			map = LobbyMap;
+
+		m_Layers[i].Init(Kernel(), map);
 		m_Collision[i].Init(&m_Layers[i]);
 		m_Collision[i].m_Lobby = i;
 	}
@@ -3989,7 +3971,7 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 	{
 		for(int i = 0; i < g_Config.m_DbgDummies; i++)
 		{
-			OnClientConnected(MAX_CLIENTS - i - 1, 0);
+			OnClientConnected(MAX_CLIENTS - i - 1, 0, 0);
 		}
 	}
 #endif
@@ -4831,6 +4813,74 @@ int CGameContext::GetClientVersion(int ClientID) const
 	return Info.m_DDNetVersion;
 }
 
+bool CGameContext::SetPlayerLobby(int ClientID, int Lobby)
+{
+    if(GetLobby(ClientID) == Lobby)
+        return false;
+    
+	int lobby = clamp(Lobby, 0, MAX_LOBBIES-1);
+
+	int oldLobby = GetLobby(ClientID);
+
+	bool spec = m_apPlayers[ClientID]->GetTeam() == TEAM_SPECTATORS;
+
+	m_apPlayers[ClientID]->KillCharacter();
+	((CServer*)Server())->m_aClients[ClientID].m_Lobby = lobby;
+	m_apPlayers[ClientID]->m_ShownStats.m_Score = 0;
+	m_apPlayers[ClientID]->m_ShownStats.m_Kills = 0;
+	m_apPlayers[ClientID]->m_ShownStats.m_Deaths = 0;
+	m_apPlayers[ClientID]->m_ShownStats.m_Touches = 0;
+	m_apPlayers[ClientID]->m_ShownStats.m_Captures = 0;
+	m_apPlayers[ClientID]->m_ShownStats.m_FastestCapture = -1;
+	m_apPlayers[ClientID]->m_ShownStats.m_Shots = 0;
+	m_apPlayers[ClientID]->m_ShownStats.m_Wallshots = 0;
+	m_apPlayers[ClientID]->m_ShownStats.m_WallshotKills = 0;
+	m_apPlayers[ClientID]->m_ShownStats.m_Suicides = 0;
+
+	int team = m_apController[lobby]->GetAutoTeam(ClientID);
+	
+
+	if(m_apController[lobby]->m_tourneyMode)
+		spec = true;
+
+	if(spec)
+		team = TEAM_SPECTATORS;
+	
+	if(lobby == 0)
+		team = TEAM_RED;
+	
+	m_apPlayers[ClientID]->SetTeam(team);
+
+	if(lobby == 0)
+	{
+		if(m_apController[0]->m_TeleOuts.count(oldLobby-1))
+		m_apPlayers[ClientID]->ForceSpawn(m_apController[0]->m_TeleOuts[oldLobby-1][0]);
+	}
+
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		if(!PlayerExists(i))
+			continue;
+		
+		bool sameLobby = true;
+		if(GetLobby(i) != lobby)
+			sameLobby = false;
+		
+		char aBuf[128];
+		str_format(aBuf, 128, "%s joined %slobby: %i", ((CServer*)Server())->m_aClients[ClientID].m_aName, 
+			sameLobby ? "your " : "", lobby);
+		
+		
+		if(i == ClientID)
+			str_format(aBuf, 128, "You joined lobby: %i", lobby);
+		
+
+		SendChatTarget(i, aBuf);
+	}
+	
+	return true;
+}
+
 void CGameContext::KillPlayer(int ClientID)
 {
 	m_apPlayers[ClientID]->KillCharacter();
@@ -4900,7 +4950,13 @@ bool CGameContext::RateLimitPlayerVote(int ClientID)
 		return true;
 	}
 
-	if(Now < pPlayer->m_FirstVoteTick)
+	int playerCount = 0;
+	for(int i = 0; i < MAX_CLIENTS; i++)
+	{
+		playerCount += GetLobby(i) == Lobby;
+	}
+
+	if(Now < pPlayer->m_FirstVoteTick && playerCount > 1)
 	{
 		char aBuf[64];
 		str_format(aBuf, sizeof(aBuf), "You must wait %d seconds before making your first vote.", (int)((pPlayer->m_FirstVoteTick - Now) / TickSpeed) + 1);
