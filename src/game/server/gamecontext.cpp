@@ -95,8 +95,10 @@ CGameContext::CGameContext(int Reset)
 
 CGameContext::~CGameContext()
 {
-	if(g_Config.m_SvSaveServer && sql_handler)
-		sql_handler->stop();
+	#ifndef DISABLE_SQL
+		if(g_Config.m_SvSaveServer && sql_handler)
+			sql_handler->stop();
+	#endif
 	Destruct(m_Resetting ? RESET : NO_RESET);
 }
 
@@ -989,16 +991,20 @@ void CGameContext::OnTick()
 		if(!PlayerExists(i))
 			continue;
 		
-		if(Server()->ClientIngame(i) && ((CServer*)Server())->m_aClients[i].m_Map != m_Layers[((CServer*)Server())->m_aClients[i].m_Lobby].m_Map)
+		if(GetLobby(i) != -1 && ((CServer*)Server())->m_aClients[i].m_Map != m_Layers[GetLobby(i)].m_Map)
 		{
-			((CServer*)Server())->m_aClients[i].m_Map = m_Layers[((CServer*)Server())->m_aClients[i].m_Lobby].m_Map;
+			printf("changing client map (%i)\n", i);
+			KillPlayer(i);
+			((CServer*)Server())->m_aClients[i].m_Map = m_Layers[GetLobby(i)].m_Map;
 			if(!Server()->ClientReloadMap(i))
 				SendChatTarget(i, "Dummies cannot go to a lobby with a different map");
 		}
 
-		if(m_apPlayers[i]->m_OldLobby != ((CServer*)Server())->m_aClients[i].m_Lobby)
+		if(m_apPlayers[i]->m_OldLobby != GetLobby(i))
 		{
-			m_apPlayers[i]->m_OldLobby = ((CServer*)Server())->m_aClients[i].m_Lobby;
+			KillPlayer(i);
+			printf("move lobby for player %i\n", i);
+			m_apPlayers[i]->m_OldLobby = GetLobby(i);
 			char aBuf[128];
 			str_format(aBuf, 128, "Lobby %i", m_apPlayers[i]->m_OldLobby);
 			SendBroadcast(aBuf, i, -1, true);
@@ -2309,7 +2315,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 						SendChatTarget(ClientID, "Rollback disabled by server vote");
 
 					char str[256];
-					str_format(str, sizeof(str), "Rollback enabled (%i%)", (int)(pPlayer->m_Rollback_partial*100));
+					str_format(str, sizeof(str), "Rollback enabled (%i\%)", (int)(pPlayer->m_Rollback_partial*100));
 					if(pPlayer->m_Rollback)
 						SendChatTarget(ClientID, str);
 				}
@@ -2342,7 +2348,7 @@ void CGameContext::OnMessage(int MsgID, CUnpacker *pUnpacker, int ClientID)
 					}
 
 					char str[256];
-					str_format(str, sizeof(str), "runahead set to %i%\n", (int)(pPlayer->m_RunAhead*100));
+					str_format(str, sizeof(str), "runahead set to %i\%\n", (int)(pPlayer->m_RunAhead*100));
 					SendChatTarget(ClientID, str);
 				}
 				else
@@ -3201,6 +3207,8 @@ void CGameContext::ConChangeMap(IConsole::IResult *pResult, void *pUserData)
 		}
 		return;
 	}
+
+	printf("ConChangeMap\n");
 	pSelf->m_apController[pResult->m_Lobby]->ChangeMap(pResult->NumArguments() ? pResult->GetString(0) : "");
 }
 
@@ -3838,7 +3846,9 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 	// }
 
 	if(g_Config.m_SvSaveServer) {
-		sql_handler = std::make_unique<SqlHandler>();
+		#ifndef DISABLE_SQL
+			sql_handler = std::make_unique<SqlHandler>();
+		#endif
 	}
 
 	LobbyCount = 0;
@@ -3869,7 +3879,9 @@ void CGameContext::OnInit(/*class IKernel *pKernel*/)
 			}
 			database->Disconnect();
 		}
-		sql_handler->start();
+		#ifndef DISABLE_SQL
+			sql_handler->start();
+		#endif
 	}
 
 	const char *pCensorFilename = "censorlist.txt";
@@ -4815,10 +4827,11 @@ int CGameContext::GetClientVersion(int ClientID) const
 
 bool CGameContext::SetPlayerLobby(int ClientID, int Lobby)
 {
-    if(GetLobby(ClientID) == Lobby)
+	int lobby = clamp(Lobby, 0, MAX_LOBBIES-1);
+
+    if(GetLobby(ClientID) == lobby)
         return false;
     
-	int lobby = clamp(Lobby, 0, MAX_LOBBIES-1);
 
 	int oldLobby = GetLobby(ClientID);
 

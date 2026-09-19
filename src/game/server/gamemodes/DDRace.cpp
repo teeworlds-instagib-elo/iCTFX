@@ -180,7 +180,9 @@ void CGameControllerDDRace::UpdateServerStats() {
 			m_aTeamscore[TEAM_BLUE]
 		};
 
-		GameServer()->sql_handler->set_server_stats(server_stats);
+		#ifndef DISABLE_SQL
+			GameServer()->sql_handler->set_server_stats(server_stats);
+		#endif
 	}
 }
 
@@ -478,7 +480,9 @@ void CGameControllerDDRace::OnPlayerConnect(CPlayer *pPlayer)
 
 	if(g_Config.m_SvSaveServer)
 	{
-		GameServer()->sql_handler->get_player_stats(pPlayer, Server()->ClientName(pPlayer->GetCID()));
+		#ifndef DISABLE_SQL
+			GameServer()->sql_handler->get_player_stats(pPlayer, Server()->ClientName(pPlayer->GetCID()));
+		#endif
 	}
 }
 
@@ -488,7 +492,9 @@ void CGameControllerDDRace::OnPlayerNameChange(class CPlayer *pPlayer)
 
 	if(g_Config.m_SvSaveServer)
 	{
-		GameServer()->sql_handler->get_player_stats(pPlayer, Server()->ClientName(pPlayer->GetCID()));
+		#ifndef DISABLE_SQL
+			GameServer()->sql_handler->get_player_stats(pPlayer, Server()->ClientName(pPlayer->GetCID()));
+		#endif
 	}
 }
 
@@ -518,7 +524,9 @@ void CGameControllerDDRace::OnPlayerDisconnect(CPlayer *pPlayer, const char *pRe
 		stats.wins_week = pPlayer->m_GlobalStats.m_Wins;
 		stats.wins_week_date = pPlayer->m_GlobalStats.m_Week;
 
-		GameServer()->sql_handler->set_stats(Server()->ClientName(pPlayer->GetCID()), stats);
+		#ifndef DISABLE_SQL
+			GameServer()->sql_handler->set_stats(Server()->ClientName(pPlayer->GetCID()), stats);
+		#endif
 	}
 }
 

@@ -928,7 +928,9 @@ void CGameContext::ConRank(IConsole::IResult *pResult, void *pUserData) {
 	if(!CheckClientID(pResult->m_ClientID))
 		return;
 	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
-	pSelf->sql_handler->show_rank(pPlayer, pSelf->Server()->ClientName(pResult->m_ClientID));
+	#ifndef DISABLE_SQL
+		pSelf->sql_handler->show_rank(pPlayer, pSelf->Server()->ClientName(pResult->m_ClientID));
+	#endif
 }
 
 void CGameContext::ConTop5(IConsole::IResult *pResult, void *pUserData) {
@@ -936,7 +938,9 @@ void CGameContext::ConTop5(IConsole::IResult *pResult, void *pUserData) {
 	if(!CheckClientID(pResult->m_ClientID))
 		return;
 	CPlayer *pPlayer = pSelf->m_apPlayers[pResult->m_ClientID];
-	pSelf->sql_handler->show_top5(pPlayer);
+	#ifndef DISABLE_SQL
+		pSelf->sql_handler->show_top5(pPlayer);
+	#endif
 }
 
 void CGameContext::ConProtectedKill(IConsole::IResult *pResult, void *pUserData)

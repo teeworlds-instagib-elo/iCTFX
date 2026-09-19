@@ -164,13 +164,13 @@ private:
 
 	void SnapCharacter(int SnappingClient, int ID);
 	static bool IsSwitchActiveCb(int Number, void *pUser);
-	void HandleTiles(int Index);
+	bool HandleTiles(int Index);
 	float m_Time;
 	int m_LastBroadcast;
 	void DDRaceInit();
 	void HandleSkippableTiles(int Index);
 	void DDRaceTick();
-	void DDRacePostCoreTick();
+	bool DDRacePostCoreTick();
 	void HandleTuneLayer();
 	void SendZoneMsgs();
 	IAntibot *Antibot();

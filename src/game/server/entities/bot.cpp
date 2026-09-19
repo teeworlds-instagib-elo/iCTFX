@@ -433,7 +433,7 @@ void CBot::Tick()
 		if(randomness > 1)
 			dir += vec2(rand() % randomness * (rand() % 2 == 1 ? 1 : -1), rand() % randomness * (rand() % 2 == 1 ? 1 : -1)) / 100.0;
 
-		CLaser * pLaser = new CLaser(&GameServer()->m_World[m_Lobby], m_Pos, dir, LaserReach, 0, WEAPON_LASER, this, m_Team);
+		new CLaser(&GameServer()->m_World[m_Lobby], m_Pos, dir, LaserReach, 0, WEAPON_LASER, this, m_Team);
 		GameServer()->CreateSound(m_Lobby, m_Pos, SOUND_LASER_FIRE, 0);
 	}
 
@@ -561,7 +561,7 @@ void CBot::Tick()
 				continue;
 			
 			float playerDistToFlag = distance(pChar->m_Pos, m_pController->m_apFlags[m_Team]->m_Pos);
-			float playerDistToBot = distance(pChar->m_Pos, m_Pos);
+			// float playerDistToBot = distance(pChar->m_Pos, m_Pos);
 
 			if(playerDistToFlag < closestDistFlag)
 			{
@@ -583,7 +583,7 @@ void CBot::Tick()
 				continue;
 			
 			float playerDistToFlag = distance(pChar->m_Pos, m_pController->m_apFlags[m_Team]->m_Pos);
-			float playerDistToBot = distance(pChar->m_Pos, m_Pos);
+			// float playerDistToBot = distance(pChar->m_Pos, m_Pos);
 
 			if(playerDistToFlag < closestDistFlag)
 			{
@@ -605,20 +605,20 @@ void CBot::Tick()
 
 			if (GameServer()->m_apPlayers[m_Chase]->GetTeam() != m_Team)
 			{
-				int dist = 0;
+				int dist2 = 0;
 				if(GameServer()->m_apPlayers[m_Chase]->GetCharacter()->m_ReloadTimer <= 10)
-					dist = 8;
+					dist2 = 8;
 				
 				if(m_ReloadTimer < 0)
-					dist += 7;
+					dist2 += 7;
 				
 				if(!m_pController->m_apFlags[!m_Team]->m_AtStand && !m_HasFlag)
-					dist /= 2;
+					dist2 /= 2;
 				
 				if(m_HasFlag)
-					dist += 3;
+					dist2 += 3;
 
-				m_TargetPos += normalize(m_Pos - m_TargetPos)*32*dist;
+				m_TargetPos += normalize(m_Pos - m_TargetPos)*32*dist2;
 				
 				//we wanna look at the player we're chasing, except for when charging a shot
 				int delayed_reaction_tick = (Server()->Tick() + Server()->TickSpeed()-SvBotReactionTime) % POSITION_HISTORY;
@@ -734,7 +734,7 @@ void CBot::Tick()
 				}
 			}
 
-			if(score < lowestScore && rand() % 3 != 0 || distance1 < 5*32)
+			if((score < lowestScore && rand() % 3 != 0) || distance1 < 5*32)
 			{
 				lowestScore = score;
 				bestWaypoint = waypoint;
