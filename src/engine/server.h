@@ -340,7 +340,7 @@ public:
 	virtual void OnClientEngineJoin(int ClientID, bool Sixup) = 0;
 	virtual void OnClientEngineDrop(int ClientID, const char *pReason) = 0;
 
-	std::unique_ptr<SqlHandler> sql_handler;
+	// std::unique_ptr<SqlHandler> sql_handler;
 };
 
 extern IGameServer *CreateGameServer();

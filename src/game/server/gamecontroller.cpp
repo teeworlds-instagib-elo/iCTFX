@@ -542,6 +542,14 @@ void IGameController::ChangeMap(const char *pToMap)
 			m_apFlags[0] = 0;
 			m_apFlags[1] = 0;
 
+			for(int i = 0; i < MAX_CLIENTS; i++)
+			{
+				if(GameServer()->GetLobby(i) != m_Lobby)
+					continue;
+				
+				GameServer()->KillPlayer(i);
+			}
+
 			GameServer()->m_World[m_Lobby].DeleteAllEntities();
 			GameServer()->Layers(m_Lobby)->Init(GameServer()->Kernel(), i);
 			GameServer()->Collision(m_Lobby)->Init(GameServer()->Layers(m_Lobby));

@@ -3,10 +3,15 @@
 #ifndef GAME_SERVER_GAMECONTROLLER_H
 #define GAME_SERVER_GAMECONTROLLER_H
 
+#define DISABLE_SQL
+
 #include <base/vmath.h>
 #include <engine/map.h>
 #include <game/server/entities/flag.h>
-#include <game/server/sql_handler.h>
+
+#ifndef DISABLE_SQL
+	#include <game/server/sql_handler.h>
+#endif
 
 /*
 	Class: Game Controller

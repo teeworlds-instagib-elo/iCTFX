@@ -1153,13 +1153,19 @@ void CServer::SendMap(int ClientID)
 {
 	int Lobby = m_aClients[ClientID].m_Lobby;
 
-	if(Lobby < 0)
+	if(Lobby < 0 || Lobby >= MAX_LOBBIES)
+	{
+		printf("error: %s lobby %i does not exist\n", __func__, Lobby);
 		return;
+	}
 
 	IMap * pMap = Kernel()->GetIMap(GameServer()->GetLobbiesMap(Lobby));
 	
 	if(!pMap)
+	{
+		printf("error: %s map doesn't exist\n", __func__);
 		return;
+	}
 
 	int MapType = IsSixup(ClientID) ? MAP_TYPE_SIXUP : MAP_TYPE_SIX;
 	{
@@ -2578,7 +2584,7 @@ int CServer::Run()
 	int Counter = 0;
 	for(int i = 0; i < MapList.size(); i++)
 	{
-		char aCommand[IO_MAX_PATH_LENGTH * 2 + 10];
+		// char aCommand[IO_MAX_PATH_LENGTH * 2 + 10];
 		char aMapEscaped[IO_MAX_PATH_LENGTH * 2];
 		char *pDst = aMapEscaped;
 		str_escape(&pDst, MapList[i].m_aName, aMapEscaped + sizeof(aMapEscaped));
@@ -2837,7 +2843,6 @@ bool CServer::GetClientInput(int ClientID, int Tick, CNetObj_PlayerInput * pInpu
 
 bool CServer::ClientReloadMap(int ClientID)
 {
-	bool isDummy = false;
 	for(int i = 0; i < MAX_CLIENTS; i++)
 	{
 		if(i == ClientID)
@@ -2848,8 +2853,6 @@ bool CServer::ClientReloadMap(int ClientID)
 
 		if(m_aClients[i].m_ConnectionID != m_aClients[ClientID].m_ConnectionID)
 			continue;
-		
-		isDummy = true;
 
 		GameServer()->KillPlayer(ClientID);
 
@@ -2867,7 +2870,10 @@ bool CServer::ClientReloadMap(int ClientID)
 	}
 
 	if(m_aClients[ClientID].m_State <= CClient::STATE_AUTH)
+	{
+		printf("client (%i) rejected for sending map, state less than state_auth\n", ClientID);
 		return true;
+	}
 
 	SendMap(ClientID);
 	bool HasPersistentData = m_aClients[ClientID].m_HasPersistentData;

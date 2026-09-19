@@ -762,6 +762,9 @@ void CCharacter::Tick()
 	if(m_Paused)
 		return;
 	
+	if(!m_Alive)
+		return;
+	
 	if(m_flag_invunerable_ticks > 0)
 		m_flag_invunerable_ticks--;
 	
@@ -809,7 +812,8 @@ void CCharacter::Tick()
 	// handle Weapons
 	HandleWeapons();
 
-	DDRacePostCoreTick();
+	if(DDRacePostCoreTick())
+		return;
 
 
 	if(m_pPlayer && m_pPlayer->m_SpeedCap > 0 && abs(m_Core.m_Vel.x) > m_pPlayer->m_SpeedCap)
@@ -1770,7 +1774,7 @@ bool CCharacter::IsSwitchActiveCb(int Number, void *pUser)
 	return pCollision->m_pSwitchers && pThis->Team() != TEAM_SUPER && pCollision->m_pSwitchers[Number].m_Status[pThis->Team()];
 }
 
-void CCharacter::HandleTiles(int Index)
+bool CCharacter::HandleTiles(int Index)
 {
 	int MapIndex = Index;
 	//int PureMapIndex = GameServer()->Collision(m_Lobby)->GetPureMapIndex(m_Pos);
@@ -1782,7 +1786,7 @@ void CCharacter::HandleTiles(int Index)
 		m_LastRefillJumps = false;
 		m_LastPenalty = false;
 		m_LastBonus = false;
-		return;
+		return false;
 	}
 	// int cp = GameServer()->Collision(m_Lobby)->IsCheckpoint(MapIndex);
 	// if(cp != -1 && m_DDRaceState == DDRACE_STARTED && cp > m_CpActive)
@@ -2241,12 +2245,12 @@ void CCharacter::HandleTiles(int Index)
 	if(!g_Config.m_SvOldTeleportHook && z && !(*m_pTeleOuts)[z - 1].empty())
 	{
 		if(m_Super)
-			return;
+			return false;
 		int TeleOut = m_Core.m_pWorld->RandomOr0((*m_pTeleOuts)[z - 1].size());
 		if(m_Lobby == 0)
 		{
 		    GameServer()->SetPlayerLobby(GetPlayer()->GetCID(), z);
-			return;
+			return true;
 		}
 		m_Core.m_Pos = (*m_pTeleOuts)[z - 1][TeleOut];
 		if(!g_Config.m_SvTeleportHoldHook)
@@ -2255,19 +2259,19 @@ void CCharacter::HandleTiles(int Index)
 		}
 		if(g_Config.m_SvTeleportLoseWeapons)
 			ResetPickups();
-		return;
+		return false;
 	}
 	int evilz = GameServer()->Collision(m_Lobby)->IsEvilTeleport(MapIndex);
 	if(evilz && !(*m_pTeleOuts)[evilz - 1].empty())
 	{
 		if(m_Super)
-			return;
+			return false;
 		int TeleOut = m_Core.m_pWorld->RandomOr0((*m_pTeleOuts)[evilz - 1].size());
 		m_Core.m_Pos = (*m_pTeleOuts)[evilz - 1][TeleOut];
 		if(m_Lobby == 0)
 		{
 		    GameServer()->SetPlayerLobby(GetPlayer()->GetCID(), evilz);
-			return;
+			return true;
 		}
 		if(!g_Config.m_SvOldTeleportHook && !g_Config.m_SvOldTeleportWeapons)
 		{
@@ -2283,12 +2287,12 @@ void CCharacter::HandleTiles(int Index)
 				ResetPickups();
 			}
 		}
-		return;
+		return false;
 	}
 	if(GameServer()->Collision(m_Lobby)->IsCheckEvilTeleport(MapIndex))
 	{
 		if(m_Super)
-			return;
+			return false;
 		// first check if there is a TeleCheckOut for the current recorded checkpoint, if not check previous checkpoints
 		for(int k = m_TeleCheckpoint - 1; k >= 0; k--)
 		{
@@ -2304,7 +2308,7 @@ void CCharacter::HandleTiles(int Index)
 					GameWorld()->ReleaseHooked(GetPlayer()->GetCID());
 				}
 
-				return;
+				return false;
 			}
 		}
 		// if no checkpointout have been found (or if there no recorded checkpoint), teleport to start
@@ -2320,12 +2324,12 @@ void CCharacter::HandleTiles(int Index)
 				GameWorld()->ReleaseHooked(GetPlayer()->GetCID());
 			}
 		}
-		return;
+		return false;
 	}
 	if(GameServer()->Collision(m_Lobby)->IsCheckTeleport(MapIndex))
 	{
 		if(m_Super)
-			return;
+			return false;
 		// first check if there is a TeleCheckOut for the current recorded checkpoint, if not check previous checkpoints
 		for(int k = m_TeleCheckpoint - 1; k >= 0; k--)
 		{
@@ -2339,7 +2343,7 @@ void CCharacter::HandleTiles(int Index)
 					ResetHook();
 				}
 
-				return;
+				return false;
 			}
 		}
 		// if no checkpointout have been found (or if there no recorded checkpoint), teleport to start
@@ -2353,8 +2357,10 @@ void CCharacter::HandleTiles(int Index)
 				ResetHook();
 			}
 		}
-		return;
+		return false;
 	}
+
+	return false;
 }
 
 void CCharacter::HandleTuneLayer()
@@ -2488,7 +2494,7 @@ void CCharacter::DDRaceTick()
 	m_Core.m_Id = GetPlayer()->GetCID();
 }
 
-void CCharacter::DDRacePostCoreTick()
+bool CCharacter::DDRacePostCoreTick()
 {
 	m_Time = (float)(Server()->Tick() - m_StartTime) / ((float)Server()->TickSpeed());
 
@@ -2515,7 +2521,7 @@ void CCharacter::DDRacePostCoreTick()
 	int CurrentIndex = GameServer()->Collision(m_Lobby)->GetMapIndex(m_Pos);
 	HandleSkippableTiles(CurrentIndex);
 	if(!m_Alive)
-		return;
+		return true;
 
 	// handle Anti-Skip tiles
 	std::list<int> Indices = GameServer()->Collision(m_Lobby)->GetMapIndices(m_PrevPos, m_Pos);
@@ -2523,16 +2529,18 @@ void CCharacter::DDRacePostCoreTick()
 	{
 		for(int &Index : Indices)
 		{
-			HandleTiles(Index);
+			if(HandleTiles(Index))
+				return true;
 			if(!m_Alive)
-				return;
+				return true;
 		}
 	}
 	else
 	{
-		HandleTiles(CurrentIndex);
+		if(HandleTiles(CurrentIndex))
+			return true;
 		if(!m_Alive)
-			return;
+			return true;
 	}
 
 	// teleport gun
@@ -2547,6 +2555,8 @@ void CCharacter::DDRacePostCoreTick()
 		m_TeleGunTeleport = false;
 		m_IsBlueTeleGunTeleport = false;
 	}
+
+	return false;
 }
 
 bool CCharacter::Freeze(int Seconds)

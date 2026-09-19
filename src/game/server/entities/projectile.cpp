@@ -435,13 +435,9 @@ void CProjectile::Snap(int SnappingClient)
 	}
 
 	CCharacter *pOwnerChar = 0;
-	int64_t TeamMask = -1LL;
 
 	if(m_Owner >= 0)
 		pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
-
-	if(pOwnerChar && pOwnerChar->IsAlive())
-		TeamMask = 0;
 
 	if(SnappingClient != SERVER_DEMO_CLIENT && m_Owner != -1 && false)
 		return;
