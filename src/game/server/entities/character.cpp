@@ -8,6 +8,7 @@
 #include <game/server/gamecontext.h>
 #include <game/server/player.h>
 #include <new>
+#include <stdio.h>
 
 #include "character.h"
 #include "laser.h"
@@ -52,6 +53,7 @@ bool CCharacter::Spawn(CPlayer *pPlayer, vec2 Pos)
 	m_LastBonus = false;
 	m_HitByPlayer = -1;
 	m_lastHook = -1;
+	m_ReloadGrenade = true;
 
 	m_flag_invunerable_ticks = 0;
 
@@ -378,7 +380,7 @@ void CCharacter::FireWeapon()
 		return;
 	}
 
-	m_ReloadTimer = 0;
+	m_ReloadGrenade = true;
 
 	DoWeaponSwitch();
 	vec2 Direction = normalize(vec2(m_LatestInput.m_TargetX, m_LatestInput.m_TargetY));
@@ -394,6 +396,8 @@ void CCharacter::FireWeapon()
 
 	if(!WillFire)
 		return;
+	
+	m_ReloadTimer = 0;
 	
 	if(m_Core.m_ActiveWeapon == WEAPON_SHOTGUN)
 	{
@@ -426,6 +430,8 @@ void CCharacter::FireWeapon()
 		m_AttackTick = Server()->Tick();
 		return;
 	}
+
+	m_ReloadGrenade = false;
 
 	if(m_Core.m_ActiveWeapon == WEAPON_GRENADE)
 	{
@@ -778,7 +784,7 @@ void CCharacter::Tick()
 		}
 	}
 	
-	if(Server()->Tick() % g_Config.m_SvGrenadeAmmoReload == 0 && m_ReloadTimer == 0)
+	if(Server()->Tick() % g_Config.m_SvGrenadeAmmoReload == 0 && m_ReloadGrenade)
 		m_aWeapons[WEAPON_GRENADE].m_Ammo++;
 	
 	if(m_aWeapons[WEAPON_GRENADE].m_Ammo > GameServer()->m_apController[m_Lobby]->m_grenade_ammo)
@@ -1523,7 +1529,33 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 			}
 		}
 
-		
+		for(int i = 1; i < Server()->TickSpeed(); i++)
+		{
+			CNetObj_PlayerInput input = {0};
+
+			if(Server()->GetClientInput(ID, Server()->Tick()+i, &input))
+			{
+				int ticks_since_input = Server()->Tick()-m_LastAction;
+				int ticks_between_inputs = i + ticks_since_input;
+
+				float lerp = ticks_since_input / (float)ticks_between_inputs;
+
+				input.m_TargetX = input.m_TargetX * lerp + m_LatestInput.m_TargetX * (1-lerp);
+				input.m_TargetY = input.m_TargetY * lerp + m_LatestInput.m_TargetY * (1-lerp);
+
+				float tmp_angle = atan2f(input.m_TargetY, input.m_TargetX);
+				if(tmp_angle < -(pi / 2.0f))
+				{
+					pCharacter->m_Angle = (int)((tmp_angle + (2.0f * pi)) * 256.0f);
+				}
+				else
+				{
+					pCharacter->m_Angle = (int)(tmp_angle * 256.0f);
+				}
+
+				break;
+			}
+		}
 	}
 	else
 	{
@@ -1636,6 +1668,12 @@ void CCharacter::Snap(int SnappingClient)
 		pDDNetCharacter->m_Flags |= CHARACTERFLAG_TELEGUN_LASER;
 	if(m_aWeapons[WEAPON_LASER].m_Got)
 		pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_LASER;
+	if(m_aWeapons[WEAPON_GRENADE].m_Got)
+		pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_GRENADE;
+	if(m_aWeapons[WEAPON_SHOTGUN].m_Got)
+		pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_SHOTGUN;
+	if(m_aWeapons[WEAPON_HAMMER].m_Got)
+		pDDNetCharacter->m_Flags |= CHARACTERFLAG_WEAPON_HAMMER;
 	if(m_Core.m_LiveFrozen)
 	{
 		pDDNetCharacter->m_Flags |= CHARACTERFLAG_NO_MOVEMENTS;
