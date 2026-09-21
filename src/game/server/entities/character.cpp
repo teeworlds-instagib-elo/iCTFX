@@ -8,7 +8,6 @@
 #include <game/server/gamecontext.h>
 #include <game/server/player.h>
 #include <new>
-#include <stdio.h>
 
 #include "character.h"
 #include "laser.h"
@@ -1529,31 +1528,34 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 			}
 		}
 
-		for(int i = 1; i < Server()->TickSpeed(); i++)
+		if(g_Config.m_SvLatestTarget)
 		{
-			CNetObj_PlayerInput input = {0};
-
-			if(Server()->GetClientInput(ID, Server()->Tick()+i, &input))
+			for(int i = 1; i < Server()->TickSpeed(); i++)
 			{
-				int ticks_since_input = Server()->Tick()-m_LastAction;
-				int ticks_between_inputs = i + ticks_since_input;
+				CNetObj_PlayerInput input = {0};
 
-				float lerp = ticks_since_input / (float)ticks_between_inputs;
-
-				input.m_TargetX = input.m_TargetX * lerp + m_LatestInput.m_TargetX * (1-lerp);
-				input.m_TargetY = input.m_TargetY * lerp + m_LatestInput.m_TargetY * (1-lerp);
-
-				float tmp_angle = atan2f(input.m_TargetY, input.m_TargetX);
-				if(tmp_angle < -(pi / 2.0f))
+				if(Server()->GetClientInput(ID, Server()->Tick()+i, &input))
 				{
-					pCharacter->m_Angle = (int)((tmp_angle + (2.0f * pi)) * 256.0f);
-				}
-				else
-				{
-					pCharacter->m_Angle = (int)(tmp_angle * 256.0f);
-				}
+					int ticks_since_input = Server()->Tick()-m_LastAction;
+					int ticks_between_inputs = i + ticks_since_input;
 
-				break;
+					float lerp = ticks_since_input / (float)ticks_between_inputs;
+
+					input.m_TargetX = input.m_TargetX * lerp + m_LatestInput.m_TargetX * (1-lerp);
+					input.m_TargetY = input.m_TargetY * lerp + m_LatestInput.m_TargetY * (1-lerp);
+
+					float tmp_angle = atan2f(input.m_TargetY, input.m_TargetX);
+					if(tmp_angle < -(pi / 2.0f))
+					{
+						pCharacter->m_Angle = (int)((tmp_angle + (2.0f * pi)) * 256.0f);
+					}
+					else
+					{
+						pCharacter->m_Angle = (int)(tmp_angle * 256.0f);
+					}
+
+					break;
+				}
 			}
 		}
 	}
