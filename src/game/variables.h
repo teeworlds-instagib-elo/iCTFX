@@ -180,6 +180,7 @@ MACRO_CONFIG_INT(SvRollbackShadow, sv_rollback_shadow, 0, 0, 1, CFGFLAG_SERVER, 
 MACRO_CONFIG_INT(SvAntiZoom, sv_antizoom, 0, 0, 1, CFGFLAG_SERVER, "Limits visability range of players, disabled by default for high ping players")
 MACRO_CONFIG_INT(SvLineOfSight, sv_line_of_sight, 0, 0, 1, CFGFLAG_SERVER, "Limits visability to players in line of sight")
 MACRO_CONFIG_INT(SvLatestTarget, sv_latest_target, 0, 0, 1, CFGFLAG_SERVER, "Shows the latest direction player is looking vs correct timing")
+MACRO_CONFIG_INT(SvSmoothTarget, sv_smooth_target, 1, 0, 1, CFGFLAG_SERVER, "Interpolates player aim with preinputs, disable if antiping mispredictions happen")
 
 MACRO_CONFIG_INT(SvRunAheadDefault, sv_runahead_default, 0, 0, 100, CFGFLAG_SERVER, "amount of runahead by default")
 MACRO_CONFIG_INT(SvRunAheadSmoothing, sv_runahead_smoothing, 35, 0, 100, CFGFLAG_SERVER, "sets amount of smoothing for runahead")

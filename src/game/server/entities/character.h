@@ -180,6 +180,7 @@ private:
 public:
 	void SetTeleports(std::map<int, std::vector<vec2>> *pTeleOuts, std::map<int, std::vector<vec2>> *pTeleCheckOuts);
 	int m_ReloadTimer;
+	bool m_ReloadGrenade;
 	CNetObj_PlayerInput m_Input;
 	vec2 m_AimHistory[POSITION_HISTORY];
 
