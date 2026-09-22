@@ -730,10 +730,12 @@ void CGameControllerDDRace::Tick()
 				delete m_apBots[i];
 			}
 		}
+		m_BotCount = wantedAmount;
 		//balance bot teams
 		for(int i = 0; i < m_BotCount; i++)
 		{
-			aNumplayers[m_apBots[i]->m_Team]++;
+			if(m_apBots[i])
+				aNumplayers[m_apBots[i]->m_Team]++;
 		}
 
 		if(abs(aNumplayers[0]-aNumplayers[1]) > 1)
@@ -759,8 +761,6 @@ void CGameControllerDDRace::Tick()
 					break;
 			}
 		}
-
-		m_BotCount = wantedAmount;
 	}
 
 

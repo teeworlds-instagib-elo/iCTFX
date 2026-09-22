@@ -134,6 +134,7 @@ class CGameContext : public IGameServer
 		bool m_IsSpectator;
 		int m_FirstVoteTick;
 		int m_PreviousLobby;
+		int m_Rollback;
 	};
 
 public:

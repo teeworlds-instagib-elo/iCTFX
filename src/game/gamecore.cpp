@@ -281,8 +281,12 @@ void CCharacterCore::Tick(bool UseInput)
 				if(m_pCharacter && m_pCharacter->GameServer()->m_apPlayers[m_Id]->m_Rollback && g_Config.m_SvRollback)
 				{
 					int tick = m_pCharacter->Server()->Tick() - m_pCharacter->GameServer()->m_apPlayers[m_Id]->m_PreInputRetimed - 1;
-					tick = tick % POSITION_HISTORY;
-					pos = pCharCore->m_pCharacter->m_Positions[tick];
+
+					if(tick >= 0)
+					{
+						tick = tick % POSITION_HISTORY;
+						pos = pCharCore->m_pCharacter->m_Positions[tick];
+					}
 				}
 
 				if(m_pCharacter && m_pCharacter->GameServer()->m_apPlayers[m_Id]->m_RunAhead &&
@@ -290,8 +294,12 @@ void CCharacterCore::Tick(bool UseInput)
 				{
 					int tick = m_pCharacter->GameServer()->m_apPlayers[pCharCore->m_pCharacter->m_pPlayer->GetCID()]->m_LastAckedSnapshot;
 					tick = tick % POSITION_HISTORY;
-					pos.x = pCharCore->m_pCharacter->m_pPlayer->m_CoreAheads[tick].m_X;
-					pos.y = pCharCore->m_pCharacter->m_pPlayer->m_CoreAheads[tick].m_Y;
+
+					if(tick >= 0)
+					{
+						pos.x = pCharCore->m_pCharacter->m_pPlayer->m_CoreAheads[tick].m_X;
+						pos.y = pCharCore->m_pCharacter->m_pPlayer->m_CoreAheads[tick].m_Y;
+					}
 				}
 
 				vec2 ClosestPoint;

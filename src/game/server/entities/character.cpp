@@ -8,6 +8,7 @@
 #include <game/server/gamecontext.h>
 #include <game/server/player.h>
 #include <new>
+#include <cstdio>
 
 #include "character.h"
 #include "laser.h"
@@ -994,7 +995,10 @@ void CCharacter::Die(int Killer, int Weapon, int tick)
 
 	if(m_Killer >= 0 && !m_KillerIsBot)
 	{
-		m_DeathPos = m_Positions[(GameServer()->m_apPlayers[m_Killer]->m_LastAckedSnapshot-1) % POSITION_HISTORY];
+		int tick = (GameServer()->m_apPlayers[m_Killer]->m_LastAckedSnapshot-1) % POSITION_HISTORY;
+		if(tick < 0)
+			tick = 0;
+		m_DeathPos = m_Positions[tick];
 	}
 
 	if(m_Killer >= 0 && !m_KillerIsBot && m_Killer != m_pPlayer->GetCID() && GameServer()->m_apPlayers[m_Killer])
@@ -1467,7 +1471,7 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 		if(seePrediction < 0)
 			seePrediction = 0;
 
-		if(seePrediction && m_pPlayer->m_DeadAheads[seePrediction % POSITION_HISTORY])
+		if(seePrediction > 0 && m_pPlayer->m_DeadAheads[seePrediction % POSITION_HISTORY])
 			return;
 
 		CNetObj_Character *pCharacter = static_cast<CNetObj_Character *>(Server()->SnapNewItem(NETOBJTYPE_CHARACTER, ID, sizeof(CNetObj_Character)));
@@ -1511,8 +1515,11 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 			// seePrediction = Server()->Tick() - GameServer()->m_apPlayers[SnappingClient]->m_LAS_leftover;
 			// seePrediction = GameServer()->m_apPlayers[SnappingClient]->m_LastAckedSnapshot+1;
 			seePrediction = Server()->Tick() - GameServer()->m_apPlayers[SnappingClient]->m_PreInputRetimed+1;
-			*pCharacter = m_PastCharacters[seePrediction % POSITION_HISTORY];
-			latest_target = true;
+			if(seePrediction >= 0)
+			{
+				*pCharacter = m_PastCharacters[seePrediction % POSITION_HISTORY];
+				latest_target = true;
+			}
 		}
 
 		if(g_Config.m_SvLatestTarget || latest_target)
@@ -1528,7 +1535,7 @@ void CCharacter::SnapCharacter(int SnappingClient, int ID)
 			}
 		}
 
-		if(g_Config.m_SvLatestTarget)
+		if(g_Config.m_SvSmoothTarget && SnappingClient != ID && !seePrediction && !(m_LatestInput.m_Fire & 1))
 		{
 			for(int i = 1; i < Server()->TickSpeed(); i++)
 			{
@@ -1690,7 +1697,10 @@ void CCharacter::Snap(int SnappingClient)
 	{
 		CNetObj_Pickup *pShadow = static_cast<CNetObj_Pickup *>(Server()->SnapNewItem(NETOBJTYPE_PICKUP, ID+64, sizeof(CNetObj_Pickup)));
 
-		vec2 pos = GameServer()->m_apPlayers[SnappingClient]->GetCharacter()->m_Positions[m_pPlayer->m_LastAckedSnapshot % POSITION_HISTORY];
+		int tick = m_pPlayer->m_LastAckedSnapshot % POSITION_HISTORY;
+		if(tick < 0)
+			tick = 0;
+		vec2 pos = GameServer()->m_apPlayers[SnappingClient]->GetCharacter()->m_Positions[tick];
 		pShadow->m_X = (int)pos.x;
 		pShadow->m_Y = (int)pos.y;
 		pShadow->m_Subtype = 0;
