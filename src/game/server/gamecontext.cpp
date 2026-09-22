@@ -218,7 +218,7 @@ void CGameContext::CreateExplosion(int Lobby, vec2 Pos, int Owner, int Weapon, b
 	{
 		vec2 Diff = apEnts[i]->m_Pos - Pos;
 
-		if(tick != -1 && ((CCharacter*)apEnts[i])->m_pPlayer->GetCID() != Owner)
+		if(tick != -1 && tick > 0 && ((CCharacter*)apEnts[i])->m_pPlayer->GetCID() != Owner)
 		{
 			Diff = ((CCharacter*)apEnts[i])->m_Positions[tick % POSITION_HISTORY] - Pos;
 		}
@@ -1697,6 +1697,9 @@ bool CGameContext::OnClientDataPersist(int ClientID, void *pData)
 	pPersistent->m_IsSpectator = m_apPlayers[ClientID]->GetTeam() == TEAM_SPECTATORS;
 	pPersistent->m_FirstVoteTick = m_apPlayers[ClientID]->m_FirstVoteTick-Server()->Tick();
 	pPersistent->m_PreviousLobby = m_apPlayers[ClientID]->m_OldLobby;
+	pPersistent->m_Rollback = m_apPlayers[ClientID]->m_Rollback_partial * 100;
+	if(!m_apPlayers[ClientID]->m_Rollback)
+		pPersistent->m_Rollback = 0;
 	return true;
 }
 
@@ -1746,6 +1749,12 @@ void CGameContext::OnClientConnected(int ClientID, void *pData, int Lobby)
 	{
 		m_apPlayers[ClientID]->m_FirstVoteTick = Server()->Tick() + pPersistentData->m_FirstVoteTick;
 		m_apPlayers[ClientID]->m_PreviousLobby = pPersistentData->m_PreviousLobby;
+
+		if(pPersistentData->m_Rollback)
+		{
+			m_apPlayers[ClientID]->m_Rollback = true;
+			m_apPlayers[ClientID]->m_Rollback_partial = pPersistentData->m_Rollback / 100.0;
+		}
 	}
 
 #ifdef CONF_DEBUG

@@ -47,6 +47,7 @@ void CBot::Die(int Killer)
 		GameServer()->CreateSoundGlobal(m_Lobby, SOUND_CTF_DROP);
 		m_pController->m_apFlags[!m_Team]->m_AtStand = false;
 		m_pController->m_apFlags[!m_Team]->m_BotGrabbed = false;
+		m_pController->m_apFlags[!m_Team]->m_pCarryingCharacter = nullptr;
 		m_pController->m_apFlags[!m_Team]->m_DropTick = Server()->Tick();
 		m_HasFlag = false;
 		m_Pos = vec2(0,0);
@@ -479,7 +480,10 @@ void CBot::Tick()
 		m_pController->m_apFlags[!m_Team]->m_pCarryingCharacter = 0;
 	}
 
-	int distanceWaypoint = distance(vec2(m_pController->m_aWaypoints[m_Waypoint].x, m_pController->m_aWaypoints[m_Waypoint].y), m_Pos);
+	int distanceWaypoint = 0;
+	
+	if(m_Waypoint >= 0 && m_Waypoint < MAX_WAYPOINTS)
+		distanceWaypoint = distance(vec2(m_pController->m_aWaypoints[m_Waypoint].x, m_pController->m_aWaypoints[m_Waypoint].y), m_Pos);
 
 	for(int f = 0; f < 2; f++)
 	{
@@ -622,7 +626,7 @@ void CBot::Tick()
 				
 				//we wanna look at the player we're chasing, except for when charging a shot
 				int delayed_reaction_tick = (Server()->Tick() + Server()->TickSpeed()-SvBotReactionTime) % POSITION_HISTORY;
-				if(m_ShootTimer > 10)
+				if(m_ShootTimer > 10 && delayed_reaction_tick >= 0)
 					m_LookAt = GameServer()->m_apPlayers[m_Chase]->GetCharacter()->m_Positions[delayed_reaction_tick];
 			}
 			
@@ -708,6 +712,12 @@ void CBot::Tick()
 
 		int currentDistance = distance(m_Pos, m_TargetPos);
 
+		if(curWaypoint < 0)
+			curWaypoint = 0;
+		
+		if(curWaypoint > MAX_WAYPOINTS)
+			curWaypoint = MAX_WAYPOINTS-1;
+
 		for(int w = 0; w < m_pController->m_aWaypoints[curWaypoint].connectionAmount; w++)
 		{
 			int waypoint = m_pController->m_aWaypoints[curWaypoint].connections[w];
@@ -741,7 +751,8 @@ void CBot::Tick()
 			}
 
 			//make bots choose a more random route
-			if(currentDistance > distance1 && (rand() % (1+m_pController->m_aWaypoints[m_Waypoint].connectionAmount) == 0 || rand() % 3 == 0))
+			if(currentDistance > distance1 && m_Waypoint >= 0 && m_Waypoint < MAX_WAYPOINTS
+				&& (rand() % (1+m_pController->m_aWaypoints[m_Waypoint].connectionAmount) == 0 || rand() % 3 == 0))
 			{
 				lowestScore = score;
 				bestWaypoint = waypoint;

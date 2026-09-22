@@ -472,7 +472,10 @@ void CPlayer::Snap(int SnappingClient)
 		if(!pPlayerInfo)
 			return;
 
-		pPlayerInfo->m_Latency = Latency;
+		pPlayerInfo->m_Latency = m_LastAckedSnapshotSmoothed * 1000 / Server()->TickSpeed();
+		if(!g_Config.m_SvPredictionPing)
+			pPlayerInfo->m_Latency = Latency;
+		
 		pPlayerInfo->m_Score = Score;
 		pPlayerInfo->m_Local = (int)(m_ClientID == SnappingClient && (m_Paused != PAUSE_PAUSED || SnappingClientVersion >= VERSION_DDNET_OLD));
 		pPlayerInfo->m_ClientID = id;
