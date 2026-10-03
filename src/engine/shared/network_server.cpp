@@ -135,6 +135,19 @@ int CNetServer::Update()
 	return 0;
 }
 
+void CNetServer::EndFlushBatch()
+{
+	m_FlushBatch = false;
+	for(int ClientId = 0; ClientId < MaxClients(); ClientId++)
+	{
+		if(!m_aFlushPending[ClientId])
+			continue;
+		m_aFlushPending[ClientId] = false;
+		if(m_aSlots[ClientId].m_Connection.State() == NET_CONNSTATE_ONLINE)
+			m_aSlots[ClientId].m_Connection.Flush();
+	}
+}
+
 SECURITY_TOKEN CNetServer::GetToken(const NETADDR &Addr)
 {
 	SHA256_CTX Sha256;
@@ -783,7 +796,12 @@ int CNetServer::Send(CNetChunk *pChunk)
 		if(m_aSlots[pChunk->m_ClientID].m_Connection.QueueChunk(Flags, pChunk->m_DataSize, pChunk->m_pData) == 0)
 		{
 			if(pChunk->m_Flags & NETSENDFLAG_FLUSH)
-				m_aSlots[pChunk->m_ClientID].m_Connection.Flush();
+			{
+				if(m_FlushBatch)
+					m_aFlushPending[pChunk->m_ClientID] = true;
+				else
+					m_aSlots[pChunk->m_ClientID].m_Connection.Flush();
+			}
 		}
 		else
 		{

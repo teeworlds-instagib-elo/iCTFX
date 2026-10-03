@@ -364,7 +364,7 @@ public:
 	void SendServerInfoConnless(const NETADDR *pAddr, int Token, int Type);
 	void UpdateServerInfo(bool Resend = false);
 
-	void PumpNetwork(bool PacketWaiting);
+	void PumpNetwork();
 
 	const char *GetMapName() const;
 	virtual int LoadMap(const char *pMapName, int Map);

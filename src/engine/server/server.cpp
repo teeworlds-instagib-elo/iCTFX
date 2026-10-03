@@ -49,6 +49,9 @@
 #endif
 
 #include <csignal>
+#include <chrono>
+
+using namespace std::chrono_literals;
 
 volatile sig_atomic_t InterruptSignaled = 0;
 
@@ -1372,8 +1375,8 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 	{
 		int64_t Now = time_get();
 		int64_t Diff = Now - m_aClients[ClientID].m_TrafficSince;
-		float Alpha = Config()->m_SvNetlimitAlpha / 100.0f;
-		float Limit = (float)Config()->m_SvNetlimit * 1024 / time_freq();
+		double Alpha = Config()->m_SvNetlimitAlpha / 100.0;
+		double Limit = (double)(Config()->m_SvNetlimit * 1024) / time_freq();
 
 		if(m_aClients[ClientID].m_Traffic > Limit)
 		{
@@ -1382,7 +1385,7 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 		}
 		if(Diff > 100)
 		{
-			m_aClients[ClientID].m_Traffic = (Alpha * ((float)pPacket->m_DataSize / Diff)) + (1.0f - Alpha) * m_aClients[ClientID].m_Traffic;
+			m_aClients[ClientID].m_Traffic = (Alpha * ((double)pPacket->m_DataSize / Diff)) + (1.0 - Alpha) * m_aClients[ClientID].m_Traffic;
 			m_aClients[ClientID].m_TrafficSince = Now;
 		}
 	}
@@ -1533,14 +1536,46 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 		}
 		else if(Msg == NETMSG_INPUT)
 		{
-			CClient::CInput *pInput;
-			int64_t TagTime;
+			if((pPacket->m_Flags & NET_CHUNKFLAG_VITAL) != 0)
+			{
+				return;
+			}
+			if(m_aClients[ClientID].m_State != CClient::STATE_INGAME)
+			{
+				return;
+			}
 
 			int Acked = Unpacker.GetInt();
 			m_aClients[ClientID].m_LastAckedSnapshot = Acked;
-			// GameServer()->
+			
+
+			if(Unpacker.Error() ||
+				Acked < -1 ||
+				Acked > Tick())
+			{
+				return;
+			}
+
 			int IntendedTick = Unpacker.GetInt();
-			int Size = Unpacker.GetInt();
+
+			if(Unpacker.Error() ||
+				IntendedTick < MIN_TICK ||
+				IntendedTick > MAX_TICK)
+			{
+				return;
+			}
+
+			const int Size = Unpacker.GetInt();
+			if(Unpacker.Error() ||
+				Size % (int)sizeof(int32_t) != 0 ||
+				Size / (int)sizeof(int32_t) < MIN_INPUT_SIZE ||
+				Size / (int)sizeof(int32_t) > MAX_INPUT_SIZE)
+			{
+				return;
+			}
+
+			CClient::CInput *pInput;
+			int64_t TagTime;
 
 			// check for errors
 			if(Unpacker.Error() || Size / 4 > MAX_INPUT_SIZE)
@@ -1580,7 +1615,9 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 			for(int i = 0; i < Size / 4; i++)
 				pInput->m_aData[i] = Unpacker.GetInt();
 
-			if(g_Config.m_SvPreInput)
+			if(g_Config.m_SvPreInput &&
+				IntendedTick <= Tick() + 4 * TickSpeed() + 1 &&
+				IntendedTick > Tick())
 			{
 				// send preinputs of ClientId to valid clients
 				bool aPreInputClients[MAX_CLIENTS] = {};
@@ -1612,6 +1649,8 @@ void CServer::ProcessClientPacket(CNetChunk *pPacket)
 					for(int Id = 0; Id < MAX_CLIENTS; Id++)
 					{
 						if(!aPreInputClients[Id])
+							continue;
+						if(m_aClients[Id].m_SnapRate != CClient::SNAPRATE_FULL)
 							continue;
 
 						PreInput.m_IntendedTick = IntendedTick;
@@ -2275,20 +2314,28 @@ void CServer::FreeBotID(int ID)
 	m_NetServer.FreeBotID(ID);
 }
 
-void CServer::PumpNetwork(bool PacketWaiting)
+void CServer::PumpNetwork()
 {
 	CNetChunk Packet;
 	SECURITY_TOKEN ResponseToken;
 
 	m_NetServer.Update();
 
-	if(PacketWaiting)
+	// Coalesce the flushes triggered while handling this burst of incoming
+	// packets (preinput broadcasts, timing/ping replies, ...) into one packet
+	// per recipient, flushed once all packets have been handled below.
+	m_NetServer.BeginFlushBatch();
+
 	{
 		// process packets
+		ResponseToken = NET_SECURITY_TOKEN_UNKNOWN;
 		while(m_NetServer.Recv(&Packet, &ResponseToken))
 		{
 			if(Packet.m_ClientID == -1)
 			{
+				// if(ResponseToken == NET_SECURITY_TOKEN_UNKNOWN && m_Register.OnPacket(&Packet))
+					// continue;
+				
 				// stateless
 				if(!(Packet.m_Flags & NETSENDFLAG_CONNLESS))
 				{
@@ -2380,6 +2427,8 @@ void CServer::PumpNetwork(bool PacketWaiting)
 			ProcessClientPacket(&Packet);
 		}
 	}
+
+	m_NetServer.EndFlushBatch();
 
 	m_ServerBan.Update();
 	m_Econ.Update();
@@ -2623,7 +2672,6 @@ int CServer::Run()
 	// start game
 	{
 		bool NonActive = false;
-		bool PacketWaiting = false;
 
 		m_GameStartTime = time_get();
 
@@ -2631,11 +2679,11 @@ int CServer::Run()
 		while(m_RunServer < STOPPING)
 		{
 			if(NonActive)
-				PumpNetwork(PacketWaiting);
+				PumpNetwork();
 
 			set_new_tick();
 
-			int64_t t = time_get();
+			int64_t LastTime = time_get();
 			int NewTicks = 0;
 
 			// handle dnsbl
@@ -2680,7 +2728,7 @@ int CServer::Run()
 				}
 			}
 
-			while(t > TickStartTime(m_CurrentGameTick + 1))
+			while(LastTime > TickStartTime(m_CurrentGameTick + 1))
 			{
 				GameServer()->OnPreTickTeehistorian();
 
@@ -2738,7 +2786,7 @@ int CServer::Run()
 			Antibot()->OnEngineTick();
 
 			if(!NonActive)
-				PumpNetwork(PacketWaiting);
+				PumpNetwork();
 
 			NonActive = true;
 
@@ -2755,17 +2803,17 @@ int CServer::Run()
 				if(Config()->m_SvShutdownWhenEmpty)
 					m_RunServer = STOPPING;
 				else
-					PacketWaiting = net_socket_read_wait(m_NetServer.Socket(), 1000000);
+					net_socket_read_wait(m_NetServer.Socket(), 1s);
 				
 				GameServer()->ResetAllGames();
 			}
 			else
 			{
 				set_new_tick();
-				t = time_get();
-				int x = (TickStartTime(m_CurrentGameTick + 1) - t) * 1000000 / time_freq() + 1;
-
-				PacketWaiting = x > 0 ? net_socket_read_wait(m_NetServer.Socket(), x) : true;
+				LastTime = time_get();
+				const auto MicrosecondsToWait = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::nanoseconds(TickStartTime(m_CurrentGameTick + 1) - LastTime)) + 1us;
+				if(MicrosecondsToWait > 0us)
+					net_socket_read_wait(m_NetServer.Socket(), MicrosecondsToWait);
 			}
 			if(InterruptSignaled)
 			{
