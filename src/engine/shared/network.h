@@ -315,6 +315,8 @@ class CNetServer
 	CSlot m_aSlots[NET_MAX_CLIENTS];
 	int m_MaxClients;
 	int m_MaxClientsPerIP;
+	bool m_FlushBatch = false;
+	bool m_aFlushPending[NET_MAX_CLIENTS] = {};
 
 	NETFUNC_NEWCLIENT m_pfnNewClient;
 	NETFUNC_NEWCLIENT_NOAUTH m_pfnNewClientNoAuth;
@@ -364,6 +366,14 @@ public:
 	int Recv(CNetChunk *pChunk, SECURITY_TOKEN *pResponseToken);
 	int Send(CNetChunk *pChunk);
 	int Update();
+
+	// While a flush batch is open, sends requesting MSGFLAG_FLUSH only queue
+	// their chunk and mark the connection; EndFlushBatch() then flushes each
+	// marked connection once. Used to coalesce the flushes triggered while
+	// draining a burst of incoming packets into one packet per recipient.
+	void BeginFlushBatch() { m_FlushBatch = true; }
+	void EndFlushBatch();
+
 
 	//
 	int Drop(int ClientID, const char *pReason);

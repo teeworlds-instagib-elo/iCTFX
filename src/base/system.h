@@ -29,6 +29,7 @@
 #endif
 
 #if defined(__cplusplus)
+#include <chrono>
 extern "C" {
 #endif
 
@@ -1845,7 +1846,7 @@ int net_errno();
 */
 int net_would_block();
 
-int net_socket_read_wait(NETSOCKET sock, int time);
+int net_socket_read_wait(NETSOCKET sock, std::chrono::nanoseconds nanoseconds);
 
 /*
 	Function: open_link
