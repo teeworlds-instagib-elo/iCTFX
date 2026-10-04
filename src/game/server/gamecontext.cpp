@@ -993,7 +993,7 @@ void CGameContext::OnTick()
 		
 		if(GetLobby(i) != -1 && ((CServer*)Server())->m_aClients[i].m_Map != m_Layers[GetLobby(i)].m_Map)
 		{
-			printf("changing client map (%i)\n", i);
+			printf("changing client map (%i) %i -> %i\n", i, ((CServer*)Server())->m_aClients[i].m_Map, m_Layers[GetLobby(i)].m_Map);
 			KillPlayer(i);
 			((CServer*)Server())->m_aClients[i].m_Map = m_Layers[GetLobby(i)].m_Map;
 			if(!Server()->ClientReloadMap(i))
@@ -1003,7 +1003,7 @@ void CGameContext::OnTick()
 		if(m_apPlayers[i]->m_OldLobby != GetLobby(i))
 		{
 			KillPlayer(i);
-			printf("move lobby for player %i\n", i);
+			printf("move lobby for player %i  (%i -> %i)\n", i, m_apPlayers[i]->m_OldLobby, GetLobby(i));
 			m_apPlayers[i]->m_OldLobby = GetLobby(i);
 			char aBuf[128];
 			str_format(aBuf, 128, "Lobby %i", m_apPlayers[i]->m_OldLobby);
@@ -1731,6 +1731,17 @@ void CGameContext::OnClientConnected(int ClientID, void *pData, int Lobby)
 	if(Lobby < 0 || Lobby >= MAX_LOBBIES)
 		Lobby = 0;
 	
+	if(pPersistentData)
+	{
+		m_apPlayers[ClientID]->m_FirstVoteTick = Server()->Tick() + pPersistentData->m_FirstVoteTick;
+		m_apPlayers[ClientID]->m_PreviousLobby = pPersistentData->m_PreviousLobby;
+
+		if(pPersistentData->m_Rollback)
+		{
+			m_apPlayers[ClientID]->m_Rollback = true;
+			m_apPlayers[ClientID]->m_Rollback_partial = pPersistentData->m_Rollback / 100.0;
+		}
+	}
 
 	// Check which team the player should be on
 	int StartTeam = (Spec || g_Config.m_SvTournamentMode) ? TEAM_SPECTATORS : m_apController[Lobby]->GetAutoTeam(ClientID);
@@ -1744,18 +1755,6 @@ void CGameContext::OnClientConnected(int ClientID, void *pData, int Lobby)
 	if(m_apPlayers[ClientID])
 		delete m_apPlayers[ClientID];
 	m_apPlayers[ClientID] = new(ClientID) CPlayer(this, ClientID, StartTeam);
-
-	if(pPersistentData)
-	{
-		m_apPlayers[ClientID]->m_FirstVoteTick = Server()->Tick() + pPersistentData->m_FirstVoteTick;
-		m_apPlayers[ClientID]->m_PreviousLobby = pPersistentData->m_PreviousLobby;
-
-		if(pPersistentData->m_Rollback)
-		{
-			m_apPlayers[ClientID]->m_Rollback = true;
-			m_apPlayers[ClientID]->m_Rollback_partial = pPersistentData->m_Rollback / 100.0;
-		}
-	}
 
 #ifdef CONF_DEBUG
 	if(g_Config.m_DbgDummies)

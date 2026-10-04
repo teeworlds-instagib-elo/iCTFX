@@ -503,7 +503,7 @@ void IGameController::StartRound()
 
 	Server()->DemoRecorder_HandleAutoStart();
 	char aBuf[256];
-	str_format(aBuf, sizeof(aBuf), "start round type='%s' teamplay='%d'", m_pGameType, m_GameFlags & GAMEFLAG_TEAMS);
+	str_format(aBuf, sizeof(aBuf), "start round lobby=%i type='%s' teamplay='%d'", m_Lobby, m_pGameType, m_GameFlags & GAMEFLAG_TEAMS);
 	GameServer()->Console()->Print(IConsole::OUTPUT_LEVEL_DEBUG, "game", aBuf);
 
 	for(int i = 0; i < MAX_CLIENTS; i++) {
