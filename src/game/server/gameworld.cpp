@@ -341,7 +341,7 @@ void CGameWorld::SwapClients(int Client1, int Client2)
 
 // TODO: should be more general
 //CCharacter *CGameWorld::IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, vec2& NewPos, CEntity *pNotThis)
-CCharacter *CGameWorld::IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, bool &shield, CCharacter *pNotThis, int CollideWith, class CCharacter *pThisOnly, int tick)
+CCharacter *CGameWorld::IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, bool &shield, CCharacter *pNotThis, int CollideWith, class CCharacter *pThisOnly, int tick, float subtick)
 {
 	// Find other players
 	float ClosestLen = distance(Pos0, Pos1) * 100.0f;
@@ -370,55 +370,50 @@ CCharacter *CGameWorld::IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, v
 			last_pos = p->m_Positions[(tick+POSITION_HISTORY-1) % POSITION_HISTORY];
 		}
 
-		last_pos = (cur_pos + last_pos) / 2;
+		vec2 pos = cur_pos * subtick + last_pos * (1-subtick);
 
-		vec2 positions [] = {cur_pos, last_pos};
+		if(subtick == 1)
+			pos = cur_pos;
 
-		for(vec2 pos : positions)
+		vec2 IntersectPos;
+		if(closest_point_on_line(Pos0, Pos1, pos, IntersectPos))
 		{
-			vec2 IntersectPos;
-			if(closest_point_on_line(Pos0, Pos1, pos, IntersectPos))
+			float Len = distance(pos, IntersectPos);
+			if(Len < p->m_ProximityRadius * 3 + Radius)
 			{
-				float Len = distance(pos, IntersectPos);
-				if(Len < p->m_ProximityRadius * 3 + Radius)
+				if(p->m_Core.m_ActiveWeapon == WEAPON_SHOTGUN && p->m_ShieldReloadTimer > 0
+					&& distance(normalize(vec2(p->m_LatestInput.m_TargetX, p->m_LatestInput.m_TargetY)), normalize(Pos0-pos)) < 0.5)
 				{
-					if(p->m_Core.m_ActiveWeapon == WEAPON_SHOTGUN && p->m_ShieldReloadTimer > 0
-						&& distance(normalize(vec2(p->m_LatestInput.m_TargetX, p->m_LatestInput.m_TargetY)), normalize(Pos0-pos)) < 0.5)
+					vec2 dir = normalize(Pos0-Pos1);
+					for(int i = 0; i < 20; i++)
 					{
-						vec2 dir = normalize(Pos0-Pos1);
-						for(int i = 0; i < 20; i++)
-						{
-							IntersectPos += dir*10;
+						IntersectPos += dir*10;
 
-							if(distance(IntersectPos, pos) > p->m_ProximityRadius * 3 + Radius)
-								break;
-						}
-
-						Len = distance(Pos0, IntersectPos);
-						if(Len < ClosestLen)
-						{
-							NewPos = IntersectPos;
-							ClosestLen = Len;
-							pClosest = p;
-							shield = true;
-						}
+						if(distance(IntersectPos, pos) > p->m_ProximityRadius * 3 + Radius)
+							break;
 					}
-					else if(Len < p->m_ProximityRadius + Radius)
+
+					Len = distance(Pos0, IntersectPos);
+					if(Len < ClosestLen)
 					{
-						Len = distance(Pos0, IntersectPos);
-						if(Len < ClosestLen)
-						{
-							NewPos = IntersectPos;
-							ClosestLen = Len;
-							pClosest = p;
-							shield = false;
-						}
+						NewPos = IntersectPos;
+						ClosestLen = Len;
+						pClosest = p;
+						shield = true;
+					}
+				}
+				else if(Len < p->m_ProximityRadius + Radius)
+				{
+					Len = distance(Pos0, IntersectPos);
+					if(Len < ClosestLen)
+					{
+						NewPos = IntersectPos;
+						ClosestLen = Len;
+						pClosest = p;
+						shield = false;
 					}
 				}
 			}
-
-			if(!g_Config.m_SvSubTickCollision)
-				break;
 		}
 	}
 

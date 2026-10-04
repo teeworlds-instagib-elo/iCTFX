@@ -79,7 +79,7 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 {
 	vec2 At = vec2(99999, 99999);
 	CCharacter *pOwnerChar = GameServer()->GetPlayerChar(m_Owner);
-	CCharacter *pHit;
+	CCharacter *pHit = nullptr;
 	bool pDontHitSelf = g_Config.m_SvOldLaser || (m_Bounces == 0 && !m_WasTele);
 
 	int tick = -1;
@@ -95,10 +95,41 @@ bool CLaser::HitCharacter(vec2 From, vec2 To)
 
 	bool shield = false;
 
-	if(pOwnerChar ? (!(pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_LASER) && m_Type == WEAPON_LASER) || (!(pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_SHOTGUN) && m_Type == WEAPON_SHOTGUN) : g_Config.m_SvHit)
-		pHit = GameServer()->m_World[m_Lobby].IntersectCharacter(m_Pos, To, 0.f, At, shield, pOwnerChar, m_Owner, nullptr, tick);
-	else
-		pHit = GameServer()->m_World[m_Lobby].IntersectCharacter(m_Pos, To, 0.f, At, shield, pOwnerChar, m_Owner, pOwnerChar, tick);
+	vec2 closest_start = m_Pos;
+	vec2 closest_end = To;
+	float closest_distance = 999999;
+	for(int i = g_Config.m_SvSubTickCollision; i <= 10; i++)
+	{
+		vec2 start = m_Pos;
+		vec2 end = To;
+		float subtick = i/10.0;
+
+		if(pOwnerChar && m_Bounces < 1)
+		{
+			vec2 last_pos = pOwnerChar->m_Positions[(Server()->Tick() + POSITION_HISTORY-1) % POSITION_HISTORY];
+
+			start = start*subtick + last_pos*(1-subtick);
+			end += start-m_Pos;
+		}
+
+		CCharacter * pTmp = nullptr;
+		
+		if(pOwnerChar ? (!(pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_LASER) && m_Type == WEAPON_LASER) || (!(pOwnerChar->m_Hit & CCharacter::DISABLE_HIT_SHOTGUN) && m_Type == WEAPON_SHOTGUN) : g_Config.m_SvHit)
+			pTmp = GameServer()->m_World[m_Lobby].IntersectCharacter(start, end, 0.f, At, shield, pOwnerChar, m_Owner, nullptr, tick, subtick);
+		else
+			pTmp = GameServer()->m_World[m_Lobby].IntersectCharacter(start, end, 0.f, At, shield, pOwnerChar, m_Owner, pOwnerChar, tick, subtick);
+		
+		float dist = distance(start, At);
+		if(pTmp && closest_distance > dist)
+		{
+			closest_start = start;
+			closest_end = At;
+			closest_distance = dist;
+			pHit = pTmp;
+		}
+	}
+
+	At = closest_end;
 	
 	if(shield)
 	{

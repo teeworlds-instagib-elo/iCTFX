@@ -93,7 +93,7 @@ private:
 			Returns a pointer to the closest hit or NULL of there is no intersection.
 	*/
 	//class CCharacter *IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, class CEntity *pNotThis = 0);
-	class CCharacter *IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, bool &shield, class CCharacter *pNotThis = 0, int CollideWith = -1, class CCharacter *pThisOnly = 0, int tick = -1);
+	class CCharacter *IntersectCharacter(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, bool &shield, class CCharacter *pNotThis = 0, int CollideWith = -1, class CCharacter *pThisOnly = 0, int tick = -1, float subtick = 1);
 	
 	class CBot *IntersectBot(vec2 Pos0, vec2 Pos1, float Radius, vec2 &NewPos, class CBot *pNotThis = 0, int CollideWith = -1, class CBot *pThisOnly = 0, int tick = -1);
 	/*

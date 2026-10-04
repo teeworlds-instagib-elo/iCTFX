@@ -1055,7 +1055,7 @@ void CGameControllerDDRace::Tick()
 		}
 	}
 	
-	if(m_GameOverTick == -1 && !m_Warmup && !(g_Config.m_SvSaveServer && m_Lobby == 0))
+	if(m_GameOverTick == -1 && !m_Warmup && m_Lobby != 0)
 	{
 		// check score win condition
 		if(!idm && !m_fng && m_apFlags[0] && m_apFlags[0])

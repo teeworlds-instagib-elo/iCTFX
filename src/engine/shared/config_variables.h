@@ -175,7 +175,7 @@ MACRO_CONFIG_INT(SvWarTime, sv_war_time, 15, 0, 600, CFGFLAG_SERVER, "Default wa
 MACRO_CONFIG_INT(SvKillingspreeKills, sv_kspree_kills, 5, 3, 20, CFGFLAG_SERVER, "How many kills are needed to be on a killing-spree")
 
 MACRO_CONFIG_INT(SvFng, sv_fng, 0, 0, 1, CFGFLAG_SERVER, "sets gamemode to fng by default")
-MACRO_CONFIG_INT(SvSubTickCollision, sv_subtick_collision, 1, 0, 1, CFGFLAG_SERVER, "makes laser and grenade collisions more forgiving in terms of timing")
+MACRO_CONFIG_INT(SvSubTickCollision, sv_subtick_collision, 5, 0, 10, CFGFLAG_SERVER, "makes lasers do multiple subtick collision checks, should fix missing shots with fast moving tee's. 10 for old behaviour")
 
 MACRO_CONFIG_INT(SvFlagReset, sv_flag_reset, 1, 0, 1, CFGFLAG_SERVER, "reset your teams flag upon touching it")
 MACRO_CONFIG_INT(SvFlagOwnHoldTimer, sv_flag_own_hold_timer, 15, 0, 120, CFGFLAG_SERVER, "flag resets to pickup point if you hold your own too long")
